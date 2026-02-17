@@ -33,6 +33,7 @@ export default function RootLayout({
           rel="stylesheet"
           precedence="default"
         />
+        
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
