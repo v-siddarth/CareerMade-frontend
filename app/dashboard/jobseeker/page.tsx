@@ -659,7 +659,15 @@ export default function JobSeekerJobs() {
                 <div
                   key={job._id}
                   className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md  p-5 cursor-pointer"
-                // onClick={() => router.push(`/dashboard/jobseeker/jobs/${job._id}/view`)}
+                  onClick={() => router.push(`/dashboard/jobseeker/jobs/${job._id}/view`)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      router.push(`/dashboard/jobseeker/jobs/${job._id}/view`);
+                    }
+                  }}
                 >
                   {/* Header Row */}
                   <div className="flex items-start justify-between gap-4">
@@ -674,8 +682,7 @@ export default function JobSeekerJobs() {
                       <div className="flex-1">
                         {/* Title with Verified Badge */}
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-lg font-semibold text-gray-900 hover:underline"
-                            onClick={() => router.push(`/dashboard/jobseeker/jobs/${job._id}/view`)}>
+                          <h3 className="text-lg font-semibold text-gray-900 hover:underline">
                             {job.title}
                           </h3>
                           {job.status === "Active" && (
@@ -747,7 +754,10 @@ export default function JobSeekerJobs() {
 
                     {/* Right: Bookmark Icon */}
                     <button
-                      onClick={() => saveJob(job._id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        saveJob(job._id);
+                      }}
                       className={`shrink-0 p-2 rounded-full transition ${savedIds.has(String(job._id || job.id))
                         ? "text-blue-600 bg-blue-50"
                         : "text-gray-400 hover:text-blue-600"
