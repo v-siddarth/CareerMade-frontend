@@ -1,11 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Mail, Lock } from "lucide-react";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api-client";
+import PasswordChecklist from "@/app/components/PasswordChecklist";
+import { isPasswordValid } from "@/lib/password-rules";
 
 const ForgotPasswordPage = () => {
+  const router = useRouter();
+  const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
@@ -41,6 +46,11 @@ const ForgotPasswordPage = () => {
       return;
     }
 
+    if (!isPasswordValid(password)) {
+      setMessage("Password must satisfy all listed rules.");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setMessage("Passwords do not match.");
       return;
@@ -60,6 +70,9 @@ const ForgotPasswordPage = () => {
       setPassword("");
       setConfirmPassword("");
       setOtpSent(false);
+      redirectTimeoutRef.current = setTimeout(() => {
+        router.push("/login");
+      }, 1200);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to reset password";
       setMessage(errorMessage);
@@ -68,6 +81,14 @@ const ForgotPasswordPage = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white px-4">
@@ -127,6 +148,8 @@ const ForgotPasswordPage = () => {
                 className="w-full pl-10 pr-4 py-3 rounded-full border border-gray-300 focus:border-[#155DFC] focus:ring-2 focus:ring-[#155DFC] outline-none"
               />
             </div>
+
+            <PasswordChecklist password={password} confirmPassword={confirmPassword} showConfirmRule />
           </>
         )}
 

@@ -5,6 +5,8 @@ import { User, Mail, Lock, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { apiFetch, authStorage } from "@/lib/api-client";
+import PasswordChecklist from "@/app/components/PasswordChecklist";
+import { isPasswordValid } from "@/lib/password-rules";
 
 const resolveRolePath = (role?: string) => {
     if (role === "jobseeker") return "/dashboard/jobseeker";
@@ -19,6 +21,7 @@ const Register = () => {
     const [loading, setLoading] = useState(false);
     const [otpSent, setOtpSent] = useState(false);
     const [otp, setOtp] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [message, setMessage] = useState("");
     const [formData, setFormData] = useState({
         firstName: "",
@@ -96,9 +99,12 @@ const Register = () => {
                 clientErrors.push("Please enter a valid email address");
             }
 
-            const pwdRegex = /(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}/;
-            if (!pwdRegex.test(formData.password)) {
-                clientErrors.push("Password must be 6+ chars and include upper, lower, and a number");
+            if (!isPasswordValid(formData.password)) {
+                clientErrors.push("Password must satisfy all listed rules");
+            }
+
+            if (formData.password !== confirmPassword) {
+                clientErrors.push("Password and confirm password must match");
             }
 
             if (formData.firstName.trim().length < 2 || formData.firstName.trim().length > 50) {
@@ -163,6 +169,7 @@ const Register = () => {
                     phone: "",
                     role: "jobseeker",
                 });
+                setConfirmPassword("");
                 setOtp("");
                 setOtpSent(false);
             }
@@ -293,6 +300,26 @@ const Register = () => {
                             className="w-full pl-10 pr-4 py-3 rounded-full border border-gray-300 focus:border-[#155DFC] focus:ring-2 focus:ring-[#155DFC] outline-none text-gray-700 bg-white transition-all"
                         />
                     </div>
+
+                    {/* Confirm Password */}
+                    <div className="relative group">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input
+                            type="password"
+                            name="confirmPassword"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Confirm password"
+                            required
+                            className="w-full pl-10 pr-4 py-3 rounded-full border border-gray-300 focus:border-[#155DFC] focus:ring-2 focus:ring-[#155DFC] outline-none text-gray-700 bg-white transition-all"
+                        />
+                    </div>
+
+                    <PasswordChecklist
+                        password={formData.password}
+                        confirmPassword={confirmPassword}
+                        showConfirmRule
+                    />
 
                     {/* Role Selector */}
                     <select
