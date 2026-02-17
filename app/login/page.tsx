@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Stethoscope, Mail, Lock } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { apiFetch, authStorage } from "@/lib/api-client";
@@ -197,6 +197,12 @@ const Login = () => {
           {errorMsg && (
             <p className="text-red-500 text-center text-sm">{errorMsg}</p>
           )}
+
+          <p className="text-right text-sm">
+            <a href="/forgot-password" className="text-[#155DFC] hover:underline">
+              Forgot password?
+            </a>
+          </p>
 
           {/* Button */}
           <motion.button

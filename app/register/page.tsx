@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Stethoscope, User, Mail, Lock, Phone } from "lucide-react";
+import { User, Mail, Lock, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { apiFetch, authStorage } from "@/lib/api-client";
@@ -17,6 +17,8 @@ const Register = () => {
     const router = useRouter();
     const [isVisible, setIsVisible] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [otpSent, setOtpSent] = useState(false);
+    const [otp, setOtp] = useState("");
     const [message, setMessage] = useState("");
     const [formData, setFormData] = useState({
         firstName: "",
@@ -63,10 +65,17 @@ const Register = () => {
     }, [router]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
         setFormData((prev) => ({
             ...prev,
-            [e.target.name]: e.target.value,
+            [name]: value,
         }));
+
+        if (name === "email" && otpSent) {
+            setOtpSent(false);
+            setOtp("");
+            setMessage("Email changed. Please request a new OTP.");
+        }
     };
 
     const handleGoogle = () => {
@@ -81,22 +90,17 @@ const Register = () => {
         setMessage("");
 
         try {
-            // Client-side validation mirroring backend rules
             const clientErrors: string[] = [];
-
-            // Email
             const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
             if (!emailRegex.test(formData.email)) {
                 clientErrors.push("Please enter a valid email address");
             }
 
-            // Password: at least 6 chars, 1 uppercase, 1 lowercase, 1 number
-            // const pwdRegex = /(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}/;
-            // if (!pwdRegex.test(formData.password)) {
-            //     clientErrors.push("Password must be 6+ chars and include upper, lower, and a number");
-            // }
+            const pwdRegex = /(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}/;
+            if (!pwdRegex.test(formData.password)) {
+                clientErrors.push("Password must be 6+ chars and include upper, lower, and a number");
+            }
 
-            // Names
             if (formData.firstName.trim().length < 2 || formData.firstName.trim().length > 50) {
                 clientErrors.push("First name must be 2-50 characters");
             }
@@ -104,15 +108,17 @@ const Register = () => {
                 clientErrors.push("Last name must be 2-50 characters");
             }
 
-            // Role (backend allows only jobseeker or employer)
             if (!['jobseeker', 'employer'].includes(formData.role)) {
                 clientErrors.push("Role must be either Job Seeker or Employer");
             }
 
-            // Phone: optional in backend, but required in UI; must match +?[1-9]\d{0,15}
             const phoneRegex = /^\+?[1-9]\d{0,15}$/;
             if (!phoneRegex.test(formData.phone)) {
                 clientErrors.push("Please enter a valid phone number (digits only, optional +, cannot start with 0)");
+            }
+
+            if (otpSent && !/^\d{6}$/.test(otp)) {
+                clientErrors.push("Please enter a valid 6-digit OTP");
             }
 
             if (clientErrors.length > 0) {
@@ -120,33 +126,46 @@ const Register = () => {
                 return;
             }
 
-            const data = await apiFetch<{
-                message: string;
-                data: { accessToken: string; user: unknown };
-            }>("/api/auth/register", {
-                method: "POST",
-                skipAuth: true,
-                body: JSON.stringify(formData),
-            });
-            setMessage("✅ " + data.message);
-            authStorage.setAccessToken(data.data.accessToken);
-            authStorage.setUser(data.data.user);
-            toast.success("Registration successful!");
-
-            if (formData.role === "employer") {
-                router.push("/dashboard/employee/profile/create");
+            if (!otpSent) {
+                const sendOtpResponse = await apiFetch<{ message: string }>("/api/auth/register/send-otp", {
+                    method: "POST",
+                    skipAuth: true,
+                    body: JSON.stringify({ email: formData.email, firstName: formData.firstName }),
+                });
+                setOtpSent(true);
+                setMessage("✅ " + sendOtpResponse.message);
+                toast.success("OTP sent to your email");
             } else {
-                router.push("/dashboard/jobseeker");
-            }
+                const data = await apiFetch<{
+                    message: string;
+                    data: { accessToken: string; user: unknown };
+                }>("/api/auth/register/verify-otp", {
+                    method: "POST",
+                    skipAuth: true,
+                    body: JSON.stringify({ ...formData, otp }),
+                });
+                setMessage("✅ " + data.message);
+                authStorage.setAccessToken(data.data.accessToken);
+                authStorage.setUser(data.data.user);
+                toast.success("Registration successful!");
 
-            setFormData({
-                firstName: "",
-                lastName: "",
-                email: "",
-                password: "",
-                phone: "",
-                role: "jobseeker",
-            });
+                if (formData.role === "employer") {
+                    router.push("/dashboard/employee/profile/create");
+                } else {
+                    router.push("/dashboard/jobseeker");
+                }
+
+                setFormData({
+                    firstName: "",
+                    lastName: "",
+                    email: "",
+                    password: "",
+                    phone: "",
+                    role: "jobseeker",
+                });
+                setOtp("");
+                setOtpSent(false);
+            }
         } catch (err) {
             console.error("Error:", err);
             const message = err instanceof Error ? err.message : "Server error. Please try again later.";
@@ -288,6 +307,43 @@ const Register = () => {
                         <option value="employer">Employer</option>
                     </select>
 
+                    {otpSent && (
+                        <div className="space-y-3">
+                            <div className="relative group">
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                <input
+                                    type="text"
+                                    name="otp"
+                                    value={otp}
+                                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                                    placeholder="Enter 6-digit OTP"
+                                    required
+                                    className="w-full pl-10 pr-4 py-3 rounded-full border border-gray-300 focus:border-[#155DFC] focus:ring-2 focus:ring-[#155DFC] outline-none text-gray-700 bg-white transition-all tracking-[0.3em]"
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    try {
+                                        const response = await apiFetch<{ message: string }>("/api/auth/register/send-otp", {
+                                            method: "POST",
+                                            skipAuth: true,
+                                            body: JSON.stringify({ email: formData.email, firstName: formData.firstName }),
+                                        });
+                                        toast.success(response.message);
+                                    } catch (err) {
+                                        const resendMessage =
+                                            err instanceof Error ? err.message : "Failed to resend OTP";
+                                        toast.error(resendMessage);
+                                    }
+                                }}
+                                className="w-full text-sm text-[#155DFC] font-medium hover:underline"
+                            >
+                                Resend OTP
+                            </button>
+                        </div>
+                    )}
+
                     {/* Button */}
                     <motion.button
                         whileHover={{ scale: 1.05 }}
@@ -296,7 +352,7 @@ const Register = () => {
                         disabled={loading}
                         className="w-full bg-linear-to-r from-[#155DFC] to-[#00B8DB] text-white py-3 rounded-full font-semibold transition-all duration-300 shadow-md"
                     >
-                        {loading ? "Registering..." : "Register"}
+                        {loading ? (otpSent ? "Verifying OTP..." : "Sending OTP...") : (otpSent ? "Verify OTP & Register" : "Send OTP")}
                     </motion.button>
 
                     <div className="flex items-center gap-3">
