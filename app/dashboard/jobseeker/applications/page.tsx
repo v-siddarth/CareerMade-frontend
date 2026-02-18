@@ -45,7 +45,7 @@ interface ApplicationDetail {
     postedDate: string;
     applicationDeadline: string;
   };
-  status: "Applied" | "Under Review" | "Interview" | "Offered" | "Rejected";
+  status: "Applied" | "Under Review" | "Interview" | "Offered" | "Rejected" | "Withdrawn";
   appliedAt: string;
   viewedAt?: string;
   notes?: string;
@@ -73,6 +73,7 @@ const STATUS_OPTIONS: Array<"All" | StatusValue> = [
   "Interview",
   "Offered",
   "Rejected",
+  "Withdrawn",
 ];
 
 const statusMeta: Record<StatusValue, { color: string; bg: string; border: string; icon: React.ReactNode }> = {
@@ -106,6 +107,12 @@ const statusMeta: Record<StatusValue, { color: string; bg: string; border: strin
     border: "border-rose-200",
     icon: <XCircle className="h-4 w-4" />,
   },
+  Withdrawn: {
+    color: "text-slate-700",
+    bg: "bg-slate-100",
+    border: "border-slate-300",
+    icon: <XCircle className="h-4 w-4" />,
+  },
 };
 
 const progressMap: Record<StatusValue, number> = {
@@ -114,6 +121,7 @@ const progressMap: Record<StatusValue, number> = {
   Interview: 75,
   Offered: 100,
   Rejected: 100,
+  Withdrawn: 100,
 };
 
 const formatAddress = (address?: { city?: string; state?: string; country?: string }) => {
@@ -145,6 +153,7 @@ export default function MyApplications() {
   const [applications, setApplications] = useState<ApplicationDetail[]>([]);
   const [selectedApp, setSelectedApp] = useState<ApplicationDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [withdrawing, setWithdrawing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"All" | StatusValue>("All");
 
@@ -185,8 +194,56 @@ export default function MyApplications() {
       interview: applications.filter((app) => app.status === "Interview").length,
       offered: applications.filter((app) => app.status === "Offered").length,
       rejected: applications.filter((app) => app.status === "Rejected").length,
+      withdrawn: applications.filter((app) => app.status === "Withdrawn").length,
     };
   }, [applications]);
+
+  const handleWithdrawApplication = async () => {
+    if (!selectedApp?._id || withdrawing) return;
+    const confirmed = window.confirm(
+      "Are you sure you want to withdraw this application? This action cannot be undone."
+    );
+    if (!confirmed) return;
+
+    try {
+      setWithdrawing(true);
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/applications/${selectedApp._id}/withdraw`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ note: "Withdrawn by candidate" }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data?.message || "Failed to withdraw application");
+        return;
+      }
+
+      const updatedApplication = (data?.data?.application || data?.application || null) as ApplicationDetail | null;
+      if (updatedApplication) {
+        setApplications((prev) =>
+          prev.map((app) => (app._id === updatedApplication._id ? updatedApplication : app))
+        );
+        setSelectedApp(updatedApplication);
+      }
+
+      toast.success(data?.message || "Application withdrawn successfully");
+    } catch (error) {
+      console.error("Withdraw application error", error);
+      toast.error("Failed to withdraw application");
+    } finally {
+      setWithdrawing(false);
+    }
+  };
 
   const filteredApplications = useMemo(() => {
     return applications.filter((app) => {
@@ -247,6 +304,7 @@ export default function MyApplications() {
               { label: "Interview", value: stats.interview, icon: <UserCheck className="h-4 w-4" /> },
               { label: "Offered", value: stats.offered, icon: <Award className="h-4 w-4" /> },
               { label: "Rejected", value: stats.rejected, icon: <TrendingUp className="h-4 w-4" /> },
+              { label: "Withdrawn", value: stats.withdrawn, icon: <XCircle className="h-4 w-4" /> },
             ].map((item) => (
               <article
                 key={item.label}
@@ -470,6 +528,16 @@ export default function MyApplications() {
                   )}
 
                   <div className="flex flex-wrap gap-3 pt-1">
+                    {selectedApp.status !== "Rejected" && selectedApp.status !== "Withdrawn" && (
+                      <button
+                        type="button"
+                        onClick={handleWithdrawApplication}
+                        disabled={withdrawing}
+                        className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-300/30"
+                      >
+                        {withdrawing ? "Withdrawing..." : "Withdraw Application"}
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => router.push(`/dashboard/jobseeker/jobs/${selectedApp.job?._id}/view`)}

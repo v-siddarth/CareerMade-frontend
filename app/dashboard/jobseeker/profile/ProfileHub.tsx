@@ -1649,7 +1649,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                           }
                         />
                       </label>
-                      <label className="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2 text-sm">
+                      {/* <label className="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2 text-sm">
                         <span>Allow direct messages</span>
                         <input
                           type="checkbox"
@@ -1664,7 +1664,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                             }))
                           }
                         />
-                      </label>
+                      </label> */}
                       <label className="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2 text-sm">
                         <span>Email alerts</span>
                         <input type="checkbox" checked={emailAlerts} onChange={(e) => setEmailAlerts(e.target.checked)} />

@@ -20,7 +20,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import Navbar from "@/app/components/Navbar";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { motion } from "framer-motion";
@@ -40,8 +40,20 @@ const LOCATIONS = [
 
 const WORK_MODES = ["On-site", "Remote", "Full-time"];
 
+const CATEGORY_TO_SPECIALTIES: Record<string, string[]> = {
+  "Doctors & Physicians": ["General Medicine", "Surgery", "Pediatrics", "Internal Medicine"],
+  "Nursing Staff": ["Nursing"],
+  Technicians: ["Medical Technology", "Radiology", "Pathology"],
+  "Admin & Support": ["Other"],
+  Diagnostics: ["Pathology", "Radiology"],
+  Therapists: ["Physical Therapy", "Occupational Therapy", "Speech Therapy"],
+  "Dental & Optometry": ["Ophthalmology", "Other"],
+  "Research & Development": ["Pathology", "Other"],
+};
+
 export default function JobSeekerJobs() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [jobs, setJobs] = useState<any[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<any[]>([]);
   const [filters, setFilters] = useState({
@@ -137,6 +149,32 @@ export default function JobSeekerJobs() {
     };
     fetchJobs();
   }, []);
+
+  useEffect(() => {
+    const category = searchParams.get("category");
+    const specialtiesFromQuery = searchParams.get("specialties");
+    const q = searchParams.get("q");
+
+    if (q) {
+      setSearchQuery(q);
+    }
+
+    let mapped: string[] = [];
+    if (specialtiesFromQuery) {
+      mapped = specialtiesFromQuery
+        .split(",")
+        .map((item) => decodeURIComponent(item).trim())
+        .filter(Boolean);
+    } else if (category && CATEGORY_TO_SPECIALTIES[category]) {
+      mapped = CATEGORY_TO_SPECIALTIES[category];
+    }
+
+    if (mapped.length > 0) {
+      const uniqueMapped = Array.from(new Set(mapped));
+      setSelectedSpecialties(uniqueMapped);
+      setShowAllSpecialties(true);
+    }
+  }, [searchParams]);
 
   // ✅ Apply filters and search
   useEffect(() => {

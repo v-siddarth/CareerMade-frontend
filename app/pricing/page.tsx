@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, CreditCard, Landmark, ShieldCheck, Sparkles, Wallet } from "lucide-react";
 import toast from "react-hot-toast";
 import Navbar from "@/app/components/Navbar";
+import { authStorage } from "@/lib/api-client";
+import { createPricingNotificationEvent } from "@/lib/notifications-client";
 
 type Plan = {
   id: "starter" | "growth" | "pro";
@@ -77,7 +79,32 @@ export default function PricingPage() {
     [selectedPlanId]
   );
 
+  useEffect(() => {
+    const token = authStorage.getAccessToken();
+    if (!token) return;
+    createPricingNotificationEvent({ eventType: "view_pricing" }).catch(() => {});
+  }, []);
+
+  const handlePlanSelect = (plan: Plan) => {
+    setSelectedPlanId(plan.id);
+    const token = authStorage.getAccessToken();
+    if (!token) return;
+    createPricingNotificationEvent({
+      eventType: "select_plan",
+      planId: plan.id,
+      planName: plan.name,
+    }).catch(() => {});
+  };
+
   const handleCheckout = () => {
+    const token = authStorage.getAccessToken();
+    if (token) {
+      createPricingNotificationEvent({
+        eventType: "checkout_intent",
+        planId: selectedPlan.id,
+        planName: selectedPlan.name,
+      }).catch(() => {});
+    }
     toast("Payment gateway will be connected at deployment. Plan locked for now.", {
       icon: "💳",
     });
@@ -138,7 +165,7 @@ export default function PricingPage() {
 
                   <button
                     type="button"
-                    onClick={() => setSelectedPlanId(plan.id)}
+                    onClick={() => handlePlanSelect(plan)}
                     className={`mt-7 w-full rounded-xl px-4 py-3 text-sm font-semibold transition ${
                       active
                         ? "bg-gray-900 text-white"

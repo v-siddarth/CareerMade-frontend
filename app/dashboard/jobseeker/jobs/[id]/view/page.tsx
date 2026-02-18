@@ -39,6 +39,9 @@ export default function JobViewPage() {
     const { id } = useParams();
     const router = useRouter();
     const [hasApplied, setHasApplied] = useState(false);
+    const [appliedStatus, setAppliedStatus] = useState<string | null>(null);
+    const [applyAttempts, setApplyAttempts] = useState(0);
+    const [canReapply, setCanReapply] = useState(false);
     const [hasSaved, setHasSaved] = useState(false);
     const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
     const [user, setUser] = useState<any>(null);
@@ -71,24 +74,28 @@ export default function JobViewPage() {
         const token = localStorage.getItem("accessToken");
         if (!token || !id) return;
 
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobs/${id}/applications`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/applications/me?job=${id}&limit=1`, {
             headers: { Authorization: `Bearer ${token}` },
         })
             .then((res) => res.json())
             .then((data) => {
-                const applications = data.data?.applications || data.applications || [];
-                const userData = localStorage.getItem("user");
-                if (userData) {
-                    const user = JSON.parse(userData);
-                    const hasUserApplied = applications.some((app: any) =>
-                        app.jobSeeker?.user?._id === user._id ||
-                        app.jobSeeker?._id === user.jobSeekerId
-                    );
-                    setHasApplied(hasUserApplied);
-                }
+                const applications = data?.data?.items || data?.items || [];
+                const firstApplication = Array.isArray(applications) ? applications[0] : null;
+                const status = firstApplication?.status || null;
+                const attempts = Number(firstApplication?.applyAttempts || 0);
+                const allowReapply = status === "Withdrawn" && attempts < 2;
+
+                setApplyAttempts(attempts);
+                setCanReapply(allowReapply);
+                setHasApplied(Boolean(firstApplication?._id) && !allowReapply);
+                setAppliedStatus(status);
             })
             .catch((err) => {
                 console.error("Error checking application status:", err);
+                setHasApplied(false);
+                setAppliedStatus(null);
+                setApplyAttempts(0);
+                setCanReapply(false);
             });
     }, [id]);
 
@@ -250,6 +257,12 @@ export default function JobViewPage() {
                 return;
             }
 
+            if (canReapply && applyAttempts === 1) {
+                toast("Warning: if you withdraw again, you cannot apply for this job anymore.", {
+                    icon: "⚠️",
+                });
+            }
+
             const payload: any = {
                 resume: resume.url || resume._id || resume,
             };
@@ -271,8 +284,17 @@ export default function JobViewPage() {
 
             if (res.ok) {
                 setHasApplied(true);
+                setCanReapply(false);
+                const nextAttempt = Number(data?.data?.attemptNumber || applyAttempts || 1);
+                setApplyAttempts(nextAttempt);
+                setAppliedStatus(data?.data?.application?.status || "Applied");
                 setMessage(data.message || "Application submitted successfully!");
                 toast.success(data.message || "Application submitted successfully!");
+                if (nextAttempt === 2) {
+                    toast("Warning: if you withdraw again, you cannot apply for this job anymore.", {
+                        icon: "⚠️",
+                    });
+                }
             } else {
                 setMessage(data.message || "Failed to submit application.");
                 toast.error(data.message || "Failed to submit application.");
@@ -567,7 +589,7 @@ export default function JobViewPage() {
                                                 disabled
                                                 className="px-4 py-2 bg-gray-300 text-white rounded-full text-sm font-medium cursor-not-allowed"
                                             >
-                                                <CheckCircle className="w-4 h-4 inline-block mr-1" /> Already Applied
+                                                <CheckCircle className="w-4 h-4 inline-block mr-1" /> {appliedStatus || "Applied"}
                                             </button>
                                         ) : (
                                             <button
@@ -580,7 +602,7 @@ export default function JobViewPage() {
                                                 }}
                                                 className="px-4 py-2 bg-[#007BFF] hover:bg-[#006AE6] text-white rounded-full text-sm font-semibold"
                                             >
-                                                Apply
+                                                {canReapply ? "Apply Again" : "Apply"}
                                             </button>
                                         )}
                                     </div>

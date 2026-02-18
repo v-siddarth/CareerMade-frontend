@@ -1,10 +1,144 @@
 "use client"
-import { Search, FileText, TrendingUp, Users, Briefcase, DollarSign, Award, Building } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { FileText, TrendingUp, Users, Briefcase, DollarSign, Award, Building } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import Footer from "./Footer";
+import toast from "react-hot-toast";
+
+type UserRole = "jobseeker" | "employer" | "admin" | null;
+
+const OPPORTUNITY_CARDS = [
+  {
+    title: "Doctors & Physicians",
+    subtitle: "General, Surgery, Pediatrics",
+    positions: "1,247",
+    image: "/man.png",
+    iconBg: "bg-orange-100",
+    accent: "text-[#2B7FFF]",
+    specialties: ["General Medicine", "Surgery", "Pediatrics", "Internal Medicine"],
+  },
+  {
+    title: "Nursing Staff",
+    subtitle: "RNs, LPNs, CNAs, Nurse Practitioners",
+    positions: "2,183",
+    image: "/woman.png",
+    iconBg: "bg-red-100",
+    accent: "text-[#F6339A]",
+    specialties: ["Nursing"],
+  },
+  {
+    title: "Technicians",
+    subtitle: "Lab Techs, X-Ray, MRI, Ultrasound",
+    positions: "1,640",
+    image: "/micro.png",
+    iconBg: "bg-yellow-100",
+    accent: "text-[#00C950]",
+    specialties: ["Medical Technology", "Radiology", "Pathology"],
+  },
+  {
+    title: "Admin & Support",
+    subtitle: "Medical Billing, Reception, Management",
+    positions: "3,920",
+    image: "/pad.png",
+    iconBg: "bg-purple-100",
+    accent: "text-[#AD46FF]",
+    specialties: ["Other"],
+  },
+  {
+    title: "Diagnostics",
+    subtitle: "Pathology, Radiology, Laboratory",
+    positions: "2,890",
+    image: "/scope.png",
+    iconBg: "bg-blue-100",
+    accent: "text-[#00B8DB]",
+    specialties: ["Pathology", "Radiology"],
+  },
+  {
+    title: "Therapists",
+    subtitle: "Physical, Occupational, Speech",
+    positions: "4,455",
+    image: "/pill.png",
+    iconBg: "bg-gray-100",
+    accent: "text-[#FF6900]",
+    specialties: ["Physical Therapy", "Occupational Therapy", "Speech Therapy"],
+  },
+  {
+    title: "Dental & Optometry",
+    subtitle: "Dentists, Hygienists, Optometrists",
+    positions: "2,175",
+    image: "/teeth.png",
+    iconBg: "bg-indigo-100",
+    accent: "text-[#615FFF]",
+    specialties: ["Ophthalmology", "Other"],
+  },
+  {
+    title: "Research & Development",
+    subtitle: "Clinical Research, Medical Writing",
+    positions: "1,567",
+    image: "/graph.png",
+    iconBg: "bg-teal-100",
+    accent: "text-[#00BBA7]",
+    specialties: ["Pathology", "Other"],
+  },
+];
 
 export default function CareerMadeLanding() {
+    const router = useRouter();
+    const [role, setRole] = useState<UserRole>(null);
+    const [email, setEmail] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+
+    useEffect(() => {
+        try {
+            const rawUser = localStorage.getItem("user");
+            if (!rawUser) {
+                setRole(null);
+                return;
+            }
+            const parsed = JSON.parse(rawUser) as { role?: UserRole };
+            setRole(parsed?.role || null);
+        } catch {
+            setRole(null);
+        }
+    }, []);
+
+    const openJobsByCategory = (card: { title: string; specialties: string[] }) => {
+        const params = new URLSearchParams();
+        params.set("category", card.title);
+        params.set("specialties", card.specialties.join(","));
+        router.push(`/view-jobs?${params.toString()}`);
+    };
+
+    const handleNewsletterSubscribe = async () => {
+        const normalizedEmail = email.trim().toLowerCase();
+        if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+            toast.error("Please enter a valid email address.");
+            return;
+        }
+
+        try {
+            setSubmitting(true);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/newsletter/subscribe`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: normalizedEmail, source: "landing-page-cta" }),
+            });
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(data?.message || "Failed to subscribe");
+            }
+
+            toast.success(data?.message || "Subscribed successfully.");
+            setEmail("");
+        } catch (error: any) {
+            toast.error(error?.message || "Unable to subscribe right now.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-white">
             {/* Hero Section */}
@@ -222,132 +356,26 @@ export default function CareerMadeLanding() {
                     </div>
 
                     <div className="grid md:grid-cols-4 gap-6">
-                        <div className="bg-white rounded-xl p-6 hover:shadow-lg transition border border-gray-100">
-                            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
-                                <Image src="/man.png" alt="Doctors & Physicians" width={20} height={20} />
-                            </div>
-                            <h3 className="font-bold text-gray-900 mb-2">Doctors & Physicians</h3>
-                            <p className="text-sm text-gray-600 mb-4">
-                                General, Surgery, Pediatrics
-                            </p>
-                            <p className="text-2xl font-bold text-[#2B7FFF] mb-1">1,247</p>
-                            <p className="text-sm text-gray-500 mb-4">positions available</p>
-                            <button className="text-gray-700 font-semibold hover:text-gray-800">
-                                View jobs →
+                        {OPPORTUNITY_CARDS.map((card) => (
+                            <button
+                                key={card.title}
+                                type="button"
+                                onClick={() => openJobsByCategory(card)}
+                                className="bg-white rounded-xl p-6 hover:shadow-lg transition border border-gray-100 text-left"
+                            >
+                                <div className={`w-10 h-10 ${card.iconBg} rounded-lg flex items-center justify-center mb-4`}>
+                                    <Image src={card.image} alt={card.title} width={20} height={20} />
+                                </div>
+                                <h3 className="font-bold text-gray-900 mb-2">{card.title}</h3>
+                                <p className="text-sm text-gray-600 mb-4">{card.subtitle}</p>
+                                <p className={`text-2xl font-bold ${card.accent} mb-1`}>{card.positions}</p>
+                                <p className="text-sm text-gray-500 mb-4">positions available</p>
+                                <span className="text-gray-700 font-semibold hover:text-gray-800">View jobs →</span>
                             </button>
-                        </div>
-
-                        <div className="bg-white rounded-xl p-6 hover:shadow-lg transition border border-gray-100">
-                            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mb-4">
-                                <Image src="/woman.png" alt="Doctors & Physicians" width={20} height={20} />
-                            </div>
-                            <h3 className="font-bold text-gray-900 mb-2">Nursing Staff</h3>
-                            <p className="text-sm text-gray-600 mb-4">
-                                RNs, LPNs, CNAs, Nurse Practitioners
-                            </p>
-                            <p className="text-2xl font-bold text-[#F6339A] mb-1">2,183</p>
-                            <p className="text-sm text-gray-500 mb-4">positions available</p>
-                            <button className="text-gray-700 font-semibold hover:text-gray-800">
-                                View jobs →
-                            </button>
-                        </div>
-
-                        <div className="bg-white rounded-xl p-6 hover:shadow-lg transition border border-gray-100">
-                            <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mb-4">
-                                <Image src="/micro.png" alt="Doctors & Physicians" width={20} height={20} />
-                            </div>
-                            <h3 className="font-bold text-gray-900 mb-2">Technicians</h3>
-                            <p className="text-sm text-gray-600 mb-4">
-                                Lab Techs, X-Ray, MRI, Ultrasound
-                            </p>
-                            <p className="text-2xl font-bold text-[#00C950] mb-1">1,640</p>
-                            <p className="text-sm text-gray-500 mb-4">positions available</p>
-                            <button className="text-gray-700 font-semibold hover:text-gray-800">
-                                View jobs →
-                            </button>
-                        </div>
-
-                        <div className="bg-white rounded-xl p-6 hover:shadow-lg transition border border-gray-100">
-                            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                                <Image src="/pad.png" alt="Doctors & Physicians" width={20} height={20} />
-                            </div>
-                            <h3 className="font-bold text-gray-900 mb-2">Admin & Support</h3>
-                            <p className="text-sm text-gray-600 mb-4">
-                                Medical Billing, Reception, Management
-                            </p>
-                            <p className="text-2xl font-bold text-[#AD46FF] mb-1">3,920</p>
-                            <p className="text-sm text-gray-500 mb-4">positions available</p>
-                            <button className="text-gray-700 font-semibold hover:text-gray-800">
-                                View jobs →
-                            </button>
-                        </div>
-
-                        <div className="bg-white rounded-xl p-6 hover:shadow-lg transition border border-gray-100">
-                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                                <Image src="/scope.png" alt="Doctors & Physicians" width={20} height={20} />
-                            </div>
-                            <h3 className="font-bold text-gray-900 mb-2">Diagnostics</h3>
-                            <p className="text-sm text-gray-600 mb-4">
-                                Pathology, Radiology, Laboratory
-                            </p>
-                            <p className="text-2xl font-bold text-[#00B8DB] mb-1">2,890</p>
-                            <p className="text-sm text-gray-500 mb-4">positions available</p>
-                            <button className="text-gray-700 font-semibold hover:text-gray-800">
-                                View jobs →
-                            </button>
-                        </div>
-
-                        <div className="bg-white rounded-xl p-6 hover:shadow-lg transition border border-gray-100">
-                            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-                                <Image src="/pill.png" alt="Doctors & Physicians" width={20} height={20} />
-                            </div>
-                            <h3 className="font-bold text-gray-900 mb-2">Therapists</h3>
-                            <p className="text-sm text-gray-600 mb-4">
-                                Physical, Occupational, Speech
-                            </p>
-                            <p className="text-2xl font-bold text-[#FF6900] mb-1">4,455</p>
-                            <p className="text-sm text-gray-500 mb-4">positions available</p>
-                            <button className="text-gray-700 font-semibold hover:text-gray-800">
-                                View jobs →
-                            </button>
-                        </div>
-
-                        <div className="bg-white rounded-xl p-6 hover:shadow-lg transition border border-gray-100">
-                            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
-                                <Image src="/teeth.png" alt="Doctors & Physicians" width={20} height={20} />
-                            </div>
-                            <h3 className="font-bold text-gray-900 mb-2">Dental & Optometry</h3>
-                            <p className="text-sm text-gray-600 mb-4">
-                                Dentists, Hygienists, Optometrists
-                            </p>
-                            <p className="text-2xl font-bold text-[#615FFF] mb-1">2,175</p>
-                            <p className="text-sm text-gray-500 mb-4">positions available</p>
-                            <button className="text-gray-700 font-semibold hover:text-gray-800">
-                                View jobs →
-                            </button>
-                        </div>
-
-                        <div className="bg-white rounded-xl p-6 hover:shadow-lg transition border border-gray-100">
-                            <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center mb-4">
-                                <Image src="/graph.png" alt="Doctors & Physicians" width={20} height={20} />
-                            </div>
-                            <h3 className="font-bold text-gray-900 mb-2">Research & Development</h3>
-                            <p className="text-sm text-gray-600 mb-4">
-                                Clinical Research, Medical Writing
-                            </p>
-                            <p className="text-2xl font-bold text-[#00BBA7] mb-1">1,567</p>
-                            <p className="text-sm text-gray-500 mb-4">positions available</p>
-                            <button className="text-gray-700 font-semibold hover:text-gray-800">
-                                View jobs →
-                            </button>
-                        </div>
+                        ))}
                     </div>
 
-                    <div className="text-center mt-12">
-                        <button className="bg-gray-900 text-white px-8 py-3 rounded-full hover:bg-gray-800 transition">
-                            View All Categories
-                        </button>
-                    </div>
+                    
                 </div>
             </section>
 
@@ -403,12 +431,24 @@ export default function CareerMadeLanding() {
                     <div className="text-center mt-16">
                         <p className="text-gray-400 mb-6">Ready to get started? Join CareerMade</p>
                         <div className="flex items-center justify-center space-x-4">
-                            <button className="bg-white text-gray-900 px-8 py-3 rounded-full hover:bg-gray-100 transition font-semibold">
-                                Post a Job
-                            </button>
-                            <button className="border border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-gray-900 transition font-semibold">
-                                Find a Job
-                            </button>
+                            {(role === "employer" || role === "admin") && (
+                                <button
+                                    type="button"
+                                    onClick={() => router.push("/dashboard/employee/jobs/create")}
+                                    className="bg-white text-gray-900 px-8 py-3 rounded-full hover:bg-gray-100 transition font-semibold"
+                                >
+                                    Post a Job
+                                </button>
+                            )}
+                            {(role === "jobseeker" || role === null) && (
+                                <button
+                                    type="button"
+                                    onClick={() => router.push("/view-jobs")}
+                                    className="border border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-gray-900 transition font-semibold"
+                                >
+                                    Find a Job
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -482,11 +522,7 @@ export default function CareerMadeLanding() {
                         </div>
                     </div>
 
-                    <div className="text-center mt-8">
-                        <button className="text-blue-500 font-semibold hover:text-blue-600">
-                            Read More Success Stories →
-                        </button>
-                    </div>
+                    
                 </div>
             </section>
 
@@ -524,15 +560,26 @@ export default function CareerMadeLanding() {
                             <input
                                 type="email"
                                 placeholder="Your email address"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                                 className="flex-1 px-5 py-3 text-sm sm:text-base outline-none text-gray-900 rounded-full"
                             />
-                            <button className="bg-blue-600 text-white px-6 sm:px-8 py-3 rounded-full hover:bg-blue-700 transition font-semibold whitespace-nowrap">
-                                Subscribe
+                            <button
+                                type="button"
+                                onClick={handleNewsletterSubscribe}
+                                disabled={submitting}
+                                className="bg-blue-600 text-white px-6 sm:px-8 py-3 rounded-full hover:bg-blue-700 transition font-semibold whitespace-nowrap disabled:opacity-60"
+                            >
+                                {submitting ? "Subscribing..." : "Subscribe"}
                             </button>
                         </div>
 
                         {/* Secondary Button */}
-                        <button className="w-full sm:w-auto border-2 border-white text-white px-6 sm:px-8 py-3 rounded-full hover:bg-white hover:text-blue-600 transition font-semibold">
+                        <button
+                            type="button"
+                            onClick={() => router.push("/view-jobs")}
+                            className="w-full sm:w-auto border-2 border-white text-white px-6 sm:px-8 py-3 rounded-full hover:bg-white hover:text-blue-600 transition font-semibold"
+                        >
                             Find All Vacancies
                         </button>
                     </div>
