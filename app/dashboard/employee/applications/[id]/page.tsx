@@ -405,6 +405,27 @@ export default function ApplicationDetailPage() {
               </div>
             )}
 
+            {/* Screening answers submitted at apply time */}
+            {Array.isArray(app.answers) && app.answers.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-base font-semibold text-gray-900 mb-4">
+                  Screening answers
+                </h3>
+                <div className="space-y-4">
+                  {app.answers.map((qa: any, idx: number) => (
+                    <div key={idx} className="rounded-lg border border-gray-100 bg-gray-50 p-4">
+                      <p className="text-sm font-medium text-gray-900">
+                        {qa?.question || `Question ${idx + 1}`}
+                      </p>
+                      <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">
+                        {qa?.answer || "No answer provided"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Skills & expertise */}
             {((app.skills && app.skills.length) ||
               (js?.skills && js.skills.length)) && (

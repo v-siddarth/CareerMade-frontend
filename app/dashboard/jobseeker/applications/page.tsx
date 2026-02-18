@@ -45,7 +45,14 @@ interface ApplicationDetail {
     postedDate: string;
     applicationDeadline: string;
   };
-  status: "Applied" | "Under Review" | "Interview" | "Offered" | "Rejected" | "Withdrawn";
+  status:
+    | "Applied"
+    | "Under Review"
+    | "Shortlisted"
+    | "Interview"
+    | "Offered"
+    | "Rejected"
+    | "Withdrawn";
   appliedAt: string;
   viewedAt?: string;
   notes?: string;
@@ -70,6 +77,7 @@ const STATUS_OPTIONS: Array<"All" | StatusValue> = [
   "All",
   "Applied",
   "Under Review",
+  "Shortlisted",
   "Interview",
   "Offered",
   "Rejected",
@@ -88,6 +96,12 @@ const statusMeta: Record<StatusValue, { color: string; bg: string; border: strin
     bg: "bg-amber-50",
     border: "border-amber-200",
     icon: <Eye className="h-4 w-4" />,
+  },
+  Shortlisted: {
+    color: "text-indigo-700",
+    bg: "bg-indigo-50",
+    border: "border-indigo-200",
+    icon: <UserCheck className="h-4 w-4" />,
   },
   Interview: {
     color: "text-violet-700",
@@ -118,10 +132,28 @@ const statusMeta: Record<StatusValue, { color: string; bg: string; border: strin
 const progressMap: Record<StatusValue, number> = {
   Applied: 15,
   "Under Review": 45,
+  Shortlisted: 60,
   Interview: 75,
   Offered: 100,
   Rejected: 100,
   Withdrawn: 100,
+};
+
+const fallbackStatusMeta = {
+  color: "text-slate-700",
+  bg: "bg-slate-100",
+  border: "border-slate-300",
+  icon: <Clock className="h-4 w-4" />,
+};
+
+const getStatusMeta = (status?: string) => {
+  if (!status) return fallbackStatusMeta;
+  return statusMeta[status as StatusValue] || fallbackStatusMeta;
+};
+
+const getStatusProgress = (status?: string) => {
+  if (!status) return 0;
+  return progressMap[status as StatusValue] ?? 0;
 };
 
 const formatAddress = (address?: { city?: string; state?: string; country?: string }) => {
@@ -361,7 +393,7 @@ export default function MyApplications() {
                 <div className="max-h-[760px] divide-y divide-[#e7effd] overflow-y-auto" aria-live="polite">
                   {filteredApplications.map((app) => {
                     const active = selectedApp?._id === app._id;
-                    const meta = statusMeta[app.status];
+                    const meta = getStatusMeta(app.status);
                     return (
                       <button
                         key={app._id}
@@ -417,9 +449,9 @@ export default function MyApplications() {
                       </p>
                     </div>
                     <span
-                      className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold ${statusMeta[selectedApp.status].bg} ${statusMeta[selectedApp.status].color} ${statusMeta[selectedApp.status].border}`}
+                      className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold ${getStatusMeta(selectedApp.status).bg} ${getStatusMeta(selectedApp.status).color} ${getStatusMeta(selectedApp.status).border}`}
                     >
-                      {statusMeta[selectedApp.status].icon}
+                      {getStatusMeta(selectedApp.status).icon}
                       {selectedApp.status}
                     </span>
                   </header>
@@ -427,21 +459,21 @@ export default function MyApplications() {
                   <div className="rounded-2xl border border-[#cfe2ff] bg-gradient-to-br from-[#f6fbff] to-white p-4">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold text-[#13305f]">Application Progress</p>
-                      <p className="text-xs font-semibold text-[#48648e]">{progressMap[selectedApp.status]}%</p>
+                      <p className="text-xs font-semibold text-[#48648e]">{getStatusProgress(selectedApp.status)}%</p>
                     </div>
                     <div
                       className="mt-3 h-2.5 overflow-hidden rounded-full bg-[#e2ebf7]"
                       role="progressbar"
                       aria-valuemin={0}
                       aria-valuemax={100}
-                      aria-valuenow={progressMap[selectedApp.status]}
+                      aria-valuenow={getStatusProgress(selectedApp.status)}
                       aria-label="Application progress"
                     >
                       <div
                         className={`h-2.5 rounded-full ${
                           selectedApp.status === "Rejected" ? "bg-rose-500" : "bg-gradient-to-r from-[#1688f0] to-[#0fc2df]"
                         }`}
-                        style={{ width: `${progressMap[selectedApp.status]}%` }}
+                        style={{ width: `${getStatusProgress(selectedApp.status)}%` }}
                       />
                     </div>
 

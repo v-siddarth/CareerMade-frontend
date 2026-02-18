@@ -3,15 +3,31 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
-import { User2, Edit, Mail, Phone, Globe, MapPin, Award, Building2, ArrowLeft } from "lucide-react";
+import { User2, Edit, Mail, Phone, Globe, MapPin, Award, Building2, ArrowLeft, LogOut } from "lucide-react";
 import GradientLoader from "@/app/components/GradientLoader";
 import toast from "react-hot-toast";
+import { logout } from "@/lib/api-client";
 
 export default function ViewEmployerProfile() {
   const router = useRouter();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      setLoggingOut(true);
+      await logout();
+      router.push("/login");
+    } catch {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("user");
+      router.push("/login");
+    } finally {
+      setLoggingOut(false);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -88,6 +104,14 @@ export default function ViewEmployerProfile() {
               >
                 <Edit className="w-4 h-4" />
                 Edit Profile
+              </button>
+              <button
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="flex items-center justify-center gap-2 px-6 py-2.5 border border-red-200 bg-white text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-all disabled:opacity-70"
+              >
+                <LogOut className="w-4 h-4" />
+                {loggingOut ? "Logging out..." : "Logout"}
               </button>
             </div>
           </div>

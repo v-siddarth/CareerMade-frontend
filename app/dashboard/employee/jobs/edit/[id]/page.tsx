@@ -9,6 +9,11 @@ import { ChevronRight, CheckCircle } from "lucide-react";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
+interface ScreeningQuestion {
+  question: string;
+  required: boolean;
+}
+
 interface FormData {
   title: string;
   specialization: string;
@@ -32,6 +37,7 @@ interface FormData {
   description: string;
   responsibilities: string[];
   requirements: string[];
+  screeningQuestions: ScreeningQuestion[];
   benefits: string[];
   isRemote: boolean;
   isFeatured: boolean;
@@ -160,6 +166,7 @@ export default function EditJobPage() {
     description: "",
     responsibilities: [],
     requirements: [],
+    screeningQuestions: [],
     benefits: [],
     isRemote: false,
     isFeatured: false,
@@ -168,6 +175,9 @@ export default function EditJobPage() {
 
   const [qualifications, setQualifications] = useState<string[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
+  const [screeningQuestionInput, setScreeningQuestionInput] = useState("");
+  const [screeningQuestionRequired, setScreeningQuestionRequired] =
+    useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -215,7 +225,7 @@ export default function EditJobPage() {
         const data = await response.json();
         console.log("Full response:", data);
 
-        const job = data?.data || data;
+        const job = data?.data?.job || data?.data || data;
         console.log("Job data:", job);
 
         if (!job) {
@@ -239,6 +249,22 @@ export default function EditJobPage() {
           ? job.requirements.filter(
               (item: any) => item && typeof item === "string"
             )
+          : [];
+        const screeningQuestionsArray = Array.isArray(job.screeningQuestions)
+          ? job.screeningQuestions
+              .map((item: any) => {
+                if (typeof item === "string") {
+                  return { question: item, required: false };
+                }
+                if (item && typeof item.question === "string") {
+                  return {
+                    question: item.question,
+                    required: Boolean(item.required),
+                  };
+                }
+                return null;
+              })
+              .filter(Boolean)
           : [];
 
         // Separate qualifications and skills
@@ -288,6 +314,7 @@ export default function EditJobPage() {
           description: job.description || "",
           responsibilities: responsibilitiesArray,
           requirements: requirementsArray,
+          screeningQuestions: screeningQuestionsArray,
           benefits: benefitsArray,
           isRemote: isRemote,
           isFeatured: job.isFeatured || false,
@@ -395,6 +422,56 @@ export default function EditJobPage() {
     }
   };
 
+  const addScreeningQuestion = () => {
+    const question = screeningQuestionInput.trim();
+    if (!question) return;
+
+    if (question.length < 5) {
+      toast.error("Screening question should be at least 5 characters.");
+      return;
+    }
+
+    if (formData.screeningQuestions.length >= 10) {
+      toast.error("You can add up to 10 screening questions.");
+      return;
+    }
+
+    if (
+      formData.screeningQuestions.some(
+        (q) => q.question.toLowerCase() === question.toLowerCase()
+      )
+    ) {
+      toast.error("This screening question is already added.");
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      screeningQuestions: [
+        ...prev.screeningQuestions,
+        { question, required: screeningQuestionRequired },
+      ],
+    }));
+    setScreeningQuestionInput("");
+    setScreeningQuestionRequired(false);
+  };
+
+  const removeScreeningQuestion = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      screeningQuestions: prev.screeningQuestions.filter((_, i) => i !== index),
+    }));
+  };
+
+  const toggleScreeningQuestionRequired = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      screeningQuestions: prev.screeningQuestions.map((item, i) =>
+        i === index ? { ...item, required: !item.required } : item
+      ),
+    }));
+  };
+
   const validateStep = (step: Step): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -491,6 +568,11 @@ export default function EditJobPage() {
       description: formData.description.trim(),
       responsibilities: formData.responsibilities.filter((r) => r.trim()),
       requirements: [...qualifications, ...skills].filter((r) => r.trim()),
+      screeningQuestions: formData.screeningQuestions.map((item, index) => ({
+        question: item.question.trim(),
+        required: item.required,
+        order: index,
+      })),
       benefits: formData.benefits.filter((b) => b.trim()),
       isRemote: workMode === "remote",
       isFeatured: formData.isFeatured,
@@ -1198,6 +1280,81 @@ export default function EditJobPage() {
                           </div>
                         )}
                       </div>
+
+                      {/* Screening Questions */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                          Screening Questions (Optional)
+                        </label>
+                        <p className="text-xs text-gray-500 mb-3">
+                          Add up to 10 questions candidates answer while applying.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-2 mb-3">
+                          <input
+                            type="text"
+                            value={screeningQuestionInput}
+                            onChange={(e) =>
+                              setScreeningQuestionInput(e.target.value)
+                            }
+                            placeholder="Ex. Can you join within 30 days?"
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                          <label className="inline-flex items-center gap-2 text-sm text-gray-700 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50">
+                            <input
+                              type="checkbox"
+                              checked={screeningQuestionRequired}
+                              onChange={(e) =>
+                                setScreeningQuestionRequired(e.target.checked)
+                              }
+                              className="w-4 h-4 rounded border-gray-300"
+                            />
+                            Required
+                          </label>
+                          <button
+                            type="button"
+                            onClick={addScreeningQuestion}
+                            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium"
+                          >
+                            Add
+                          </button>
+                        </div>
+                        <div className="space-y-2">
+                          {formData.screeningQuestions.map((item, index) => (
+                            <div
+                              key={`${item.question}-${index}`}
+                              className="flex items-start justify-between gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-sm text-gray-800 break-words">
+                                  {index + 1}. {item.question}
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    toggleScreeningQuestionRequired(index)
+                                  }
+                                  className={`mt-1 text-xs font-medium ${
+                                    item.required
+                                      ? "text-red-600"
+                                      : "text-gray-600"
+                                  }`}
+                                >
+                                  {item.required
+                                    ? "Required question"
+                                    : "Optional question"}
+                                </button>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeScreeningQuestion(index)}
+                                className="text-sm text-red-600 hover:text-red-700 font-semibold"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1448,6 +1605,16 @@ export default function EditJobPage() {
                               <p className="text-gray-600 font-medium">Skills</p>
                               <p className="text-gray-900 mt-1 font-semibold">
                                 {skills.join(", ")}
+                              </p>
+                            </div>
+                          )}
+                          {formData.screeningQuestions.length > 0 && (
+                            <div className="sm:col-span-2">
+                              <p className="text-gray-600 font-medium">
+                                Screening Questions
+                              </p>
+                              <p className="text-gray-900 mt-1 font-semibold">
+                                {formData.screeningQuestions.length}
                               </p>
                             </div>
                           )}

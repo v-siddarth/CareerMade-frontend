@@ -77,12 +77,20 @@ export default function EmployeeDashboardPage() {
         {/* Section Title */}
         <div className="max-w-6xl mx-auto flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-gray-800">Job Listings</h2>
-          <button
-            onClick={() => router.push("/dashboard/employee/jobs")}
-            className="text-[#8F59ED] hover:underline text-sm font-medium"
-          >
-            View all
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push("/dashboard/employee/applications")}
+              className="text-[#155DFC] hover:underline text-sm font-medium"
+            >
+              Received applications
+            </button>
+            <button
+              onClick={() => router.push("/dashboard/employee/jobs")}
+              className="text-[#8F59ED] hover:underline text-sm font-medium"
+            >
+              View all
+            </button>
+          </div>
         </div>
 
         {/* Jobs Grid */}

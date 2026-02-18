@@ -437,6 +437,15 @@ export default function JobViewPage() {
                 </div>
                 <div className="flex flex-col-reverse sm:flex-row justify-end gap-4">
                   <button
+                    onClick={() =>
+                      router.push(`/dashboard/employee/jobs/${id}/applications`)
+                    }
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition"
+                  >
+                    Applications ({job.stats?.applications || 0})
+                  </button>
+
+                  <button
                     onClick={() => router.push("/dashboard/employee/jobs")}
                     className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-lg border border-gray-300 bg-white text-gray-700 font-semibold hover:bg-gray-50 transition"
                   >

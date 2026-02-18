@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast, Toaster } from "react-hot-toast";
 import {
@@ -10,7 +10,6 @@ import {
   Star,
   Search,
   Filter,
-  ChevronDown,
   Briefcase,
 } from "lucide-react";
 import Navbar from "@/app/components/Navbar";
@@ -150,8 +149,6 @@ export default function JobApplicationsPage() {
   const [minRating, setMinRating] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
 
-  const [openStatusMenuId, setOpenStatusMenuId] = useState<string | null>(null);
-
   const itemsPerPage = 8;
   const apiBase = useMemo(
     () => process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000",
@@ -159,16 +156,11 @@ export default function JobApplicationsPage() {
   );
 
   const filterRef = useRef<HTMLDivElement>(null);
-  const statusMenuRef = useRef<HTMLDivElement | null>(null);
-
   // Close popovers on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
         setShowFilters(false);
-      }
-      if (statusMenuRef.current && !statusMenuRef.current.contains(event.target as Node)) {
-        setOpenStatusMenuId(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -241,7 +233,6 @@ export default function JobApplicationsPage() {
       setApplications((prev) =>
         prev.map((app) => (app._id === applicationId ? { ...app, status: newStatus } : app))
       );
-      setOpenStatusMenuId(null);
       toast.success("Status updated");
     } catch (err: any) {
       console.error("Error updating status:", err);
@@ -445,7 +436,7 @@ export default function JobApplicationsPage() {
         )}
 
         {/* Table */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-visible">
           {filteredApplications.length === 0 ? (
             <div className="p-12 text-center">
               <div className="flex justify-center mb-4">
@@ -568,35 +559,23 @@ export default function JobApplicationsPage() {
                           </td>
 
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="relative inline-block" ref={statusMenuRef}>
-                              <button
-                                onClick={() =>
-                                  setOpenStatusMenuId((prev) => (prev === app._id ? null : app._id))
-                                }
+                            <div className="space-y-2">
+                              <span
                                 className={`inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium ${statusClasses[status] || statusClasses.default}`}
                               >
                                 {status}
-                                <ChevronDown className="ml-1 h-3.5 w-3.5" />
-                              </button>
-
-                              {openStatusMenuId === app._id && (
-                                <div className="absolute z-10 mt-2 w-44 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-                                  <div className="py-1">
-                                    {STATUS_OPTIONS.map((s) => (
-                                      <button
-                                        key={s}
-                                        onClick={() => updateApplicationStatus(app._id, s)}
-                                        className={`block w-full text-left px-3 py-2 text-sm ${status === s
-                                          ? "bg-gray-100 text-gray-900"
-                                          : "text-gray-700 hover:bg-gray-50"
-                                          }`}
-                                      >
-                                        {s}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
+                              </span>
+                              <select
+                                value={status}
+                                onChange={(e) => updateApplicationStatus(app._id, e.target.value)}
+                                className="block w-44 rounded-md border border-gray-300 py-2 pl-3 pr-8 text-sm focus:border-[#155DFC] focus:outline-none focus:ring-2 focus:ring-[#155DFC]/20"
+                              >
+                                {STATUS_OPTIONS.map((s) => (
+                                  <option key={s} value={s}>
+                                    {s}
+                                  </option>
+                                ))}
+                              </select>
                             </div>
                           </td>
 

@@ -53,6 +53,8 @@ export default function JobViewPage() {
     const [uploadingResume, setUploadingResume] = useState(false);
     const [uploadingCover, setUploadingCover] = useState(false);
     const [expandedDescription, setExpandedDescription] = useState(false);
+    const [screeningAnswers, setScreeningAnswers] = useState<Record<string, string>>({});
+    const [screeningErrors, setScreeningErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
         const token = localStorage.getItem("accessToken");
@@ -244,6 +246,50 @@ export default function JobViewPage() {
         }
     };
 
+    const getScreeningQuestions = () => {
+        if (!Array.isArray(job?.screeningQuestions)) return [];
+        return job.screeningQuestions
+            .map((item: any, index: number) => {
+                if (typeof item === "string") {
+                    return { _id: `sq-${index}`, question: item, required: false };
+                }
+                if (item && typeof item.question === "string") {
+                    return {
+                        _id: item._id || `sq-${index}`,
+                        question: item.question,
+                        required: Boolean(item.required),
+                    };
+                }
+                return null;
+            })
+            .filter(Boolean);
+    };
+
+    const prepareScreeningState = () => {
+        const questions = getScreeningQuestions();
+        const nextAnswers: Record<string, string> = {};
+        questions.forEach((q: any) => {
+            const key = String(q._id);
+            nextAnswers[key] = screeningAnswers[key] || "";
+        });
+        setScreeningAnswers(nextAnswers);
+        setScreeningErrors({});
+    };
+
+    const validateScreeningAnswers = () => {
+        const questions = getScreeningQuestions();
+        const nextErrors: Record<string, string> = {};
+        questions.forEach((q: any) => {
+            const key = String(q._id);
+            const value = (screeningAnswers[key] || "").trim();
+            if (q.required && !value) {
+                nextErrors[key] = "This question is required.";
+            }
+        });
+        setScreeningErrors(nextErrors);
+        return Object.keys(nextErrors).length === 0;
+    };
+
     const applyJob = async () => {
         try {
             const token = localStorage.getItem("accessToken");
@@ -269,6 +315,21 @@ export default function JobViewPage() {
 
             if (coverLetter) {
                 payload.coverLetter = coverLetter.url || coverLetter._id || coverLetter;
+            }
+
+            const screeningQuestions = getScreeningQuestions();
+            if (screeningQuestions.length > 0) {
+                payload.answers = screeningQuestions
+                    .map((q: any, index: number) => {
+                        const key = String(q._id);
+                        const answer = (screeningAnswers[key] || "").trim();
+                        return {
+                            questionId: String(q._id || `sq-${index}`),
+                            question: q.question,
+                            answer,
+                        };
+                    })
+                    .filter((item: any) => item.answer.length > 0);
             }
 
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobs/${id}/apply`, {
@@ -353,6 +414,7 @@ export default function JobViewPage() {
     };
 
     const skills = extractSkills();
+    const screeningQuestions = getScreeningQuestions();
     const organizationName = job?.organizationName || job?.organization || "Company Name";
 
     const formatPostedDate = () => {
@@ -598,13 +660,14 @@ export default function JobViewPage() {
                                                     //     toast.error("Please upload a resume before applying!");
                                                     //     return;
                                                     // }
+                                                    prepareScreeningState();
                                                     setIsApplyModalOpen(true);
                                                 }}
                                                 className="px-4 py-2 bg-[#007BFF] hover:bg-[#006AE6] text-white rounded-full text-sm font-semibold"
                                             >
-                                                {canReapply ? "Apply Again" : "Apply"}
-                                            </button>
-                                        )}
+                                        {canReapply ? "Apply Again" : "Apply"}
+                                    </button>
+                                )}
                                     </div>
                                 </div>
                             </div>
@@ -674,6 +737,32 @@ export default function JobViewPage() {
                                             )
                                         )}
                                     </ul>
+                                </div>
+                            )}
+
+                            {/* Screening Questions Preview */}
+                            {screeningQuestions.length > 0 && (
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
+                                    <h2 className="text-xl font-bold text-gray-900 mb-2">
+                                        Screening Questions During Apply
+                                    </h2>
+                                    <p className="text-sm text-gray-600 mb-4">
+                                        You will answer these while submitting your application.
+                                    </p>
+                                    <div className="space-y-2">
+                                        {screeningQuestions.map((q: any, index: number) => (
+                                            <div
+                                                key={String(q._id)}
+                                                className="flex items-start gap-2 text-sm text-gray-700"
+                                            >
+                                                <span className="mt-0.5 text-gray-500">{index + 1}.</span>
+                                                <span>
+                                                    {q.question}
+                                                    {q.required && <span className="text-red-500 ml-1">*</span>}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
 
@@ -792,7 +881,7 @@ export default function JobViewPage() {
                     onClose={() => setIsApplyModalOpen(false)}
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm"
                 >
-                    <Dialog.Panel className="bg-white/90 backdrop-blur-md border border-white/30 rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
+                    <Dialog.Panel className="bg-white/90 backdrop-blur-md border border-white/30 rounded-xl shadow-2xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
                         <Dialog.Title className="text-lg font-bold text-gray-900 mb-4">
                             Confirm Application
                         </Dialog.Title>
@@ -925,6 +1014,48 @@ export default function JobViewPage() {
                             )}
                         </div>
 
+                        {/* Screening Questions Section */}
+                        {screeningQuestions.length > 0 && (
+                            <div className="mb-4">
+                                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                                    Screening Questions
+                                </label>
+                                <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+                                    {screeningQuestions.map((q: any, index: number) => {
+                                        const key = String(q._id);
+                                        return (
+                                            <div key={key} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                                <label className="block text-sm font-medium text-gray-800 mb-1">
+                                                    {index + 1}. {q.question}
+                                                    {q.required && <span className="text-red-500 ml-1">*</span>}
+                                                </label>
+                                                <textarea
+                                                    value={screeningAnswers[key] || ""}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        setScreeningAnswers((prev) => ({ ...prev, [key]: val }));
+                                                        if (screeningErrors[key]) {
+                                                            setScreeningErrors((prev) => ({ ...prev, [key]: "" }));
+                                                        }
+                                                    }}
+                                                    rows={3}
+                                                    maxLength={500}
+                                                    placeholder="Write your answer..."
+                                                    className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 ${screeningErrors[key]
+                                                            ? "border-red-400 focus:ring-red-200"
+                                                            : "border-gray-300 focus:ring-blue-200"
+                                                        }`}
+                                                />
+                                                {screeningErrors[key] && (
+                                                    <p className="text-xs text-red-600 mt-1">{screeningErrors[key]}</p>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="flex justify-end gap-3 mt-6">
                             <button
                                 onClick={() => setIsApplyModalOpen(false)}
@@ -936,6 +1067,10 @@ export default function JobViewPage() {
                                 onClick={() => {
                                     if (!resume) {
                                         toast.error("Please select or upload a resume before applying!");
+                                        return;
+                                    }
+                                    if (!validateScreeningAnswers()) {
+                                        toast.error("Please answer all required screening questions.");
                                         return;
                                     }
                                     applyJob();

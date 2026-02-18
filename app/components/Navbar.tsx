@@ -415,6 +415,11 @@ export default function Navbar() {
           matches: [{ path: "/dashboard/employee/jobs" }],
         },
         {
+          label: "Received Applications",
+          path: "/dashboard/employee/applications",
+          matches: [{ path: "/dashboard/employee/applications" }],
+        },
+        {
           label: "Create Job",
           path: "/dashboard/employee/jobs/create",
           matches: [{ path: "/dashboard/employee/jobs/create" }],
@@ -655,7 +660,6 @@ export default function Navbar() {
                   </AnimatePresence>
                 </div>
 
-                
               </>
             ) : (
               <>

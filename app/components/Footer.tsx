@@ -7,28 +7,50 @@ type UserRole = "jobseeker" | "employer" | "admin" | null;
 
 const Footer = () => {
   const [role, setRole] = useState<UserRole>(null);
+  const [hasAccessToken, setHasAccessToken] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("user");
-      if (!raw) {
+    const syncAuth = () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const raw = localStorage.getItem("user");
+        setHasAccessToken(Boolean(token));
+
+        if (!raw) {
+          setRole(null);
+          return;
+        }
+
+        const parsed = JSON.parse(raw) as { role?: UserRole };
+        setRole(parsed?.role || null);
+      } catch {
         setRole(null);
-        return;
+      } finally {
+        setHydrated(true);
       }
-      const parsed = JSON.parse(raw) as { role?: UserRole };
-      setRole(parsed?.role || null);
-    } catch {
-      setRole(null);
-    }
+    };
+
+    syncAuth();
+    window.addEventListener("auth-state-changed", syncAuth);
+    window.addEventListener("focus", syncAuth);
+    window.addEventListener("storage", syncAuth);
+
+    return () => {
+      window.removeEventListener("auth-state-changed", syncAuth);
+      window.removeEventListener("focus", syncAuth);
+      window.removeEventListener("storage", syncAuth);
+    };
   }, []);
 
-  const showJobSeekerSection = role === "jobseeker" || role === null;
-  const showEmployerSection = role === "employer" || role === null;
+  const isAuthenticated = hydrated && hasAccessToken && Boolean(role);
+  const showJobSeekerSection = isAuthenticated ? role === "jobseeker" : true;
+  const showEmployerSection = isAuthenticated ? role === "employer" : true;
 
   return (
     <footer className="bg-gray-900 py-12 text-gray-400">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 grid gap-8 md:grid-cols-4">
+        <div className="mb-8 grid gap-8 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
           <div>
             <div className="mb-4 text-2xl font-bold text-white">
               <img src="/logo.png" alt="CareerMade" className="h-13" />
@@ -76,10 +98,46 @@ const Footer = () => {
               <li><Link href="/terms-of-service" className="hover:text-white">Terms of Service</Link></li>
             </ul>
           </div>
+
+          <div>
+            <h4 className="mb-4 font-semibold text-white">Trust & Credits</h4>
+            <p className="text-sm leading-6">
+              CareerMed is proudly owned by{" "}
+              <a
+                href="https://lifematecare.com/"
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-white underline decoration-gray-600 underline-offset-4 transition hover:text-cyan-300"
+              >
+                Lifemate Healthcare Pvt Ltd
+              </a>
+              , focused on building trusted healthcare hiring experiences.
+            </p>
+          </div>
         </div>
 
         <div className="border-t border-gray-800 pt-8 text-center text-sm">
-          <p>© 2025 CareerMade. All rights reserved.</p>
+          <p className="mb-2">
+            Support Email:{" "}
+            <a href="mailto:support@carreermed.in" className="text-gray-200 transition hover:text-white">
+              support@carreermed.in
+            </a>{" "}
+            <span className="mx-2 hidden sm:inline">|</span>
+            <span className="block sm:inline">Contact: +91 98765 43210</span>
+          </p>
+          <p>© 2026 CareerMade. All rights reserved.</p>
+          <p className="mt-2">
+            Designed, developed, and maintained by{" "}
+            <a
+              href="https://20sdevelopers.com/"
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-white underline decoration-gray-600 underline-offset-4 transition hover:text-cyan-300"
+            >
+              20s Developers
+            </a>
+            .
+          </p>
         </div>
       </div>
     </footer>
