@@ -327,7 +327,7 @@ export default function AdminDashboard() {
         <div className="bg-white border border-gray-200 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <p className="text-sm text-gray-500">Admin Session</p>
-            <p className="text-base font-semibold text-gray-900">Logout is moved here as requested.</p>
+            <p className="text-base font-semibold text-gray-900">Logout</p>
           </div>
           <button
             onClick={handleLogout}

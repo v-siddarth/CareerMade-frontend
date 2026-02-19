@@ -73,7 +73,9 @@ type SubscriptionDraftState = {
   endDate: string;
 };
 
-const statuses: SubscriptionStatus[] = ["Active", "Inactive", "Cancelled", "Expired"];
+  const statuses: SubscriptionStatus[] = ["Active", "Inactive", "Cancelled", "Expired"];
+const numberInputClass =
+  "no-spinner w-full rounded-lg border border-gray-300 px-3 py-2 text-sm";
 
 const DistributionBars = ({
   title,
@@ -628,7 +630,8 @@ export default function AdminPricingPage() {
                                 min={0}
                                 value={draft.price}
                                 onChange={(e) => handlePlanTextUpdate(plan.audience, plan.id, "price", Number(e.target.value))}
-                                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                                onWheel={(e) => e.currentTarget.blur()}
+                                className={numberInputClass}
                               />
                             </div>
                             <div>
@@ -701,7 +704,8 @@ export default function AdminPricingPage() {
                                   onChange={(e) =>
                                     handleEmployerSubFeatureUpdate(plan.audience, plan.id, "maxJobPosts", Number(e.target.value))
                                   }
-                                  className="rounded-lg border border-gray-300 px-2 py-2 text-sm"
+                                  onWheel={(e) => e.currentTarget.blur()}
+                                  className="no-spinner rounded-lg border border-gray-300 px-2 py-2 text-sm"
                                   placeholder="Max Job Posts"
                                 />
                                 <input
@@ -711,7 +715,8 @@ export default function AdminPricingPage() {
                                   onChange={(e) =>
                                     handleEmployerSubFeatureUpdate(plan.audience, plan.id, "maxApplications", Number(e.target.value))
                                   }
-                                  className="rounded-lg border border-gray-300 px-2 py-2 text-sm"
+                                  onWheel={(e) => e.currentTarget.blur()}
+                                  className="no-spinner rounded-lg border border-gray-300 px-2 py-2 text-sm"
                                   placeholder="Max Applications"
                                 />
                                 <label className="inline-flex items-center gap-2 text-sm text-gray-700">
@@ -988,6 +993,17 @@ export default function AdminPricingPage() {
           </p>
         </div>
       </div>
+      <style jsx global>{`
+        input.no-spinner::-webkit-outer-spin-button,
+        input.no-spinner::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input.no-spinner[type="number"] {
+          -moz-appearance: textfield;
+          appearance: textfield;
+        }
+      `}</style>
     </div>
   );
 }
