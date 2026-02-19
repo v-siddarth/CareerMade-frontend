@@ -61,9 +61,8 @@ const Login = () => {
 
   const handleGoogle = () => {
     const backend = process.env.NEXT_PUBLIC_API_URL;
-    // default role can be jobseeker when logging in with OAuth
-    const role = "jobseeker";
-    window.location.href = `${backend}/api/auth/google?role=${encodeURIComponent(role)}`;
+    const redirectUri = typeof window !== "undefined" ? window.location.origin : "";
+    window.location.href = `${backend}/api/auth/google?redirectUri=${encodeURIComponent(redirectUri)}`;
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -73,7 +72,7 @@ const Login = () => {
 
     try {
       const data = await apiFetch<{
-        data: { accessToken: string; user: { role: string } };
+        data: { accessToken: string; user: { role: string }; nextPath?: string };
       }>("/api/auth/login", {
         method: "POST",
         skipAuth: true,
@@ -86,8 +85,7 @@ const Login = () => {
       authStorage.setAccessToken(accessToken);
       authStorage.setUser(user);
 
-      // ✅ Redirect based on user role
-      router.push(resolveRolePath(user.role));
+      router.push(data.data.nextPath || resolveRolePath(user.role));
     } catch (error) {
       console.error("Login error:", error);
       const message =

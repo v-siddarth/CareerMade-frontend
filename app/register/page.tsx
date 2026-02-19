@@ -84,7 +84,8 @@ const Register = () => {
     const handleGoogle = () => {
         const role = formData.role || "jobseeker";
         const backend = process.env.NEXT_PUBLIC_API_URL;
-        window.location.href = `${backend}/api/auth/google?role=${encodeURIComponent(role)}`;
+        const redirectUri = typeof window !== "undefined" ? window.location.origin : "";
+        window.location.href = `${backend}/api/auth/google?role=${encodeURIComponent(role)}&redirectUri=${encodeURIComponent(redirectUri)}`;
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -144,7 +145,7 @@ const Register = () => {
             } else {
                 const data = await apiFetch<{
                     message: string;
-                    data: { accessToken: string; user: unknown };
+                    data: { accessToken: string; user: unknown; nextPath?: string };
                 }>("/api/auth/register/verify-otp", {
                     method: "POST",
                     skipAuth: true,
@@ -154,12 +155,9 @@ const Register = () => {
                 authStorage.setAccessToken(data.data.accessToken);
                 authStorage.setUser(data.data.user);
                 toast.success("Registration successful!");
-
-                if (formData.role === "employer") {
-                    router.push("/dashboard/employee/profile/create");
-                } else {
-                    router.push("/dashboard/jobseeker");
-                }
+                router.push(data.data.nextPath || (formData.role === "employer"
+                    ? "/dashboard/employee/profile/create"
+                    : "/dashboard/jobseeker"));
 
                 setFormData({
                     firstName: "",

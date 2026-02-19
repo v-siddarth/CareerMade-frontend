@@ -11,7 +11,13 @@ function OAuthHandler() {
   const [error, setError] = useState("");
 
   const handleAuth = useCallback(async () => {
+    const pending = params.get("pending");
     const code = params.get("code");
+
+    if (pending) {
+      router.replace(`/oauth/complete?pending=${encodeURIComponent(pending)}`);
+      return;
+    }
 
     if (!code) {
       setError("Missing OAuth exchange code.");
@@ -21,23 +27,17 @@ function OAuthHandler() {
 
     try {
       const data = await apiFetch<{
-        data: { accessToken: string; user: { role: string } };
+        data: { accessToken: string; user: { role: string }; nextPath?: string };
       }>("/api/auth/oauth/exchange", {
         method: "POST",
         skipAuth: true,
         body: JSON.stringify({ code }),
       });
-      const { accessToken, user } = data.data;
+      const { accessToken, user, nextPath } = data.data;
       authStorage.setAccessToken(accessToken);
       authStorage.setUser(user);
 
-      if (user.role === "jobseeker") {
-        router.replace("/dashboard/jobseeker");
-      } else if (user.role === "employer") {
-        router.replace("/dashboard/employee/jobs");
-      } else {
-        router.replace("/dashboard"); // Fallback
-      }
+      router.replace(nextPath || (user.role === "admin" ? "/dashboard/admin" : "/dashboard/jobseeker"));
     } catch (e) {
       const errorMessage =
         e instanceof Error ? e.message : "An unknown error occurred.";
