@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import {
   MapPin,
   Calendar,
@@ -51,7 +51,7 @@ const CATEGORY_TO_SPECIALTIES: Record<string, string[]> = {
   "Research & Development": ["Pathology", "Other"],
 };
 
-export default function JobSeekerJobs() {
+function JobSeekerJobsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [jobs, setJobs] = useState<any[]>([]);
@@ -788,5 +788,13 @@ export default function JobSeekerJobs() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function JobSeekerJobs() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
+      <JobSeekerJobsContent />
+    </Suspense>
   );
 }
