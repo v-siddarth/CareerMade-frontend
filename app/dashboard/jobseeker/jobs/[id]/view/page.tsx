@@ -4,7 +4,6 @@ import { useParams } from "next/navigation";
 import {
     MapPin,
     Briefcase,
-    DollarSign,
     Clock,
     Building2,
     ArrowLeft,
@@ -53,6 +52,7 @@ export default function JobViewPage() {
     const [uploadingResume, setUploadingResume] = useState(false);
     const [uploadingCover, setUploadingCover] = useState(false);
     const [expandedDescription, setExpandedDescription] = useState(false);
+    const [showAllBenefits, setShowAllBenefits] = useState(false);
     const [screeningAnswers, setScreeningAnswers] = useState<Record<string, string>>({});
     const [screeningErrors, setScreeningErrors] = useState<Record<string, string>>({});
 
@@ -437,12 +437,37 @@ export default function JobViewPage() {
     
     const hasMoreDescription = job?.description && job.description.length > 300;
 
+    const formatSalaryAmount = (value?: number | string | null) => {
+        const numericValue = typeof value === "string"
+            ? Number(value.replace(/,/g, "").trim())
+            : value;
+        if (
+            typeof numericValue !== "number" ||
+            !Number.isFinite(numericValue) ||
+            numericValue <= 0
+        ) {
+            return null;
+        }
+        return new Intl.NumberFormat("en-IN", {
+            maximumFractionDigits: 0,
+        }).format(numericValue);
+    };
+
     const formatSalary = () => {
-        if (job?.salary?.min && job?.salary?.max) {
-          return `${job.salary.min}-${job.salary.max} LPA`;
+        const minFormatted = formatSalaryAmount(job?.salary?.min);
+        const maxFormatted = formatSalaryAmount(job?.salary?.max);
+
+        if (minFormatted && maxFormatted) {
+            return `₹${minFormatted} - ₹${maxFormatted} LPA`;
+        }
+        if (minFormatted) {
+            return `₹${minFormatted} LPA`;
+        }
+        if (maxFormatted) {
+            return `₹${maxFormatted} LPA`;
         }
         return "Not specified";
-      };
+    };
     
       const formatExperience = () => {
         if (
@@ -579,7 +604,7 @@ export default function JobViewPage() {
                                             Salary
                                         </p>
                                         <div className="flex items-center gap-2">
-                                            <DollarSign className="w-4 h-4 text-gray-400" />
+                                            <IndianRupee className="w-4 h-4 text-gray-400" />
                                             <p className="text-sm font-semibold text-gray-900">
                                                 {formatSalary()}
                                             </p>
@@ -804,14 +829,18 @@ export default function JobViewPage() {
                                             Benefits & Perks
                                         </h3>
                                         {job.benefits.length > 6 && (
-                                            <button className="text-blue-600 text-sm font-semibold hover:text-blue-700">
-                                                View all
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowAllBenefits((prev) => !prev)}
+                                                className="text-blue-600 text-sm font-semibold hover:text-blue-700"
+                                            >
+                                                {showAllBenefits ? "View less" : "View all"}
                                             </button>
                                         )}
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3">
-                                        {job.benefits.slice(0, 6).map((benefit: string, idx: number) => (
+                                        {(showAllBenefits ? job.benefits : job.benefits.slice(0, 6)).map((benefit: string, idx: number) => (
                                             <div
                                                 key={idx}
                                                 className="flex flex-col items-center text-center p-3 bg-gray-50 rounded-lg border border-gray-200"

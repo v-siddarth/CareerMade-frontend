@@ -10,7 +10,7 @@ import {
   AlertCircle,
   Clock,
   MapPin,
-  DollarSign,
+  IndianRupee,
   Briefcase,
 } from "lucide-react";
 import Navbar from "@/app/components/Navbar";
@@ -62,6 +62,7 @@ export default function JobViewPage() {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedDescription, setExpandedDescription] = useState(false);
+  const [showAllBenefits, setShowAllBenefits] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -254,10 +255,29 @@ export default function JobViewPage() {
   const hasMoreDescription =
     job.description && job.description.length > 300;
 
-  const formatSalary = () => {
-    if (job.salary?.min && job.salary?.max) {
-      return `${job.salary.min}-${job.salary.max} LPA`;
+  const formatSalaryAmount = (value?: number) => {
+    if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+      return null;
     }
+    return new Intl.NumberFormat("en-IN", {
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  const formatSalary = () => {
+    const minFormatted = formatSalaryAmount(job.salary?.min);
+    const maxFormatted = formatSalaryAmount(job.salary?.max);
+
+    if (minFormatted && maxFormatted) {
+      return `₹${minFormatted} - ₹${maxFormatted} LPA`;
+    }
+    if (minFormatted) {
+      return `₹${minFormatted} LPA`;
+    }
+    if (maxFormatted) {
+      return `₹${maxFormatted} LPA`;
+    }
+
     return "Not specified";
   };
 
@@ -377,7 +397,7 @@ export default function JobViewPage() {
                       Salary
                     </p>
                     <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-gray-400" />
+                      <IndianRupee className="w-4 h-4 text-gray-400" />
                       <p className="text-sm font-semibold text-gray-900">
                         {formatSalary()}
                       </p>
@@ -591,14 +611,18 @@ export default function JobViewPage() {
                       Benefits & Perks
                     </h3>
                     {job.benefits.length > 6 && (
-                      <button className="text-blue-600 text-sm font-semibold hover:text-blue-700">
-                        View all
+                      <button
+                        type="button"
+                        onClick={() => setShowAllBenefits((prev) => !prev)}
+                        className="text-blue-600 text-sm font-semibold hover:text-blue-700"
+                      >
+                        {showAllBenefits ? "View less" : "View all"}
                       </button>
                     )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    {job.benefits.slice(0, 6).map((benefit: string, idx: number) => (
+                    {(showAllBenefits ? job.benefits : job.benefits.slice(0, 6)).map((benefit: string, idx: number) => (
                       <div
                         key={idx}
                         className="flex flex-col items-center text-center p-3 bg-gray-50 rounded-lg border border-gray-200"
