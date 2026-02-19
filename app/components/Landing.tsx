@@ -17,6 +17,7 @@ const OPPORTUNITY_CARDS = [
     iconBg: "bg-orange-100",
     accent: "text-[#2B7FFF]",
     specialties: ["General Medicine", "Surgery", "Pediatrics", "Internal Medicine"],
+    titleFilter: "Doctor",
   },
   {
     title: "Nursing Staff",
@@ -26,6 +27,7 @@ const OPPORTUNITY_CARDS = [
     iconBg: "bg-red-100",
     accent: "text-[#F6339A]",
     specialties: ["Nursing"],
+    titleFilter: "Nurse",
   },
   {
     title: "Technicians",
@@ -35,6 +37,7 @@ const OPPORTUNITY_CARDS = [
     iconBg: "bg-yellow-100",
     accent: "text-[#00C950]",
     specialties: ["Medical Technology", "Radiology", "Pathology"],
+    titleFilter: "Technician",
   },
   {
     title: "Admin & Support",
@@ -44,6 +47,7 @@ const OPPORTUNITY_CARDS = [
     iconBg: "bg-purple-100",
     accent: "text-[#AD46FF]",
     specialties: ["Other"],
+    titleFilter: "Admin",
   },
   {
     title: "Diagnostics",
@@ -53,6 +57,7 @@ const OPPORTUNITY_CARDS = [
     iconBg: "bg-blue-100",
     accent: "text-[#00B8DB]",
     specialties: ["Pathology", "Radiology"],
+    titleFilter: "Technician",
   },
   {
     title: "Therapists",
@@ -62,6 +67,7 @@ const OPPORTUNITY_CARDS = [
     iconBg: "bg-gray-100",
     accent: "text-[#FF6900]",
     specialties: ["Physical Therapy", "Occupational Therapy", "Speech Therapy"],
+    titleFilter: "Other",
   },
   {
     title: "Dental & Optometry",
@@ -71,6 +77,7 @@ const OPPORTUNITY_CARDS = [
     iconBg: "bg-indigo-100",
     accent: "text-[#615FFF]",
     specialties: ["Ophthalmology", "Other"],
+    titleFilter: "Doctor",
   },
   {
     title: "Research & Development",
@@ -80,6 +87,7 @@ const OPPORTUNITY_CARDS = [
     iconBg: "bg-teal-100",
     accent: "text-[#00BBA7]",
     specialties: ["Pathology", "Other"],
+    titleFilter: "Other",
   },
 ];
 
@@ -103,11 +111,12 @@ export default function CareerMadeLanding() {
         }
     }, []);
 
-    const openJobsByCategory = (card: { title: string; specialties: string[] }) => {
+    const openJobsByCategory = (card: { title: string; specialties: string[]; titleFilter: string }) => {
         const params = new URLSearchParams();
-        params.set("category", card.title);
-        params.set("specialties", card.specialties.join(","));
-        router.push(`/view-jobs?${params.toString()}`);
+        params.set("title", card.titleFilter);
+        params.set("specialty", card.specialties[0] || "");
+        params.set("from", "landing");
+        router.push(`/dashboard/jobseeker?${params.toString()}`);
     };
 
     const handleNewsletterSubscribe = async () => {

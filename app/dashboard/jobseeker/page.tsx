@@ -20,19 +20,120 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import Navbar from "@/app/components/Navbar";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
-const SPECIALIZATIONS = [
-  "General Medicine", "Cardiology", "Neurology", "Orthopedics", "Pediatrics",
-  "Gynecology", "Dermatology", "Psychiatry", "Radiology", "Anesthesiology",
-  "Emergency Medicine", "Surgery", "Oncology", "Pathology", "Ophthalmology",
-  "ENT", "Urology", "Gastroenterology", "Pulmonology", "Endocrinology",
-  "Rheumatology", "Nephrology", "Hematology", "Infectious Disease",
-];
+const TITLE_OPTIONS = ["Doctor", "Nurse", "Technician", "Pharmacy", "Support", "Admin", "Insurance", "Marketing", "Other"];
+
+const TITLE_SPECIALIZATION_OPTIONS: Record<string, string[]> = {
+  Doctor: ["Specialist", "Super specialist", "Medicine officer", "RMO", "Other"],
+  Nurse: ["ANM", "GNM", "BSC", "Other"],
+  Technician: ["Cathlab", "Dialysis", "Operation theatre", "Laboratory", "Endoscopy", "X-ray", "CT/MRI", "Other"],
+  Pharmacy: ["D. Pharma", "B. Pharma", "Other"],
+  Support: ["Ward assistant", "OT assistant", "House keeping", "Security", "Accounting", "Other"],
+  Admin: ["Hospital administration", "Operations", "HR", "Finance", "Other"],
+  Insurance: ["Claims", "TPA operations", "Underwriting", "Customer support", "Other"],
+  Marketing: ["Digital marketing", "Field marketing", "Branding", "Sales", "Other"],
+  Other: ["Other"],
+};
+
+const TITLE_FIELD_OPTIONS: Record<string, Record<string, string[]>> = {
+  Doctor: {
+    Specialist: [
+      "General Physician",
+      "Pediatrician",
+      "General Surgeon",
+      "Orthopedic Surgeon",
+      "ENT Specialist",
+      "Ophthalmologist",
+      "Dermatologist",
+      "Psychiatrist",
+      "Radiologist",
+      "Anesthesiologist",
+      "Emergency Physician",
+      "Other",
+    ],
+    "Super specialist": [
+      "Cardiologist",
+      "Neurologist",
+      "Nephrologist",
+      "Gastroenterologist",
+      "Endocrinologist",
+      "Oncologist",
+      "Urologist",
+      "Neurosurgeon",
+      "CTVS Specialist",
+      "Critical Care Specialist",
+      "Other",
+    ],
+    "Medicine officer": [
+      "General Duty Medical Officer",
+      "Casualty Medical Officer",
+      "ICU Medical Officer",
+      "Public Health Medical Officer",
+      "Occupational Health Medical Officer",
+      "Other",
+    ],
+    RMO: ["Emergency RMO", "ICU RMO", "Ward RMO", "Night Duty RMO", "OT RMO", "Other"],
+    Other: ["Other"],
+  },
+  Nurse: {
+    ANM: ["Community Health Nurse", "Maternal Care Nurse", "Vaccination Nurse", "Other"],
+    GNM: ["Ward Nurse", "ICU Nurse", "Operation Theatre Nurse", "Emergency Nurse", "Other"],
+    BSC: ["Clinical Nurse", "Nurse Educator", "Critical Care Nurse", "Nurse Supervisor", "Other"],
+    Other: ["Other"],
+  },
+  Technician: {
+    Cathlab: ["Cath Lab Technician", "Other"],
+    Dialysis: ["Dialysis Technician", "Other"],
+    "Operation theatre": ["OT Technician", "Anesthesia Technician", "Other"],
+    Laboratory: ["Lab Technician", "Phlebotomy Technician", "Other"],
+    Endoscopy: ["Endoscopy Technician", "Other"],
+    "X-ray": ["X-ray Technician", "Other"],
+    "CT/MRI": ["CT Technician", "MRI Technician", "Other"],
+    Other: ["Other"],
+  },
+  Pharmacy: {
+    "D. Pharma": ["Staff Pharmacist", "Dispensing Pharmacist", "Other"],
+    "B. Pharma": ["Clinical Pharmacist", "Hospital Pharmacist", "Inventory Pharmacist", "Other"],
+    Other: ["Other"],
+  },
+  Support: {
+    "Ward assistant": ["Patient Care Assistant", "Ward Boy / Aya", "Other"],
+    "OT assistant": ["OT Assistant", "Sterilization Assistant", "Other"],
+    "House keeping": ["Housekeeping Executive", "Infection Control Housekeeping", "Other"],
+    Security: ["Hospital Security Guard", "Security Supervisor", "Other"],
+    Accounting: ["Billing Executive", "Accounts Assistant", "Other"],
+    Other: ["Other"],
+  },
+  Admin: {
+    "Hospital administration": ["Hospital Administrator", "Front Office Manager", "Other"],
+    Operations: ["Operations Executive", "Facility Manager", "Other"],
+    HR: ["HR Executive", "Talent Acquisition", "Other"],
+    Finance: ["Finance Executive", "Medical Billing Officer", "Other"],
+    Other: ["Other"],
+  },
+  Insurance: {
+    Claims: ["Claims Processing Officer", "Claims Auditor", "Other"],
+    "TPA operations": ["TPA Coordinator", "Insurance Desk Officer", "Other"],
+    Underwriting: ["Medical Underwriter", "Risk Analyst", "Other"],
+    "Customer support": ["Insurance Support Executive", "Policy Support Officer", "Other"],
+    Other: ["Other"],
+  },
+  Marketing: {
+    "Digital marketing": ["Digital Marketing Executive", "Performance Marketer", "Other"],
+    "Field marketing": ["Field Marketing Executive", "Hospital Outreach Executive", "Other"],
+    Branding: ["Brand Manager", "Communications Executive", "Other"],
+    Sales: ["Medical Sales Representative", "Business Development Executive", "Other"],
+    Other: ["Other"],
+  },
+  Other: {
+    Other: ["Other"],
+  },
+};
 
 const LOCATIONS = [
   "Mumbai", "Delhi NCR", "Bangalore", "Pune", "Hyderabad",
@@ -41,15 +142,76 @@ const LOCATIONS = [
 
 const WORK_MODES = ["On-site", "Remote", "Full-time"];
 
+const normalizeText = (value?: string) => (value || "").toLowerCase().trim();
+
+const inferJobTitle = (job: any) => {
+  const title = normalizeText(job?.title);
+  const specialization = normalizeText(job?.specialization);
+  const text = `${title} ${specialization}`;
+  const isMedicalDepartment = /(cardiology|neurology|orthopedics|pediatrics|gynecology|dermatology|psychiatry|radiology|anesthesiology|emergency medicine|internal medicine|surgery|oncology|pathology|ophthalmology|ent|urology|gastroenterology|pulmonology|endocrinology|rheumatology|nephrology|hematology|infectious disease|general medicine)/.test(specialization);
+
+  if (/(doctor|dr\.|consultant|surgeon|physician|medical officer|resident|registrar|rmo)/.test(text)) return "Doctor";
+  if (isMedicalDepartment) return "Doctor";
+  if (/(nurse|nursing|anm|gnm)/.test(text)) return "Nurse";
+  if (/(technician|technologist|lab tech|x-ray|radiology tech|ct|mri|dialysis|cath lab|ot tech)/.test(text)) return "Technician";
+  if (/(pharmacist|pharmacy)/.test(text)) return "Pharmacy";
+  if (/(assistant|housekeeping|security|ward|attendant)/.test(text)) return "Support";
+  if (/(admin|administrator|hr|human resources|operations|finance|billing)/.test(text)) return "Admin";
+  if (/(insurance|claims|tpa|underwriting)/.test(text)) return "Insurance";
+  if (/(marketing|sales|business development|brand)/.test(text)) return "Marketing";
+  return "Other";
+};
+
+const inferJobSpecialization = (job: any, inferredTitle: string) => {
+  const title = normalizeText(job?.title);
+  const specialization = normalizeText(job?.specialization);
+  const allowed = TITLE_SPECIALIZATION_OPTIONS[inferredTitle] || ["Other"];
+
+  if (inferredTitle === "Doctor") {
+    if (/(rmo|resident medical officer)/.test(title)) return "RMO";
+    if (/(medical officer|duty medical officer|casualty medical officer)/.test(title)) return "Medicine officer";
+    if (/(cardio|neuro|nephro|gastro|endo|onco|uro|critical care|ctvs|super specialist|superspecialist)/.test(`${title} ${specialization}`)) {
+      return "Super specialist";
+    }
+    if (/(specialist|consultant|surgeon|physician|general medicine|orthopedic|ent|ophthal|derma|psychiatry|anesthesia|radiology|pediatric)/.test(`${title} ${specialization}`)) {
+      return "Specialist";
+    }
+    return "Other";
+  }
+
+  const found = allowed.find((item) => {
+    if (item === "Other") return false;
+    return title.includes(item.toLowerCase()) || specialization.includes(item.toLowerCase());
+  });
+  return found || "Other";
+};
+
+const inferJobField = (job: any, inferredTitle: string, inferredSpecialization: string) => {
+  const title = normalizeText(job?.title);
+  const specialization = normalizeText(job?.specialization);
+  const options = TITLE_FIELD_OPTIONS[inferredTitle]?.[inferredSpecialization] || ["Other"];
+
+  const found = options.find((field) => {
+    if (field === "Other") return false;
+    const key = field.toLowerCase();
+    return title.includes(key) || specialization.includes(key);
+  });
+  return found || "Other";
+};
+
 export default function JobSeekerJobs() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchParamsKey = searchParams.toString();
   // Set of saved job IDs for O(1) lookup
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
   const [jobs, setJobs] = useState<any[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<any[]>([]);
   const [filters, setFilters] = useState({
+    title: "",
     specialization: "",
+    field: "",
     location: "",
     salary: "",
     years: "",
@@ -62,31 +224,22 @@ export default function JobSeekerJobs() {
 
   // Filter section expansion states
   const [expandedSections, setExpandedSections] = useState({
-    specialty: true,
+    title: true,
+    specialization: true,
+    field: true,
     workMode: true,
     experience: true,
     location: false,
     salary: false,
   });
 
-  // Selected filters
-  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [selectedWorkModes, setSelectedWorkModes] = useState<string[]>([]);
   const [experienceRange, setExperienceRange] = useState(0);
-  const [showAllSpecialties, setShowAllSpecialties] = useState(false);
 
   const jobsPerPage = 5;
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
-
-  const toggleSpecialty = (specialty: string) => {
-    setSelectedSpecialties(prev =>
-      prev.includes(specialty)
-        ? prev.filter(s => s !== specialty)
-        : [...prev, specialty]
-    );
   };
 
   const toggleWorkMode = (mode: string) => {
@@ -99,7 +252,9 @@ export default function JobSeekerJobs() {
 
   const getAppliedFiltersCount = () => {
     let count = 0;
-    if (selectedSpecialties.length > 0) count++;
+    if (filters.title) count++;
+    if (filters.specialization) count++;
+    if (filters.field) count++;
     if (selectedWorkModes.length > 0) count++;
     if (experienceRange > 0) count++;
     if (filters.location) count++;
@@ -108,11 +263,12 @@ export default function JobSeekerJobs() {
   };
 
   const clearAllFilters = () => {
-    setSelectedSpecialties([]);
     setSelectedWorkModes([]);
     setExperienceRange(0);
     setFilters({
+      title: "",
       specialization: "",
+      field: "",
       location: "",
       salary: "",
       years: "",
@@ -125,6 +281,9 @@ export default function JobSeekerJobs() {
       try {
         const token = localStorage.getItem("accessToken");
         const rawUser = localStorage.getItem("user");
+        const parsedParams = new URLSearchParams(searchParamsKey);
+        const titleFromUrl = (parsedParams.get("title") || "").trim();
+        const specialtyFromUrl = (parsedParams.get("specialty") || "").trim();
 
         // 🔒 Redirect if no token
         if (!token) {
@@ -168,6 +327,35 @@ export default function JobSeekerJobs() {
           return;
         }
 
+        // Apply filter from landing card route when present.
+        if (titleFromUrl && TITLE_OPTIONS.includes(titleFromUrl)) {
+          setFilters((prev) => ({
+            ...prev,
+            title: titleFromUrl,
+            specialization: "",
+            field: "",
+          }));
+        }
+        if (specialtyFromUrl) {
+          setSearchQuery(specialtyFromUrl);
+        }
+
+        // Prefill title filter from user's professional profile when available.
+        if (!titleFromUrl) {
+          try {
+            const profileRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobseeker/profile`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            const profileData = await profileRes.json();
+            const category = profileData?.data?.jobSeeker?.professionalInfo?.category;
+            if (category && TITLE_OPTIONS.includes(category)) {
+              setFilters((prev) => ({ ...prev, title: category }));
+            }
+          } catch {
+            // Non-blocking: continue with jobs listing if profile prefill fails.
+          }
+        }
+
         // ✅ Fetch jobs if authorized
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobs?limit=50`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -188,7 +376,7 @@ export default function JobSeekerJobs() {
     };
 
     fetchJobs();
-  }, [router]);
+  }, [router, searchParamsKey]);
 
 
   // ✅ Apply filters and search
@@ -207,13 +395,26 @@ export default function JobSeekerJobs() {
       );
     }
 
-    // Specialty filter (multiple selection)
-    if (selectedSpecialties.length > 0) {
-      filtered = filtered.filter(j =>
-        selectedSpecialties.some(s =>
-          j.specialization?.toLowerCase() === s.toLowerCase()
-        )
-      );
+    // Dynamic title -> specialization -> field filters
+    if (filters.title) {
+      filtered = filtered.filter((j) => inferJobTitle(j) === filters.title);
+    }
+
+    if (filters.specialization) {
+      filtered = filtered.filter((j) => {
+        const jobTitle = inferJobTitle(j);
+        const jobSpecialization = inferJobSpecialization(j, jobTitle);
+        return jobSpecialization === filters.specialization;
+      });
+    }
+
+    if (filters.field) {
+      filtered = filtered.filter((j) => {
+        const jobTitle = inferJobTitle(j);
+        const jobSpecialization = inferJobSpecialization(j, jobTitle);
+        const jobField = inferJobField(j, jobTitle, jobSpecialization);
+        return jobField === filters.field;
+      });
     }
 
     // Location filter
@@ -242,7 +443,7 @@ export default function JobSeekerJobs() {
 
     setFilteredJobs(filtered);
     setCurrentPage(1);
-  }, [filters, searchQuery, jobs, selectedSpecialties, selectedWorkModes, experienceRange]);
+  }, [filters, searchQuery, jobs, selectedWorkModes, experienceRange]);
 
   // Pagination
   const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
@@ -266,11 +467,10 @@ export default function JobSeekerJobs() {
     return `${Math.floor(diffDays / 30)} months ago`;
   };
 
-  const getSpecialtyCount = (specialty: string) => {
-    return jobs.filter(j => j.specialization?.toLowerCase() === specialty.toLowerCase()).length;
-  };
-
-  const displayedSpecialties = showAllSpecialties ? SPECIALIZATIONS : SPECIALIZATIONS.slice(0, 4);
+  const availableSpecializations = filters.title ? TITLE_SPECIALIZATION_OPTIONS[filters.title] || ["Other"] : [];
+  const availableFields = filters.title && filters.specialization
+    ? TITLE_FIELD_OPTIONS[filters.title]?.[filters.specialization] || ["Other"]
+    : [];
 
   // --- Saved jobs handling (use Set for O(1) lookup) ---
 
@@ -430,49 +630,137 @@ export default function JobSeekerJobs() {
               )}
             </div>
 
-            {/* SPECIALTY FILTER */}
+            {/* TITLE FILTER */}
             <div className="mb-6 pb-6 border-b">
               <button
-                onClick={() => toggleSection('specialty')}
+                onClick={() => toggleSection('title')}
                 className="flex items-center justify-between w-full text-left mb-3"
               >
-                <h3 className="text-base font-bold text-gray-900">Specialty</h3>
-                {expandedSections.specialty ? (
+                <h3 className="text-base font-bold text-gray-900">Title</h3>
+                {expandedSections.title ? (
                   <ChevronUp className="w-5 h-5 text-gray-500" />
                 ) : (
                   <ChevronDown className="w-5 h-5 text-gray-500" />
                 )}
               </button>
 
-              {expandedSections.specialty && (
+              {expandedSections.title && (
                 <div className="space-y-2.5">
-                  {displayedSpecialties.map((specialty) => {
-                    const count = getSpecialtyCount(specialty);
-                    return (
+                  {TITLE_OPTIONS.map((title) => (
+                    <label
+                      key={title}
+                      className="flex items-center gap-2.5 cursor-pointer group"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={filters.title === title}
+                        onChange={() =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            title: prev.title === title ? "" : title,
+                            specialization: "",
+                            field: "",
+                          }))
+                        }
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700 group-hover:text-gray-900 flex-1">
+                        {title}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* SPECIALIZATION FILTER */}
+            <div className="mb-6 pb-6 border-b">
+              <button
+                onClick={() => toggleSection('specialization')}
+                className="flex items-center justify-between w-full text-left mb-3"
+              >
+                <h3 className="text-base font-bold text-gray-900">Specialization</h3>
+                {expandedSections.specialization ? (
+                  <ChevronUp className="w-5 h-5 text-gray-500" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-gray-500" />
+                )}
+              </button>
+
+              {expandedSections.specialization && (
+                !filters.title ? (
+                  <p className="text-sm text-gray-500">Select title first</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {availableSpecializations.map((specialization) => (
                       <label
-                        key={specialty}
+                        key={specialization}
                         className="flex items-center gap-2.5 cursor-pointer group"
                       >
                         <input
                           type="checkbox"
-                          checked={selectedSpecialties.includes(specialty)}
-                          onChange={() => toggleSpecialty(specialty)}
+                          checked={filters.specialization === specialization}
+                          onChange={() =>
+                            setFilters((prev) => ({
+                              ...prev,
+                              specialization: prev.specialization === specialization ? "" : specialization,
+                              field: "",
+                            }))
+                          }
                           className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
                         />
                         <span className="text-sm text-gray-700 group-hover:text-gray-900 flex-1">
-                          {specialty}
+                          {specialization}
                         </span>
-                        <span className="text-xs text-gray-400">({count})</span>
                       </label>
-                    );
-                  })}
-                  <button
-                    onClick={() => setShowAllSpecialties(!showAllSpecialties)}
-                    className="text-sm text-blue-600 font-medium hover:underline mt-2"
-                  >
-                    {showAllSpecialties ? "View Less" : "View More"}
-                  </button>
-                </div>
+                    ))}
+                  </div>
+                )
+              )}
+            </div>
+
+            {/* FIELD FILTER */}
+            <div className="mb-6 pb-6 border-b">
+              <button
+                onClick={() => toggleSection('field')}
+                className="flex items-center justify-between w-full text-left mb-3"
+              >
+                <h3 className="text-base font-bold text-gray-900">Field</h3>
+                {expandedSections.field ? (
+                  <ChevronUp className="w-5 h-5 text-gray-500" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-gray-500" />
+                )}
+              </button>
+
+              {expandedSections.field && (
+                !filters.title || !filters.specialization ? (
+                  <p className="text-sm text-gray-500">Select title and specialization first</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {availableFields.map((field) => (
+                      <label
+                        key={field}
+                        className="flex items-center gap-2.5 cursor-pointer group"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={filters.field === field}
+                          onChange={() =>
+                            setFilters((prev) => ({
+                              ...prev,
+                              field: prev.field === field ? "" : field,
+                            }))
+                          }
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-700 group-hover:text-gray-900 flex-1">
+                          {field}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )
               )}
             </div>
 

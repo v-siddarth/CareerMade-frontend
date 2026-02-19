@@ -74,6 +74,8 @@ type JobSeekerProfile = {
     otherSpecification?: string;
     doctorSpecialization?: string;
     doctorSubSpecialty?: string;
+    otherDoctorSubSpecialty?: string;
+    councilNo?: string;
     location?: { country?: string; state?: string; city?: string };
   };
   education?: {
@@ -161,6 +163,65 @@ const SPEC_OPTIONS: Record<string, string[]> = {
   Insurance: ["Claims", "TPA operations", "Underwriting", "Customer support", "Other"],
   Marketing: ["Digital marketing", "Field marketing", "Branding", "Sales", "Other"],
   Other: ["Other"],
+};
+
+const DOCTOR_FIELD_OPTIONS: Record<string, string[]> = {
+  Specialist: [
+    "General Medicine",
+    "Pediatrics",
+    "General Surgery",
+    "Obstetrics & Gynecology",
+    "Orthopedics",
+    "ENT",
+    "Ophthalmology",
+    "Dermatology",
+    "Psychiatry",
+    "Anesthesiology",
+    "Radiology",
+    "Pathology",
+    "Emergency Medicine",
+    "Pulmonology",
+    "Other",
+  ],
+  "Super specialist": [
+    "Cardiology",
+    "Neurology",
+    "Nephrology",
+    "Gastroenterology",
+    "Endocrinology",
+    "Medical Oncology",
+    "Surgical Oncology",
+    "Urology",
+    "Neurosurgery",
+    "Cardiothoracic Surgery",
+    "Plastic Surgery",
+    "Pediatric Surgery",
+    "Rheumatology",
+    "Clinical Hematology",
+    "Critical Care Medicine",
+    "Other",
+  ],
+  "Medicine officer": [
+    "General Duty Medical Officer",
+    "Casualty Medical Officer",
+    "ICU Medical Officer",
+    "Public Health Medical Officer",
+    "Occupational Health Medical Officer",
+    "Community Health Medical Officer",
+    "Medical Officer (TB/IDSP/NHM)",
+    "Insurance Medical Officer",
+    "Other",
+  ],
+  RMO: [
+    "Emergency RMO",
+    "ICU RMO",
+    "Ward RMO",
+    "Night Duty RMO",
+    "Trauma RMO",
+    "OPD RMO",
+    "OT RMO",
+    "Other",
+  ],
 };
 
 const DEGREE_OPTIONS: Record<string, string[]> = {
@@ -384,6 +445,9 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
   const specializationOptions = SPEC_OPTIONS[selectedCategory] || [];
   const degreeOptions = DEGREE_OPTIONS[selectedCategory] || DEGREE_OPTIONS.Other;
   const isTechnicianCategory = selectedCategory === "Technician";
+  const selectedDoctorSpecialization =
+    selectedCategory === "Doctor" ? profile?.professionalInfo?.specifications?.[0] || profile?.professionalInfo?.doctorSpecialization || "" : "";
+  const doctorFieldOptions = DOCTOR_FIELD_OPTIONS[selectedDoctorSpecialization] || [];
 
   if (loading) {
     return (
@@ -760,6 +824,10 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                                     category: selectedCategory === category ? "" : category,
                                     specifications: [],
                                     otherSpecification: "",
+                                    doctorSpecialization: "",
+                                    doctorSubSpecialty: "",
+                                    otherDoctorSubSpecialty: "",
+                                    councilNo: "",
                                   },
                                   specializations: [],
                                 }))
@@ -820,6 +888,9 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                                           ...prev.professionalInfo,
                                           specifications: next,
                                           otherSpecification: next.includes("Other") ? prev.professionalInfo?.otherSpecification : "",
+                                          doctorSpecialization: selectedCategory === "Doctor" ? next[0] || "" : "",
+                                          doctorSubSpecialty: "",
+                                          otherDoctorSubSpecialty: "",
                                         },
                                         specializations: next,
                                       };
@@ -851,6 +922,59 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                       </label>
                     )}
 
+                    {selectedCategory === "Doctor" && selectedDoctorSpecialization && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-gray-700">Field</p>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {doctorFieldOptions.map((field) => {
+                            const isSelected = profile.professionalInfo?.doctorSubSpecialty === field;
+                            return (
+                              <label
+                                key={field}
+                                className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
+                                  isSelected ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700"
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() =>
+                                    updateProfile((prev) => ({
+                                      ...prev,
+                                      professionalInfo: {
+                                        ...prev.professionalInfo,
+                                        doctorSubSpecialty: isSelected ? "" : field,
+                                        otherDoctorSubSpecialty:
+                                          !isSelected && field === "Other" ? prev.professionalInfo?.otherDoctorSubSpecialty || "" : "",
+                                      },
+                                    }))
+                                  }
+                                />
+                                <span>{field}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedCategory === "Doctor" && profile.professionalInfo?.doctorSubSpecialty === "Other" && (
+                      <label className="text-sm font-medium text-gray-700">
+                        Other Field
+                        <input
+                          type="text"
+                          value={profile.professionalInfo?.otherDoctorSubSpecialty || ""}
+                          onChange={(e) =>
+                            updateProfile((prev) => ({
+                              ...prev,
+                              professionalInfo: { ...prev.professionalInfo, otherDoctorSubSpecialty: e.target.value },
+                            }))
+                          }
+                          className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
+                        />
+                      </label>
+                    )}
+
                     <label className="text-sm font-medium text-gray-700">
                       Professional Summary
                       <textarea
@@ -860,6 +984,24 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                         placeholder="Write a clear summary of your strengths, years of experience, and preferred role."
                       />
                     </label>
+
+                    {selectedCategory === "Doctor" && (
+                      <label className="text-sm font-medium text-gray-700">
+                        Council No
+                        <input
+                          type="text"
+                          value={profile.professionalInfo?.councilNo || ""}
+                          onChange={(e) =>
+                            updateProfile((prev) => ({
+                              ...prev,
+                              professionalInfo: { ...prev.professionalInfo, councilNo: e.target.value },
+                            }))
+                          }
+                          className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
+                          placeholder="Enter medical council registration number"
+                        />
+                      </label>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-3">
