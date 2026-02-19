@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Bell, CheckCheck, ExternalLink, LogOut, Menu, Shield, X } from "lucide-react";
+import { Bell, CheckCheck, ExternalLink, Menu, Shield, X } from "lucide-react";
 import Image from "next/image";
-import { authStorage, logout } from "@/lib/api-client";
+import { authStorage } from "@/lib/api-client";
 import {
   type AppNotification,
   listNotifications,
@@ -300,15 +300,6 @@ export default function Navbar() {
   const navigate = (path: string) => {
     router.push(path);
     setMobileMenuOpen(false);
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    setUser(null);
-    setProfileCompletion(null);
-    setNotifications([]);
-    setUnreadCount(0);
-    navigate("/login");
   };
 
   const openNotifications = async () => {
@@ -837,14 +828,6 @@ export default function Navbar() {
                       )}
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="mt-1 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-red-500 transition hover:bg-red-50 hover:text-red-600"
-                    >
-                      <LogOut size={16} />
-                      <span>Logout</span>
-                    </button>
                   </>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">

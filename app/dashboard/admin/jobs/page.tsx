@@ -91,7 +91,7 @@ export default function JobsManagement() {
       if (jobTypeFilter) params.append("jobType", jobTypeFilter);
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/jobs?${params.toString()}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/jobs?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -105,8 +105,8 @@ export default function JobsManagement() {
         throw new Error(data.message || "Failed to fetch jobs");
       }
 
-      setJobs(data.data.items || data.data);
-      setTotal(data.data.total || data.data.length);
+      setJobs(data.data.items);
+      setTotal(data.data.total);
     } catch (err: any) {
       console.error("Error fetching jobs:", err);
       toast.error(err.message || "Failed to load jobs");
@@ -186,6 +186,13 @@ export default function JobsManagement() {
           <span className="px-3 py-1 inline-flex items-center gap-1 text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
             <Pause className="w-3 h-3" />
             Archived
+          </span>
+        );
+      case "Flagged":
+        return (
+          <span className="px-3 py-1 inline-flex items-center gap-1 text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
+            <XCircle className="w-3 h-3" />
+            Flagged
           </span>
         );
       case "Closed":
@@ -297,6 +304,7 @@ export default function JobsManagement() {
                 <option value="Pending">Pending</option>
                 <option value="Active">Active</option>
                 <option value="Archived">Archived</option>
+                <option value="Flagged">Flagged</option>
                 <option value="Closed">Closed</option>
               </select>
             </div>
@@ -407,6 +415,19 @@ export default function JobsManagement() {
                             >
                               <Pause className="w-4 h-4" />
                               Archive Job
+                            </button>
+
+                            <button
+                              onClick={() => handleChangeStatus(job._id, "Flagged")}
+                              disabled={job.status === "Flagged"}
+                              className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${
+                                job.status === "Flagged"
+                                  ? "text-gray-400 cursor-not-allowed"
+                                  : "text-gray-700 hover:bg-gray-100"
+                              }`}
+                            >
+                              <XCircle className="w-4 h-4" />
+                              Flag Job
                             </button>
                             
                             <button
