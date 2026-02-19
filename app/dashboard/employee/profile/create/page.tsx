@@ -5,6 +5,41 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
 import toast from "react-hot-toast";
 
+const ALLOWED_SPECIALIZATIONS = [
+  "General Medicine",
+  "Cardiology",
+  "Neurology",
+  "Orthopedics",
+  "Pediatrics",
+  "Gynecology",
+  "Dermatology",
+  "Psychiatry",
+  "Radiology",
+  "Anesthesiology",
+  "Emergency Medicine",
+  "Internal Medicine",
+  "Surgery",
+  "Oncology",
+  "Pathology",
+  "Ophthalmology",
+  "ENT",
+  "Urology",
+  "Gastroenterology",
+  "Pulmonology",
+  "Endocrinology",
+  "Rheumatology",
+  "Nephrology",
+  "Hematology",
+  "Infectious Disease",
+  "Physical Therapy",
+  "Occupational Therapy",
+  "Speech Therapy",
+  "Nursing",
+  "Pharmacy",
+  "Medical Technology",
+  "Other",
+];
+
 export default function EmployerProfileCreatePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -82,10 +117,18 @@ export default function EmployerProfileCreatePage() {
   };
 
   const addSpecialization = (spec: string) => {
-    if (spec.trim() && !formData.specializations.includes(spec.trim())) {
+    const trimmed = spec.trim();
+    if (!trimmed) return;
+
+    if (!ALLOWED_SPECIALIZATIONS.includes(trimmed)) {
+      toast.error("Please select a specialization from the allowed list.");
+      return;
+    }
+
+    if (!formData.specializations.includes(trimmed)) {
       setFormData({
         ...formData,
-        specializations: [...formData.specializations, spec.trim()],
+        specializations: [...formData.specializations, trimmed],
       });
     }
   };
@@ -146,6 +189,17 @@ export default function EmployerProfileCreatePage() {
     const token = localStorage.getItem("accessToken");
     if (!token) return toast.error("Please log in again");
 
+    const invalidSpecializations = formData.specializations.filter(
+      (s) => !ALLOWED_SPECIALIZATIONS.includes(s.trim())
+    );
+    if (invalidSpecializations.length > 0) {
+      setLoading(false);
+      toast.error(
+        `Invalid specialization(s): ${invalidSpecializations.join(", ")}`
+      );
+      return;
+    }
+
     const payload = {
       organizationName: formData.organizationName.trim(),
       organizationType: formData.organizationType.trim(),
@@ -166,7 +220,7 @@ export default function EmployerProfileCreatePage() {
         pincode: formData.pincode.trim(),
         country: formData.country.trim() || "India",
       },
-      specializations: formData.specializations.filter(s => s.trim()),
+      specializations: formData.specializations.filter((s) => s.trim()),
       accreditations: formData.accreditations.map((a) => ({
         name: a.trim(),
         issuingBody: "Self", // Required field - provide default
@@ -464,8 +518,14 @@ export default function EmployerProfileCreatePage() {
                 type="text"
                 id="specInput"
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Search for medical specialities"
+                placeholder="Type an allowed specialization"
+                list="allowed-specializations"
               />
+              <datalist id="allowed-specializations">
+                {ALLOWED_SPECIALIZATIONS.map((spec) => (
+                  <option key={spec} value={spec} />
+                ))}
+              </datalist>
               <button
                 type="button"
                 onClick={() => {
