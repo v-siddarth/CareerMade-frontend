@@ -83,7 +83,7 @@ const Register = () => {
 
     const handleGoogle = () => {
         const role = formData.role || "jobseeker";
-        const backend = process.env.NEXT_PUBLIC_API_URL;
+        const backend = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
         const redirectUri = typeof window !== "undefined" ? window.location.origin : "";
         window.location.href = `${backend}/api/auth/google?role=${encodeURIComponent(role)}&redirectUri=${encodeURIComponent(redirectUri)}`;
     };

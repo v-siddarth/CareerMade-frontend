@@ -1,6 +1,6 @@
 export type UserRole = 'jobseeker' | 'employer' | 'admin';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '');
 const ACCESS_TOKEN_KEY = 'accessToken';
 const USER_KEY = 'user';
 
@@ -94,8 +94,10 @@ export async function apiFetch<T = unknown>(path: string, options: ApiRequestOpt
     }
   }
 
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+
   const makeRequest = () =>
-    fetch(`${API_BASE}${path}`, {
+    fetch(`${API_BASE}${normalizedPath}`, {
       ...rest,
       headers: requestHeaders,
       credentials: 'include',
