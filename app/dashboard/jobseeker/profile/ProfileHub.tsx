@@ -1101,16 +1101,16 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                           </button>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
-                          {[
+                          {([
                             { key: "position", label: "Position" },
                             { key: "company", label: "Company" },
                             { key: "location", label: "Location" },
-                          ].map((field) => (
+                          ] as const).map((field) => (
                             <label key={field.key} className="text-sm font-medium text-gray-700">
                               {field.label}
                               <input
                                 type="text"
-                                value={exp[field.key as keyof typeof exp] || ""}
+                                value={exp[field.key] ?? ""}
                                 onChange={(e) =>
                                   updateProfile((prev) => ({
                                     ...prev,
