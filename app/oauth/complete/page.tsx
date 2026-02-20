@@ -16,6 +16,7 @@ function OAuthCompleteHandler() {
   const initialRole: Role = preferredRole === "employer" ? "employer" : "jobseeker";
 
   const [otp, setOtp] = useState("");
+  const [phone, setPhone] = useState("");
   const [role, setRole] = useState<Role>(initialRole);
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -68,6 +69,7 @@ function OAuthCompleteHandler() {
           pendingCode,
           otp,
           role,
+          phone: phone.trim(),
         }),
       });
 
@@ -80,7 +82,7 @@ function OAuthCompleteHandler() {
     } finally {
       setSubmitting(false);
     }
-  }, [canContinue, otp, pendingCode, role, router]);
+  }, [canContinue, otp, pendingCode, role, phone, router]);
 
   if (!pendingCode) {
     return (
@@ -135,6 +137,17 @@ function OAuthCompleteHandler() {
               Employer
             </button>
           </div>
+        </div>
+
+        <div className="mt-5">
+          <label className="mb-2 block text-sm font-medium text-gray-700">Primary Phone Number</label>
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            inputMode="tel"
+            placeholder="Add primary phone number"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-[#155DFC] focus:ring-2 focus:ring-blue-100"
+          />
         </div>
 
         <div className="mt-5">

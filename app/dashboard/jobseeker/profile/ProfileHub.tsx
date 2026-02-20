@@ -35,6 +35,7 @@ type TabId =
   | "education"
   | "experience"
   | "skills"
+  | "expectations"
   | "documents"
   | "billing"
   | "settings"
@@ -74,6 +75,7 @@ type JobSeekerProfile = {
     otherSpecification?: string;
     doctorSpecialization?: string;
     doctorSubSpecialty?: string;
+    doctorSubSpecialties?: string[];
     otherDoctorSubSpecialty?: string;
     councilNo?: string;
     location?: { country?: string; state?: string; city?: string };
@@ -83,6 +85,7 @@ type JobSeekerProfile = {
     degree?: string;
     field?: string;
     institution?: string;
+    startYear?: number;
     yearOfCompletion?: number;
     grade?: string;
     customDegree?: string;
@@ -90,6 +93,7 @@ type JobSeekerProfile = {
   workExperience?: {
     _id?: string;
     position?: string;
+    organization?: string;
     company?: string;
     location?: string;
     startDate?: string;
@@ -104,6 +108,13 @@ type JobSeekerProfile = {
   jobPreferences?: {
     preferredLocations?: { city?: string; state?: string; country?: string }[];
     preferredJobTypes?: string[];
+    expectedSalary?: {
+      min?: number;
+      max?: number;
+      currency?: string;
+      period?: string;
+    };
+    expectedBenefits?: string[];
   };
   documents?: {
     panNumber?: string;
@@ -122,6 +133,7 @@ type JobSeekerProfile = {
   user?: {
     firstName?: string;
     lastName?: string;
+    fullName?: string;
     email?: string;
     phone?: string;
     profileImage?: string;
@@ -143,13 +155,14 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: "education", label: "Education", icon: <FileText className="h-4 w-4" /> },
   { id: "experience", label: "Work Experience", icon: <Briefcase className="h-4 w-4" /> },
   { id: "skills", label: "Skills & Jobs", icon: <Sparkles className="h-4 w-4" /> },
+  { id: "expectations", label: "Expectations", icon: <CreditCard className="h-4 w-4" /> },
   { id: "documents", label: "Documents", icon: <FileText className="h-4 w-4" /> },
   { id: "billing", label: "Pricing", icon: <CreditCard className="h-4 w-4" /> },
   { id: "settings", label: "Settings", icon: <Settings className="h-4 w-4" /> },
   { id: "faq", label: "FAQ", icon: <HelpCircle className="h-4 w-4" /> },
 ];
 
-const TAB_FLOW: TabId[] = ["personal", "professional", "education", "experience", "skills", "documents"];
+const TAB_FLOW: TabId[] = ["personal", "professional", "education", "experience", "skills", "expectations", "documents"];
 
 const CATEGORY_OPTIONS = ["Doctor", "Nurse", "Technician", "Pharmacy", "Support", "Admin", "Insurance", "Marketing", "Other"];
 
@@ -225,7 +238,7 @@ const DOCTOR_FIELD_OPTIONS: Record<string, string[]> = {
 };
 
 const DEGREE_OPTIONS: Record<string, string[]> = {
-  Doctor: ["MBBS", "MD", "MS", "DNB", "DM", "MCh", "BDS", "MDS", "Other"],
+  Doctor: ["MBBS", "MD", "MS", "DNB", "DM", "MCh", "BAMS", "BHMS", "Unani", "BDS", "MDS", "Other"],
   Nurse: ["ANM", "GNM", "BSc Nursing", "Post Basic BSc Nursing", "MSc Nursing", "Other"],
   Technician: ["DMLT", "BMLT", "Diploma in OT Technician", "Diploma in Radiology Imaging", "Diploma in Dialysis Technician", "Other"],
   Pharmacy: ["D.Pharm", "B.Pharm", "M.Pharm", "Pharm.D", "Other"],
@@ -237,6 +250,77 @@ const DEGREE_OPTIONS: Record<string, string[]> = {
 };
 
 const PREFERRED_JOB_TYPES = ["Full-time", "Part-time", "Contract", "Freelance", "Internship", "Volunteer"];
+
+const BENEFITS_OPTIONS = [
+  "Health Insurance",
+  "Life Insurance",
+  "Retirement/Pension Plan",
+  "CME Allowance",
+  "Professional Development",
+  "Housing Assistance",
+  "Relocation Assistance",
+  "Paid Time Off",
+  "Sick Leave",
+  "Maternity/Paternity Leave",
+  "Meal Allowance",
+  "Transportation",
+  "Conference Attendance",
+  "Research Opportunities",
+  "Malpractice Insurance",
+];
+
+const MAHARASHTRA_CITIES = [
+  "Ahmednagar",
+  "Akola",
+  "Alibag",
+  "Amravati",
+  "Aurangabad",
+  "Baramati",
+  "Beed",
+  "Bhandara",
+  "Bhiwandi",
+  "Bhusawal",
+  "Boisar",
+  "Chandrapur",
+  "Dhule",
+  "Gadchiroli",
+  "Gondia",
+  "Hinganghat",
+  "Hingoli",
+  "Ichalkaranji",
+  "Jalgaon",
+  "Jalna",
+  "Karad",
+  "Khamgaon",
+  "Kolhapur",
+  "Latur",
+  "Malegaon",
+  "Mira-Bhayandar",
+  "Mumbai",
+  "Nagpur",
+  "Nanded",
+  "Nandurbar",
+  "Nashik",
+  "Navi Mumbai",
+  "Osmanabad",
+  "Palghar",
+  "Panvel",
+  "Parbhani",
+  "Pimpri-Chinchwad",
+  "Pune",
+  "Raigad",
+  "Ratnagiri",
+  "Sangamner",
+  "Sangli",
+  "Satara",
+  "Sindhudurg",
+  "Solapur",
+  "Thane",
+  "Ulhasnagar",
+  "Wardha",
+  "Washim",
+  "Yavatmal",
+];
 
 const PLAN_SUMMARY = [
   { name: "Starter Care", price: 300, seats: "1 recruiter" },
@@ -262,6 +346,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
   const [panCardFile, setPanCardFile] = useState<File | null>(null);
   const [aadhaarFrontFile, setAadhaarFrontFile] = useState<File | null>(null);
   const [aadhaarBackFile, setAadhaarBackFile] = useState<File | null>(null);
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -290,6 +375,21 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!profile) return;
+    if ((profile.jobPreferences?.preferredLocations || []).length > 0) return;
+    setProfile((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        jobPreferences: {
+          ...(prev.jobPreferences || {}),
+          preferredLocations: [{ country: "India", state: "Maharashtra", city: "" }],
+        },
+      };
+    });
+  }, [profile]);
 
   const user = profile?.user || (authStorage.getUser<JobSeekerProfile["user"]>() ?? {});
 
@@ -343,11 +443,28 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
     message: string,
     nextTab?: TabId
   ) => {
+    const normalizedPayload = { ...payload };
+    const jobPreferences = normalizedPayload.jobPreferences as JobSeekerProfile["jobPreferences"] | undefined;
+    if (jobPreferences && typeof jobPreferences === "object") {
+      const sanitizedLocations = (jobPreferences.preferredLocations || [])
+        .map((location) => ({
+          city: (location.city || "").trim(),
+          state: (location.state || "Maharashtra").trim(),
+          country: (location.country || "India").trim(),
+        }))
+        .filter((location) => Boolean(location.city));
+
+      normalizedPayload.jobPreferences = {
+        ...jobPreferences,
+        preferredLocations: sanitizedLocations,
+      };
+    }
+
     setSaving(true);
     try {
       const data = await apiFetch<ApiResponse>("/api/jobseeker/profile", {
         method: "PUT",
-        body: JSON.stringify(payload),
+        body: JSON.stringify(normalizedPayload),
       });
       const nextProfile = data?.data?.jobSeeker;
       if (nextProfile) {
@@ -391,6 +508,50 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
       if (nextTab) setActiveTab(nextTab);
     } catch (error) {
       const text = error instanceof Error ? error.message : "Failed to update documents";
+      toast.error(text);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const savePersonalPayload = async (nextTab?: TabId) => {
+    const fullName = [profile?.user?.firstName, profile?.user?.lastName].filter(Boolean).join(" ").trim();
+    const payload = {
+      personalInfo: profile?.personalInfo || {},
+      privacySettings: profile?.privacySettings || {},
+      fullName,
+      user: {
+        firstName: profile?.user?.firstName || "",
+        lastName: profile?.user?.lastName || "",
+        phone: profile?.user?.phone || "",
+      },
+    };
+
+    if (!profilePhotoFile) {
+      await saveProfilePayload(payload, "Personal information updated", nextTab);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("profile", JSON.stringify(payload));
+    formData.append("profilePhoto", profilePhotoFile);
+
+    setSaving(true);
+    try {
+      const data = await apiFetch<ApiResponse>("/api/jobseeker/profile", {
+        method: "PUT",
+        body: formData,
+      });
+      const nextProfile = data?.data?.jobSeeker;
+      if (nextProfile) {
+        setProfile(nextProfile);
+        if (nextProfile.user) authStorage.setUser(nextProfile.user);
+      }
+      setProfilePhotoFile(null);
+      toast.success("Personal information updated");
+      if (nextTab) setActiveTab(nextTab);
+    } catch (error) {
+      const text = error instanceof Error ? error.message : "Failed to update personal information";
       toast.error(text);
     } finally {
       setSaving(false);
@@ -444,10 +605,13 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
   const selectedCategory = profile?.professionalInfo?.category || "";
   const specializationOptions = SPEC_OPTIONS[selectedCategory] || [];
   const degreeOptions = DEGREE_OPTIONS[selectedCategory] || DEGREE_OPTIONS.Other;
-  const isTechnicianCategory = selectedCategory === "Technician";
-  const selectedDoctorSpecialization =
-    selectedCategory === "Doctor" ? profile?.professionalInfo?.specifications?.[0] || profile?.professionalInfo?.doctorSpecialization || "" : "";
-  const doctorFieldOptions = DOCTOR_FIELD_OPTIONS[selectedDoctorSpecialization] || [];
+  const selectedDoctorSpecializations =
+    selectedCategory === "Doctor" ? profile?.professionalInfo?.specifications || [] : [];
+  const doctorFieldOptions = Array.from(
+    new Set(
+      selectedDoctorSpecializations.flatMap((specialization) => DOCTOR_FIELD_OPTIONS[specialization] || [])
+    )
+  );
 
   if (loading) {
     return (
@@ -613,17 +777,45 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                   className="space-y-5"
                   onSubmit={(e) => {
                     e.preventDefault();
-                    saveProfilePayload(
-                      {
-                        personalInfo: profile.personalInfo,
-                        privacySettings: profile.privacySettings,
-                      },
-                      "Personal information updated",
-                      getNextFlowTab("personal") || undefined
-                    );
+                    savePersonalPayload(getNextFlowTab("personal") || undefined);
                   }}
                 >
                   <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Full Name
+                      <input
+                        type="text"
+                        value={[profile.user?.firstName, profile.user?.lastName].filter(Boolean).join(" ").trim()}
+                        onChange={(e) =>
+                          updateProfile((prev) => {
+                            const parts = e.target.value.trim().split(/\s+/).filter(Boolean);
+                            const firstName = parts.length <= 1 ? parts[0] || "" : parts.slice(0, -1).join(" ");
+                            const lastName = parts.length > 1 ? parts[parts.length - 1] : "";
+                            return {
+                              ...prev,
+                              user: { ...prev.user, firstName, lastName },
+                            };
+                          })
+                        }
+                        className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
+                        placeholder="Enter your full name"
+                      />
+                    </label>
+                    <label className="text-sm font-medium text-gray-700">
+                      Primary Phone
+                      <input
+                        type="text"
+                        value={profile.user?.phone || ""}
+                        onChange={(e) =>
+                          updateProfile((prev) => ({
+                            ...prev,
+                            user: { ...prev.user, phone: e.target.value },
+                          }))
+                        }
+                        className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
+                        placeholder="Add primary phone number"
+                      />
+                    </label>
                     <label className="text-sm font-medium text-gray-700">
                       Alternate Email
                       <input
@@ -688,6 +880,18 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                         <option value="Other">Other</option>
                         <option value="Prefer not to say">Prefer not to say</option>
                       </select>
+                    </label>
+                    <label className="text-sm font-medium text-gray-700 sm:col-span-2">
+                      Profile Photo
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setProfilePhotoFile(e.target.files?.[0] || null)}
+                        className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
+                      />
+                      {profilePhotoFile ? (
+                        <p className="mt-1 text-xs text-gray-500">Selected: {profilePhotoFile.name}</p>
+                      ) : null}
                     </label>
                   </div>
 
@@ -826,6 +1030,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                                     otherSpecification: "",
                                     doctorSpecialization: "",
                                     doctorSubSpecialty: "",
+                                    doctorSubSpecialties: [],
                                     otherDoctorSubSpecialty: "",
                                     councilNo: "",
                                   },
@@ -876,12 +1081,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                                   onChange={() =>
                                     updateProfile((prev) => {
                                       const current = prev.professionalInfo?.specifications || [];
-                                      let next = current;
-                                      if (isTechnicianCategory) {
-                                        next = isSelected ? current.filter((x) => x !== spec) : [...current, spec];
-                                      } else {
-                                        next = isSelected ? [] : [spec];
-                                      }
+                                      const next = isSelected ? current.filter((x) => x !== spec) : [...current, spec];
                                       return {
                                         ...prev,
                                         professionalInfo: {
@@ -890,6 +1090,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                                           otherSpecification: next.includes("Other") ? prev.professionalInfo?.otherSpecification : "",
                                           doctorSpecialization: selectedCategory === "Doctor" ? next[0] || "" : "",
                                           doctorSubSpecialty: "",
+                                          doctorSubSpecialties: [],
                                           otherDoctorSubSpecialty: "",
                                         },
                                         specializations: next,
@@ -922,12 +1123,13 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                       </label>
                     )}
 
-                    {selectedCategory === "Doctor" && selectedDoctorSpecialization && (
+                    {selectedCategory === "Doctor" && selectedDoctorSpecializations.length > 0 && (
                       <div className="space-y-2">
                         <p className="text-sm font-medium text-gray-700">Field</p>
                         <div className="grid gap-2 sm:grid-cols-2">
                           {doctorFieldOptions.map((field) => {
-                            const isSelected = profile.professionalInfo?.doctorSubSpecialty === field;
+                            const selectedFields = profile.professionalInfo?.doctorSubSpecialties || [];
+                            const isSelected = selectedFields.includes(field);
                             return (
                               <label
                                 key={field}
@@ -943,9 +1145,16 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                                       ...prev,
                                       professionalInfo: {
                                         ...prev.professionalInfo,
-                                        doctorSubSpecialty: isSelected ? "" : field,
+                                        doctorSubSpecialties: isSelected
+                                          ? (prev.professionalInfo?.doctorSubSpecialties || []).filter((x) => x !== field)
+                                          : [...(prev.professionalInfo?.doctorSubSpecialties || []), field],
+                                        doctorSubSpecialty: isSelected
+                                          ? ""
+                                          : [...(prev.professionalInfo?.doctorSubSpecialties || []), field][0] || "",
                                         otherDoctorSubSpecialty:
-                                          !isSelected && field === "Other" ? prev.professionalInfo?.otherDoctorSubSpecialty || "" : "",
+                                          field === "Other" || isSelected
+                                            ? prev.professionalInfo?.otherDoctorSubSpecialty || ""
+                                            : "",
                                       },
                                     }))
                                   }
@@ -958,7 +1167,8 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                       </div>
                     )}
 
-                    {selectedCategory === "Doctor" && profile.professionalInfo?.doctorSubSpecialty === "Other" && (
+                    {selectedCategory === "Doctor" &&
+                      (profile.professionalInfo?.doctorSubSpecialties || []).includes("Other") && (
                       <label className="text-sm font-medium text-gray-700">
                         Other Field
                         <input
@@ -1037,6 +1247,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                         degree,
                         field: degree === "Other" ? customDegree || "Other" : degree,
                         institution: item.institution || "",
+                        startYear: Number(item.startYear) || undefined,
                         yearOfCompletion: Number(item.yearOfCompletion) || undefined,
                         grade: item.grade || "",
                       };
@@ -1125,6 +1336,24 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                             </label>
                           )}
                           <label className="text-sm font-medium text-gray-700">
+                            Start Year
+                            <input
+                              type="number"
+                              min={1950}
+                              max={new Date().getFullYear() + 5}
+                              value={edu.startYear || ""}
+                              onChange={(e) =>
+                                updateProfile((prev) => ({
+                                  ...prev,
+                                  education: (prev.education || []).map((x, i) =>
+                                    i === index ? { ...x, startYear: Number(e.target.value) || undefined } : x
+                                  ),
+                                }))
+                              }
+                              className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
+                            />
+                          </label>
+                          <label className="text-sm font-medium text-gray-700">
                             Year of Completion
                             <input
                               type="number"
@@ -1169,7 +1398,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                           ...prev,
                           education: [
                             ...(prev.education || []),
-                            { degree: "", institution: "", yearOfCompletion: undefined, grade: "", field: "" },
+                            { degree: "", institution: "", startYear: undefined, yearOfCompletion: undefined, grade: "", field: "" },
                           ],
                         }))
                       }
@@ -1245,19 +1474,23 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                         <div className="grid gap-3 sm:grid-cols-2">
                           {([
                             { key: "position", label: "Position" },
-                            { key: "company", label: "Company" },
+                            { key: "organization", label: "Organization" },
                             { key: "location", label: "Location" },
                           ] as const).map((field) => (
                             <label key={field.key} className="text-sm font-medium text-gray-700">
                               {field.label}
                               <input
                                 type="text"
-                                value={exp[field.key] ?? ""}
+                                value={field.key === "organization" ? exp.organization ?? exp.company ?? "" : exp[field.key] ?? ""}
                                 onChange={(e) =>
                                   updateProfile((prev) => ({
                                     ...prev,
                                     workExperience: (prev.workExperience || []).map((x, i) =>
-                                      i === index ? { ...x, [field.key]: e.target.value } : x
+                                      i === index
+                                        ? field.key === "organization"
+                                          ? { ...x, organization: e.target.value, company: e.target.value }
+                                          : { ...x, [field.key]: e.target.value }
+                                        : x
                                     ),
                                   }))
                                 }
@@ -1341,7 +1574,16 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                           ...prev,
                           workExperience: [
                             ...(prev.workExperience || []),
-                            { position: "", company: "", location: "", startDate: "", endDate: "", isCurrent: false, description: "" },
+                            {
+                              position: "",
+                              organization: "",
+                              company: "",
+                              location: "",
+                              startDate: "",
+                              endDate: "",
+                              isCurrent: false,
+                              description: "",
+                            },
                           ],
                         }))
                       }
@@ -1458,7 +1700,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                               ...(prev.jobPreferences || {}),
                               preferredLocations: [
                                 ...(prev.jobPreferences?.preferredLocations || []),
-                                { city: "", state: "", country: "India" },
+                                { city: "", state: "Maharashtra", country: "India" },
                               ],
                             },
                           }))
@@ -1472,8 +1714,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                     <div className="space-y-3">
                       {(profile.jobPreferences?.preferredLocations || []).map((location, index) => (
                         <div key={index} className="grid gap-3 sm:grid-cols-4">
-                          <input
-                            type="text"
+                          <select
                             value={location.city || ""}
                             onChange={(e) =>
                               updateProfile((prev) => ({
@@ -1486,12 +1727,17 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                                 },
                               }))
                             }
-                            placeholder="City"
                             className="rounded-xl border border-gray-300 px-3 py-2"
-                          />
-                          <input
-                            type="text"
-                            value={location.state || ""}
+                          >
+                            <option value="">Select City</option>
+                            {MAHARASHTRA_CITIES.map((city) => (
+                              <option key={city} value={city}>
+                                {city}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            value={location.state || "Maharashtra"}
                             onChange={(e) =>
                               updateProfile((prev) => ({
                                 ...prev,
@@ -1503,11 +1749,11 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                                 },
                               }))
                             }
-                            placeholder="State"
                             className="rounded-xl border border-gray-300 px-3 py-2"
-                          />
-                          <input
-                            type="text"
+                          >
+                            <option value="Maharashtra">Maharashtra</option>
+                          </select>
+                          <select
                             value={location.country || "India"}
                             onChange={(e) =>
                               updateProfile((prev) => ({
@@ -1520,9 +1766,10 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                                 },
                               }))
                             }
-                            placeholder="Country"
                             className="rounded-xl border border-gray-300 px-3 py-2"
-                          />
+                          >
+                            <option value="India">India</option>
+                          </select>
                           <button
                             type="button"
                             onClick={() =>
@@ -1575,6 +1822,172 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                               }
                             />
                             <span>{jobType}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#155DFC] to-[#00B8DB] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
+                  >
+                    <Save className="h-4 w-4" />
+                    {saving ? "Saving..." : "Save & Next"}
+                  </button>
+                </form>
+              )}
+
+              {activeTab === "expectations" && (
+                <form
+                  className="space-y-5"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    saveProfilePayload(
+                      {
+                        jobPreferences: {
+                          ...(profile.jobPreferences || {}),
+                          expectedSalary: {
+                            min: Number(profile.jobPreferences?.expectedSalary?.min) || 0,
+                            max: Number(profile.jobPreferences?.expectedSalary?.max) || 0,
+                            currency: profile.jobPreferences?.expectedSalary?.currency || "INR",
+                            period: profile.jobPreferences?.expectedSalary?.period || "Annual",
+                          },
+                          expectedBenefits: profile.jobPreferences?.expectedBenefits || [],
+                        },
+                      },
+                      "Expectations updated",
+                      getNextFlowTab("expectations") || undefined
+                    );
+                  }}
+                >
+                  <div className="rounded-2xl border border-gray-200 p-4">
+                    <h4 className="mb-3 text-sm font-semibold text-gray-800">Expected Salary</h4>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Minimum
+                        <input
+                          type="number"
+                          min={0}
+                          value={profile.jobPreferences?.expectedSalary?.min ?? ""}
+                          onChange={(e) =>
+                            updateProfile((prev) => ({
+                              ...prev,
+                              jobPreferences: {
+                                ...(prev.jobPreferences || {}),
+                                expectedSalary: {
+                                  ...(prev.jobPreferences?.expectedSalary || {}),
+                                  min: Number(e.target.value) || 0,
+                                },
+                              },
+                            }))
+                          }
+                          className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
+                        />
+                      </label>
+                      <label className="text-sm font-medium text-gray-700">
+                        Maximum
+                        <input
+                          type="number"
+                          min={0}
+                          value={profile.jobPreferences?.expectedSalary?.max ?? ""}
+                          onChange={(e) =>
+                            updateProfile((prev) => ({
+                              ...prev,
+                              jobPreferences: {
+                                ...(prev.jobPreferences || {}),
+                                expectedSalary: {
+                                  ...(prev.jobPreferences?.expectedSalary || {}),
+                                  max: Number(e.target.value) || 0,
+                                },
+                              },
+                            }))
+                          }
+                          className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
+                        />
+                      </label>
+                      <label className="text-sm font-medium text-gray-700">
+                        Currency
+                        <select
+                          value={profile.jobPreferences?.expectedSalary?.currency || "INR"}
+                          onChange={(e) =>
+                            updateProfile((prev) => ({
+                              ...prev,
+                              jobPreferences: {
+                                ...(prev.jobPreferences || {}),
+                                expectedSalary: {
+                                  ...(prev.jobPreferences?.expectedSalary || {}),
+                                  currency: e.target.value,
+                                },
+                              },
+                            }))
+                          }
+                          className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
+                        >
+                          <option value="INR">INR</option>
+                          <option value="USD">USD</option>
+                          <option value="EUR">EUR</option>
+                          <option value="GBP">GBP</option>
+                        </select>
+                      </label>
+                      <label className="text-sm font-medium text-gray-700">
+                        Salary Period
+                        <select
+                          value={profile.jobPreferences?.expectedSalary?.period || "Annual"}
+                          onChange={(e) =>
+                            updateProfile((prev) => ({
+                              ...prev,
+                              jobPreferences: {
+                                ...(prev.jobPreferences || {}),
+                                expectedSalary: {
+                                  ...(prev.jobPreferences?.expectedSalary || {}),
+                                  period: e.target.value as "Monthly" | "Annual",
+                                },
+                              },
+                            }))
+                          }
+                          className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
+                        >
+                          <option value="Annual">Annual</option>
+                          <option value="Monthly">Monthly</option>
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-gray-200 p-4">
+                    <h4 className="mb-3 text-sm font-semibold text-gray-800">Expected Benefits & Perks</h4>
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      {BENEFITS_OPTIONS.map((benefit) => {
+                        const selected = profile.jobPreferences?.expectedBenefits || [];
+                        const checked = selected.includes(benefit);
+                        return (
+                          <label
+                            key={benefit}
+                            className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
+                              checked ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() =>
+                                updateProfile((prev) => {
+                                  const current = prev.jobPreferences?.expectedBenefits || [];
+                                  return {
+                                    ...prev,
+                                    jobPreferences: {
+                                      ...(prev.jobPreferences || {}),
+                                      expectedBenefits: checked
+                                        ? current.filter((item) => item !== benefit)
+                                        : [...current, benefit],
+                                    },
+                                  };
+                                })
+                              }
+                            />
+                            <span>{benefit}</span>
                           </label>
                         );
                       })}
