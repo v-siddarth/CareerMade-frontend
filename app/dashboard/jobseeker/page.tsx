@@ -25,115 +25,14 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { motion } from "framer-motion";
 import Link from "next/link";
-
-const TITLE_OPTIONS = ["Doctor", "Nurse", "Technician", "Pharmacy", "Support", "Admin", "Insurance", "Marketing", "Other"];
-
-const TITLE_SPECIALIZATION_OPTIONS: Record<string, string[]> = {
-  Doctor: ["Specialist", "Super specialist", "Medicine officer", "RMO", "Other"],
-  Nurse: ["ANM", "GNM", "BSC", "Other"],
-  Technician: ["Cathlab", "Dialysis", "Operation theatre", "Laboratory", "Endoscopy", "X-ray", "CT/MRI", "Other"],
-  Pharmacy: ["D. Pharma", "B. Pharma", "Other"],
-  Support: ["Ward assistant", "OT assistant", "House keeping", "Security", "Accounting", "Other"],
-  Admin: ["Hospital administration", "Operations", "HR", "Finance", "Other"],
-  Insurance: ["Claims", "TPA operations", "Underwriting", "Customer support", "Other"],
-  Marketing: ["Digital marketing", "Field marketing", "Branding", "Sales", "Other"],
-  Other: ["Other"],
-};
-
-const TITLE_FIELD_OPTIONS: Record<string, Record<string, string[]>> = {
-  Doctor: {
-    Specialist: [
-      "General Physician",
-      "Pediatrician",
-      "General Surgeon",
-      "Orthopedic Surgeon",
-      "ENT Specialist",
-      "Ophthalmologist",
-      "Dermatologist",
-      "Psychiatrist",
-      "Radiologist",
-      "Anesthesiologist",
-      "Emergency Physician",
-      "Other",
-    ],
-    "Super specialist": [
-      "Cardiologist",
-      "Neurologist",
-      "Nephrologist",
-      "Gastroenterologist",
-      "Endocrinologist",
-      "Oncologist",
-      "Urologist",
-      "Neurosurgeon",
-      "CTVS Specialist",
-      "Critical Care Specialist",
-      "Other",
-    ],
-    "Medicine officer": [
-      "General Duty Medical Officer",
-      "Casualty Medical Officer",
-      "ICU Medical Officer",
-      "Public Health Medical Officer",
-      "Occupational Health Medical Officer",
-      "Other",
-    ],
-    RMO: ["Emergency RMO", "ICU RMO", "Ward RMO", "Night Duty RMO", "OT RMO", "Other"],
-    Other: ["Other"],
-  },
-  Nurse: {
-    ANM: ["Community Health Nurse", "Maternal Care Nurse", "Vaccination Nurse", "Other"],
-    GNM: ["Ward Nurse", "ICU Nurse", "Operation Theatre Nurse", "Emergency Nurse", "Other"],
-    BSC: ["Clinical Nurse", "Nurse Educator", "Critical Care Nurse", "Nurse Supervisor", "Other"],
-    Other: ["Other"],
-  },
-  Technician: {
-    Cathlab: ["Cath Lab Technician", "Other"],
-    Dialysis: ["Dialysis Technician", "Other"],
-    "Operation theatre": ["OT Technician", "Anesthesia Technician", "Other"],
-    Laboratory: ["Lab Technician", "Phlebotomy Technician", "Other"],
-    Endoscopy: ["Endoscopy Technician", "Other"],
-    "X-ray": ["X-ray Technician", "Other"],
-    "CT/MRI": ["CT Technician", "MRI Technician", "Other"],
-    Other: ["Other"],
-  },
-  Pharmacy: {
-    "D. Pharma": ["Staff Pharmacist", "Dispensing Pharmacist", "Other"],
-    "B. Pharma": ["Clinical Pharmacist", "Hospital Pharmacist", "Inventory Pharmacist", "Other"],
-    Other: ["Other"],
-  },
-  Support: {
-    "Ward assistant": ["Patient Care Assistant", "Ward Boy / Aya", "Other"],
-    "OT assistant": ["OT Assistant", "Sterilization Assistant", "Other"],
-    "House keeping": ["Housekeeping Executive", "Infection Control Housekeeping", "Other"],
-    Security: ["Hospital Security Guard", "Security Supervisor", "Other"],
-    Accounting: ["Billing Executive", "Accounts Assistant", "Other"],
-    Other: ["Other"],
-  },
-  Admin: {
-    "Hospital administration": ["Hospital Administrator", "Front Office Manager", "Other"],
-    Operations: ["Operations Executive", "Facility Manager", "Other"],
-    HR: ["HR Executive", "Talent Acquisition", "Other"],
-    Finance: ["Finance Executive", "Medical Billing Officer", "Other"],
-    Other: ["Other"],
-  },
-  Insurance: {
-    Claims: ["Claims Processing Officer", "Claims Auditor", "Other"],
-    "TPA operations": ["TPA Coordinator", "Insurance Desk Officer", "Other"],
-    Underwriting: ["Medical Underwriter", "Risk Analyst", "Other"],
-    "Customer support": ["Insurance Support Executive", "Policy Support Officer", "Other"],
-    Other: ["Other"],
-  },
-  Marketing: {
-    "Digital marketing": ["Digital Marketing Executive", "Performance Marketer", "Other"],
-    "Field marketing": ["Field Marketing Executive", "Hospital Outreach Executive", "Other"],
-    Branding: ["Brand Manager", "Communications Executive", "Other"],
-    Sales: ["Medical Sales Representative", "Business Development Executive", "Other"],
-    Other: ["Other"],
-  },
-  Other: {
-    Other: ["Other"],
-  },
-};
+import {
+  HEALTHCARE_TITLES,
+  TITLE_FIELD_OPTIONS,
+  TITLE_SPECIALIZATION_OPTIONS,
+  inferHealthcareField,
+  inferHealthcareSpecialization,
+  inferHealthcareTitle,
+} from "@/lib/healthcare-taxonomy";
 
 const LOCATIONS = [
   "Mumbai", "Delhi NCR", "Bangalore", "Pune", "Hyderabad",
@@ -142,62 +41,7 @@ const LOCATIONS = [
 
 const WORK_MODES = ["On-site", "Remote", "Full-time"];
 
-const normalizeText = (value?: string) => (value || "").toLowerCase().trim();
-
-const inferJobTitle = (job: any) => {
-  const title = normalizeText(job?.title);
-  const specialization = normalizeText(job?.specialization);
-  const text = `${title} ${specialization}`;
-  const isMedicalDepartment = /(cardiology|neurology|orthopedics|pediatrics|gynecology|dermatology|psychiatry|radiology|anesthesiology|emergency medicine|internal medicine|surgery|oncology|pathology|ophthalmology|ent|urology|gastroenterology|pulmonology|endocrinology|rheumatology|nephrology|hematology|infectious disease|general medicine)/.test(specialization);
-
-  if (/(doctor|dr\.|consultant|surgeon|physician|medical officer|resident|registrar|rmo)/.test(text)) return "Doctor";
-  if (isMedicalDepartment) return "Doctor";
-  if (/(nurse|nursing|anm|gnm)/.test(text)) return "Nurse";
-  if (/(technician|technologist|lab tech|x-ray|radiology tech|ct|mri|dialysis|cath lab|ot tech)/.test(text)) return "Technician";
-  if (/(pharmacist|pharmacy)/.test(text)) return "Pharmacy";
-  if (/(assistant|housekeeping|security|ward|attendant)/.test(text)) return "Support";
-  if (/(admin|administrator|hr|human resources|operations|finance|billing)/.test(text)) return "Admin";
-  if (/(insurance|claims|tpa|underwriting)/.test(text)) return "Insurance";
-  if (/(marketing|sales|business development|brand)/.test(text)) return "Marketing";
-  return "Other";
-};
-
-const inferJobSpecialization = (job: any, inferredTitle: string) => {
-  const title = normalizeText(job?.title);
-  const specialization = normalizeText(job?.specialization);
-  const allowed = TITLE_SPECIALIZATION_OPTIONS[inferredTitle] || ["Other"];
-
-  if (inferredTitle === "Doctor") {
-    if (/(rmo|resident medical officer)/.test(title)) return "RMO";
-    if (/(medical officer|duty medical officer|casualty medical officer)/.test(title)) return "Medicine officer";
-    if (/(cardio|neuro|nephro|gastro|endo|onco|uro|critical care|ctvs|super specialist|superspecialist)/.test(`${title} ${specialization}`)) {
-      return "Super specialist";
-    }
-    if (/(specialist|consultant|surgeon|physician|general medicine|orthopedic|ent|ophthal|derma|psychiatry|anesthesia|radiology|pediatric)/.test(`${title} ${specialization}`)) {
-      return "Specialist";
-    }
-    return "Other";
-  }
-
-  const found = allowed.find((item) => {
-    if (item === "Other") return false;
-    return title.includes(item.toLowerCase()) || specialization.includes(item.toLowerCase());
-  });
-  return found || "Other";
-};
-
-const inferJobField = (job: any, inferredTitle: string, inferredSpecialization: string) => {
-  const title = normalizeText(job?.title);
-  const specialization = normalizeText(job?.specialization);
-  const options = TITLE_FIELD_OPTIONS[inferredTitle]?.[inferredSpecialization] || ["Other"];
-
-  const found = options.find((field) => {
-    if (field === "Other") return false;
-    const key = field.toLowerCase();
-    return title.includes(key) || specialization.includes(key);
-  });
-  return found || "Other";
-};
+const TITLE_OPTIONS = [...HEALTHCARE_TITLES];
 
 export default function JobSeekerJobs() {
   const router = useRouter();
@@ -328,7 +172,7 @@ export default function JobSeekerJobs() {
         }
 
         // Apply filter from landing card route when present.
-        if (titleFromUrl && TITLE_OPTIONS.includes(titleFromUrl)) {
+        if (titleFromUrl && TITLE_OPTIONS.includes(titleFromUrl as (typeof TITLE_OPTIONS)[number])) {
           setFilters((prev) => ({
             ...prev,
             title: titleFromUrl,
@@ -397,22 +241,22 @@ export default function JobSeekerJobs() {
 
     // Dynamic title -> specialization -> field filters
     if (filters.title) {
-      filtered = filtered.filter((j) => inferJobTitle(j) === filters.title);
+      filtered = filtered.filter((j) => inferHealthcareTitle(j) === filters.title);
     }
 
     if (filters.specialization) {
       filtered = filtered.filter((j) => {
-        const jobTitle = inferJobTitle(j);
-        const jobSpecialization = inferJobSpecialization(j, jobTitle);
+        const jobTitle = inferHealthcareTitle(j);
+        const jobSpecialization = inferHealthcareSpecialization(j, jobTitle);
         return jobSpecialization === filters.specialization;
       });
     }
 
     if (filters.field) {
       filtered = filtered.filter((j) => {
-        const jobTitle = inferJobTitle(j);
-        const jobSpecialization = inferJobSpecialization(j, jobTitle);
-        const jobField = inferJobField(j, jobTitle, jobSpecialization);
+        const jobTitle = inferHealthcareTitle(j);
+        const jobSpecialization = inferHealthcareSpecialization(j, jobTitle);
+        const jobField = inferHealthcareField(j, jobTitle, jobSpecialization);
         return jobField === filters.field;
       });
     }
@@ -467,9 +311,11 @@ export default function JobSeekerJobs() {
     return `${Math.floor(diffDays / 30)} months ago`;
   };
 
-  const availableSpecializations = filters.title ? TITLE_SPECIALIZATION_OPTIONS[filters.title] || ["Other"] : [];
+  const availableSpecializations = filters.title
+    ? TITLE_SPECIALIZATION_OPTIONS[filters.title as keyof typeof TITLE_SPECIALIZATION_OPTIONS] || ["Other"]
+    : [];
   const availableFields = filters.title && filters.specialization
-    ? TITLE_FIELD_OPTIONS[filters.title]?.[filters.specialization] || ["Other"]
+    ? TITLE_FIELD_OPTIONS[filters.title as keyof typeof TITLE_FIELD_OPTIONS]?.[filters.specialization] || ["Other"]
     : [];
 
   // --- Saved jobs handling (use Set for O(1) lookup) ---

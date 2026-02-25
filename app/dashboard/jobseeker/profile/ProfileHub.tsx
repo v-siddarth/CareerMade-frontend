@@ -240,15 +240,15 @@ const DOCTOR_FIELD_OPTIONS: Record<string, string[]> = {
 };
 
 const DEGREE_OPTIONS: Record<string, string[]> = {
-  Doctor: ["MBBS", "MD", "MS", "DNB", "DM", "MCh", "BAMS", "BHMS", "Unani", "BDS", "MDS", "Other"],
-  Nurse: ["ANM", "GNM", "BSc Nursing", "Post Basic BSc Nursing", "MSc Nursing", "Other"],
-  Technician: ["DMLT", "BMLT", "Diploma in OT Technician", "Diploma in Radiology Imaging", "Diploma in Dialysis Technician", "Other"],
-  Pharmacy: ["D.Pharm", "B.Pharm", "M.Pharm", "Pharm.D", "Other"],
-  Support: ["Certificate", "Diploma", "BSc", "Other"],
-  Admin: ["BBA", "MBA", "MHA", "PG Diploma", "Other"],
-  Insurance: ["BCom", "MBA", "PG Diploma", "IRDA Certification", "Other"],
+  Doctor: ["MBBS", "MD", "MS", "DNB", "DM", "MCh", "BAMS", "BHMS", "BUMS", "Unani", "BDS", "MDS", "Fellowship", "FRCS", "MRCP", "Other"],
+  Nurse: ["ANM", "GNM", "BSc Nursing", "Post Basic BSc Nursing", "MSc Nursing", "Certificate", "Diploma", "Other"],
+  Technician: ["DMLT", "BMLT", "BPT", "MPT", "Diploma in OT Technician", "Diploma in Radiology Imaging", "Diploma in Dialysis Technician", "BSc", "Diploma", "Certificate", "Other"],
+  Pharmacy: ["D.Pharm", "B.Pharm", "M.Pharm", "Pharm.D", "Diploma", "Certificate", "Other"],
+  Support: ["Certificate", "Diploma", "BSc", "BPT", "Other"],
+  Admin: ["BBA", "MBA", "MHA", "PG Diploma", "BCom", "Other"],
+  Insurance: ["BCom", "BBA", "MBA", "PG Diploma", "IRDA Certification", "Other"],
   Marketing: ["BBA", "MBA", "PG Diploma", "Other"],
-  Other: ["Certificate", "Diploma", "Other"],
+  Other: ["Certificate", "Diploma", "BSc", "MSc", "PhD", "BPT", "MPT", "Other"],
 };
 
 const PREFERRED_JOB_TYPES = ["Full-time", "Part-time", "Contract", "Freelance", "Internship", "Volunteer"];
@@ -268,7 +268,7 @@ const BENEFITS_OPTIONS = [
   "Transportation",
   "Conference Attendance",
   "Research Opportunities",
-  "Malpractice Insurance",
+  "Indemnity Insurance",
 ];
 
 const MAHARASHTRA_CITIES = [

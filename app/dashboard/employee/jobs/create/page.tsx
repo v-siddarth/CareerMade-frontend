@@ -6,6 +6,15 @@ import Navbar from "@/app/components/Navbar";
 import GradientLoader from "@/app/components/GradientLoader";
 import toast from "react-hot-toast";
 import { ChevronRight, CheckCircle, X } from "lucide-react";
+import {
+  ALL_JOBSEEKER_DEGREES,
+  HEALTHCARE_TITLES,
+  type HealthcareTitle,
+  getDegreeOptions,
+  getFieldOptions,
+  getScreeningQuestionPresets,
+  getSpecializationOptions,
+} from "@/lib/healthcare-taxonomy";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
@@ -44,41 +53,6 @@ interface FormData {
   expiresAt: string;
 }
 
-const SPECIALIZATIONS = [
-  "General Medicine",
-  "Cardiology",
-  "Neurology",
-  "Orthopedics",
-  "Pediatrics",
-  "Gynecology",
-  "Dermatology",
-  "Psychiatry",
-  "Radiology",
-  "Anesthesiology",
-  "Emergency Medicine",
-  "Internal Medicine",
-  "Surgery",
-  "Oncology",
-  "Pathology",
-  "Ophthalmology",
-  "ENT",
-  "Urology",
-  "Gastroenterology",
-  "Pulmonology",
-  "Endocrinology",
-  "Rheumatology",
-  "Nephrology",
-  "Hematology",
-  "Infectious Disease",
-  "Physical Therapy",
-  "Occupational Therapy",
-  "Speech Therapy",
-  "Nursing",
-  "Pharmacy",
-  "Medical Technology",
-  "Other",
-];
-
 const JOB_TYPES = [
   { value: "Full-time", label: "Full-time", desc: "Permanent position" },
   { value: "Part-time", label: "Part-time", desc: "Flexible hours" },
@@ -116,20 +90,7 @@ const BENEFITS_OPTIONS = [
   "Transportation",
   "Conference Attendance",
   "Research Opportunities",
-  "Malpractice Insurance",
-];
-
-const MEDICAL_QUALIFICATIONS = [
-  "MBBS",
-  "MD",
-  "MS",
-  "DNB",
-  "DM",
-  "MCh",
-  "Diploma",
-  "Fellowship",
-  "FRCS",
-  "MRCP",
+  "Indemnity Insurance",
 ];
 
 export default function CreateJobPage() {
@@ -173,9 +134,61 @@ export default function CreateJobPage() {
 
   const [qualifications, setQualifications] = useState<string[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
+  const [selectedTitle, setSelectedTitle] = useState<HealthcareTitle | "">("");
+  const [selectedSpecialization, setSelectedSpecialization] = useState("");
+  const [selectedField, setSelectedField] = useState("");
+  const [selectedScreeningPreset, setSelectedScreeningPreset] = useState("");
   const [screeningQuestionInput, setScreeningQuestionInput] = useState("");
   const [screeningQuestionRequired, setScreeningQuestionRequired] =
     useState(false);
+  const specializationOptions = getSpecializationOptions(selectedTitle);
+  const fieldOptions = getFieldOptions(selectedTitle, selectedSpecialization);
+  const qualificationOptions = getDegreeOptions(selectedTitle, selectedSpecialization);
+  const screeningQuestionPresets = getScreeningQuestionPresets(selectedTitle);
+
+  const syncFinalSpecialization = (specialization: string, field: string) => {
+    const normalizedSpecialization = specialization.trim();
+    const normalizedField = field.trim();
+    const finalSpecialization =
+      normalizedField && normalizedField !== "Other"
+        ? normalizedField
+        : normalizedSpecialization;
+    setFormData((prev) => ({
+      ...prev,
+      specialization: finalSpecialization,
+    }));
+    if (errors.specialization && finalSpecialization) {
+      setErrors((prev) => ({ ...prev, specialization: "" }));
+    }
+  };
+
+  const CheckboxPill = ({
+    label,
+    checked,
+    onToggle,
+    disabled = false,
+  }: {
+    label: string;
+    checked: boolean;
+    onToggle: () => void;
+    disabled?: boolean;
+  }) => (
+    <label
+      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-pointer transition ${checked
+          ? "border-blue-500 bg-blue-50 text-blue-700"
+          : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
+        } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        disabled={disabled}
+        onChange={onToggle}
+        className="w-4 h-4 rounded border-gray-300 text-blue-600"
+      />
+      {label}
+    </label>
+  );
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -330,6 +343,7 @@ export default function CreateJobPage() {
     }));
 
     setScreeningQuestionInput("");
+    setSelectedScreeningPreset("");
     setScreeningQuestionRequired(false);
   };
 
@@ -635,6 +649,82 @@ export default function CreateJobPage() {
                       {/* Job Title */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Healthcare Title
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {HEALTHCARE_TITLES.map((title) => (
+                            <CheckboxPill
+                              key={title}
+                              label={title}
+                              checked={selectedTitle === title}
+                              onToggle={() => {
+                                const nextTitle = selectedTitle === title ? "" : title;
+                                setSelectedTitle(nextTitle);
+                                setSelectedSpecialization("");
+                                setSelectedField("");
+                                setQualifications([]);
+                                syncFinalSpecialization("", "");
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">
+                          Match this with Job Seeker profile title.
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Role Specialization
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {specializationOptions.map((spec) => (
+                            <CheckboxPill
+                              key={spec}
+                              label={spec}
+                              disabled={!selectedTitle}
+                              checked={selectedSpecialization === spec}
+                              onToggle={() => {
+                                if (!selectedTitle) return;
+                                const nextSpecialization =
+                                  selectedSpecialization === spec ? "" : spec;
+                                setSelectedSpecialization(nextSpecialization);
+                                setSelectedField("");
+                                setQualifications([]);
+                                syncFinalSpecialization(nextSpecialization, "");
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Role Field
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {fieldOptions.map((field) => (
+                            <CheckboxPill
+                              key={field}
+                              label={field}
+                              disabled={!selectedTitle || !selectedSpecialization}
+                              checked={selectedField === field}
+                              onToggle={() => {
+                                if (!selectedTitle || !selectedSpecialization) return;
+                                const nextField = selectedField === field ? "" : field;
+                                setSelectedField(nextField);
+                                syncFinalSpecialization(selectedSpecialization, nextField);
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">
+                          Selected field becomes the job specialization used across listings.
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                           Job Title <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -653,28 +743,23 @@ export default function CreateJobPage() {
                         )}
                       </div>
 
-                      {/* Medical Specialty */}
+                      {/* Specialization */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Medical Specialty/Department{" "}
+                          Final Specialization{" "}
                           <span className="text-red-500">*</span>
                         </label>
-                        <select
+                        <input
+                          type="text"
                           name="specialization"
                           value={formData.specialization}
                           onChange={handleInputChange}
+                          placeholder="Ex. ICU RMO, Clinical Pharmacist, Ward Nurse"
                           className={`w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${errors.specialization
-                              ? "border-red-500"
-                              : "border-gray-300"
+                            ? "border-red-500"
+                            : "border-gray-300"
                             }`}
-                        >
-                          <option value="">Select a specialty</option>
-                          {SPECIALIZATIONS.map((spec) => (
-                            <option key={spec} value={spec}>
-                              {spec}
-                            </option>
-                          ))}
-                        </select>
+                        />
                         {errors.specialization && (
                           <p className="mt-1 text-sm text-red-600">
                             {errors.specialization}
@@ -816,14 +901,19 @@ export default function CreateJobPage() {
                     </div>
 
                     <div className="space-y-6">
-                      {/* Medical Qualifications */}
+                      {/* Qualifications */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-3">
-                          Medical Qualifications{" "}
+                          Required Education / Degrees{" "}
                           <span className="text-red-500">*</span>
                         </label>
+                        {qualificationOptions.length === 0 && (
+                          <p className="mb-3 text-xs text-gray-500">
+                            Select healthcare title and specialization in Step 1 to get recommended degree options.
+                          </p>
+                        )}
                         <div className="flex flex-wrap gap-2 mb-4">
-                          {MEDICAL_QUALIFICATIONS.map((qual) => (
+                          {qualificationOptions.map((qual) => (
                             <button
                               key={qual}
                               type="button"
@@ -843,7 +933,7 @@ export default function CreateJobPage() {
                             </button>
                           ))}
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2 mb-3">
                           {qualifications.map((qual) => (
                             <span
                               key={qual}
@@ -862,6 +952,34 @@ export default function CreateJobPage() {
                             </span>
                           ))}
                         </div>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            id="qualificationInput"
+                            list="all-jobseeker-degrees"
+                            placeholder="Add other accepted degree/certification"
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const input = document.getElementById(
+                                "qualificationInput"
+                              ) as HTMLInputElement;
+                              if (addToArray("qualifications", input.value.trim())) {
+                                input.value = "";
+                              }
+                            }}
+                            className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-black font-medium text-sm"
+                          >
+                            Add
+                          </button>
+                        </div>
+                        <datalist id="all-jobseeker-degrees">
+                          {ALL_JOBSEEKER_DEGREES.map((degree) => (
+                            <option key={degree} value={degree} />
+                          ))}
+                        </datalist>
                         {errors.qualifications && (
                           <p className="mt-2 text-sm text-red-600">
                             {errors.qualifications}
@@ -1151,6 +1269,33 @@ export default function CreateJobPage() {
                         <p className="text-xs text-gray-500 mb-3">
                           Add up to 10 questions candidates will answer while applying.
                         </p>
+                        <div className="mb-3">
+                          <label className="block text-xs text-gray-600 mb-1">
+                            Suggested questions
+                          </label>
+                          <select
+                            value={selectedScreeningPreset}
+                            onChange={(e) => {
+                              const next = e.target.value;
+                              setSelectedScreeningPreset(next);
+                              if (next && next !== "__other__") {
+                                setScreeningQuestionInput(next);
+                              }
+                              if (next === "__other__") {
+                                setScreeningQuestionInput("");
+                              }
+                            }}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          >
+                            <option value="">Select a suggested question</option>
+                            {screeningQuestionPresets.map((question) => (
+                              <option key={question} value={question}>
+                                {question}
+                              </option>
+                            ))}
+                            <option value="__other__">Other (custom question)</option>
+                          </select>
+                        </div>
                         <div className="flex flex-col sm:flex-row gap-2 mb-3">
                           <input
                             type="text"

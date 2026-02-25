@@ -4,41 +4,9 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
 import toast from "react-hot-toast";
+import { JOB_SPECIALIZATION_ENUM } from "@/lib/healthcare-taxonomy";
 
-const ALLOWED_SPECIALIZATIONS = [
-  "General Medicine",
-  "Cardiology",
-  "Neurology",
-  "Orthopedics",
-  "Pediatrics",
-  "Gynecology",
-  "Dermatology",
-  "Psychiatry",
-  "Radiology",
-  "Anesthesiology",
-  "Emergency Medicine",
-  "Internal Medicine",
-  "Surgery",
-  "Oncology",
-  "Pathology",
-  "Ophthalmology",
-  "ENT",
-  "Urology",
-  "Gastroenterology",
-  "Pulmonology",
-  "Endocrinology",
-  "Rheumatology",
-  "Nephrology",
-  "Hematology",
-  "Infectious Disease",
-  "Physical Therapy",
-  "Occupational Therapy",
-  "Speech Therapy",
-  "Nursing",
-  "Pharmacy",
-  "Medical Technology",
-  "Other",
-];
+const ALLOWED_SPECIALIZATIONS = JOB_SPECIALIZATION_ENUM;
 
 const ORGANIZATION_TYPES = [
   "Hospital",

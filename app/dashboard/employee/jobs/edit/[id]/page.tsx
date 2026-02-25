@@ -6,6 +6,18 @@ import Navbar from "@/app/components/Navbar";
 import GradientLoader from "@/app/components/GradientLoader";
 import toast from "react-hot-toast";
 import { ChevronRight, CheckCircle } from "lucide-react";
+import {
+  ALL_JOBSEEKER_DEGREES,
+  HEALTHCARE_TITLES,
+  type HealthcareTitle,
+  getDegreeOptions,
+  getFieldOptions,
+  getScreeningQuestionPresets,
+  getSpecializationOptions,
+  inferHealthcareField,
+  inferHealthcareSpecialization,
+  inferHealthcareTitle,
+} from "@/lib/healthcare-taxonomy";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
@@ -44,41 +56,6 @@ interface FormData {
   expiresAt: string;
 }
 
-const SPECIALIZATIONS = [
-  "General Medicine",
-  "Cardiology",
-  "Neurology",
-  "Orthopedics",
-  "Pediatrics",
-  "Gynecology",
-  "Dermatology",
-  "Psychiatry",
-  "Radiology",
-  "Anesthesiology",
-  "Emergency Medicine",
-  "Internal Medicine",
-  "Surgery",
-  "Oncology",
-  "Pathology",
-  "Ophthalmology",
-  "ENT",
-  "Urology",
-  "Gastroenterology",
-  "Pulmonology",
-  "Endocrinology",
-  "Rheumatology",
-  "Nephrology",
-  "Hematology",
-  "Infectious Disease",
-  "Physical Therapy",
-  "Occupational Therapy",
-  "Speech Therapy",
-  "Nursing",
-  "Pharmacy",
-  "Medical Technology",
-  "Other",
-];
-
 const JOB_TYPES = [
   { value: "Full-time", label: "Full-time", desc: "Permanent position" },
   { value: "Part-time", label: "Part-time", desc: "Flexible hours" },
@@ -116,20 +93,7 @@ const BENEFITS_OPTIONS = [
   "Transportation",
   "Conference Attendance",
   "Research Opportunities",
-  "Malpractice Insurance",
-];
-
-const MEDICAL_QUALIFICATIONS = [
-  "MBBS",
-  "MD",
-  "MS",
-  "DNB",
-  "DM",
-  "MCh",
-  "Diploma",
-  "Fellowship",
-  "FRCS",
-  "MRCP",
+  "Indemnity Insurance",
 ];
 
 export default function EditJobPage() {
@@ -175,9 +139,61 @@ export default function EditJobPage() {
 
   const [qualifications, setQualifications] = useState<string[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
+  const [selectedTitle, setSelectedTitle] = useState<HealthcareTitle | "">("");
+  const [selectedSpecialization, setSelectedSpecialization] = useState("");
+  const [selectedField, setSelectedField] = useState("");
+  const [selectedScreeningPreset, setSelectedScreeningPreset] = useState("");
   const [screeningQuestionInput, setScreeningQuestionInput] = useState("");
   const [screeningQuestionRequired, setScreeningQuestionRequired] =
     useState(false);
+  const specializationOptions = getSpecializationOptions(selectedTitle);
+  const fieldOptions = getFieldOptions(selectedTitle, selectedSpecialization);
+  const qualificationOptions = getDegreeOptions(selectedTitle, selectedSpecialization);
+  const screeningQuestionPresets = getScreeningQuestionPresets(selectedTitle);
+
+  const syncFinalSpecialization = (specialization: string, field: string) => {
+    const normalizedSpecialization = specialization.trim();
+    const normalizedField = field.trim();
+    const finalSpecialization =
+      normalizedField && normalizedField !== "Other"
+        ? normalizedField
+        : normalizedSpecialization;
+    setFormData((prev) => ({
+      ...prev,
+      specialization: finalSpecialization,
+    }));
+    if (errors.specialization && finalSpecialization) {
+      setErrors((prev) => ({ ...prev, specialization: "" }));
+    }
+  };
+
+  const CheckboxPill = ({
+    label,
+    checked,
+    onToggle,
+    disabled = false,
+  }: {
+    label: string;
+    checked: boolean;
+    onToggle: () => void;
+    disabled?: boolean;
+  }) => (
+    <label
+      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-pointer transition ${checked
+          ? "border-blue-500 bg-blue-50 text-blue-700"
+          : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
+        } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        disabled={disabled}
+        onChange={onToggle}
+        className="w-4 h-4 rounded border-gray-300 text-blue-600"
+      />
+      {label}
+    </label>
+  );
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -218,7 +234,6 @@ export default function EditJobPage() {
           const errorData = await response.json();
           console.error("Error response:", errorData);
           toast.error(errorData.message || "Failed to load job details");
-          setTimeout(() => router.push("/dashboard/employee/jobs"), 2000);
           return;
         }
 
@@ -230,7 +245,6 @@ export default function EditJobPage() {
 
         if (!job) {
           toast.error("Job not found");
-          setTimeout(() => router.push("/dashboard/employee/jobs"), 2000);
           return;
         }
 
@@ -267,14 +281,35 @@ export default function EditJobPage() {
               .filter(Boolean)
           : [];
 
-        // Separate qualifications and skills
-        const quals = requirementsArray.filter((req: string) =>
-          MEDICAL_QUALIFICATIONS.includes(req)
+        const inferredTitle = inferHealthcareTitle(job);
+        const inferredSpecialization = inferHealthcareSpecialization(
+          job,
+          inferredTitle
         );
-        const skls = requirementsArray.filter(
-          (req: string) => !MEDICAL_QUALIFICATIONS.includes(req)
+        const inferredField = inferHealthcareField(
+          job,
+          inferredTitle,
+          inferredSpecialization
         );
+        setSelectedTitle(inferredTitle);
+        setSelectedSpecialization(inferredSpecialization);
+        setSelectedField(inferredField === "Other" ? "" : inferredField);
 
+        const degreeOptions = getDegreeOptions(inferredTitle, inferredSpecialization);
+        const quals = Array.from(
+          new Set<string>(
+            requirementsArray.filter((req: string) =>
+              degreeOptions.includes(req)
+            )
+          )
+        );
+        const skls = Array.from(
+          new Set<string>(
+            requirementsArray.filter(
+              (req: string) => !degreeOptions.includes(req)
+            )
+          )
+        );
         setQualifications(quals);
         setSkills(skls);
 
@@ -323,7 +358,6 @@ export default function EditJobPage() {
       } catch (error) {
         console.error("Error fetching job:", error);
         toast.error("Failed to fetch job details");
-        setTimeout(() => router.push("/dashboard/employee/jobs"), 2000);
       } finally {
         setLoading(false);
       }
@@ -453,6 +487,7 @@ export default function EditJobPage() {
       ],
     }));
     setScreeningQuestionInput("");
+    setSelectedScreeningPreset("");
     setScreeningQuestionRequired(false);
   };
 
@@ -533,8 +568,8 @@ export default function EditJobPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    if (currentStep !== 5) return;
     if (!validateStep(5)) return;
 
     const token = localStorage.getItem("accessToken");
@@ -596,7 +631,7 @@ export default function EditJobPage() {
 
       if (response.ok) {
         toast.success("Job updated successfully!");
-        setTimeout(() => router.push("/dashboard/employee/jobs"), 1500);
+        router.push("/dashboard/employee/jobs");
       } else {
         toast.error(data.message || "Failed to update job");
         console.error("Error response:", data);
@@ -714,7 +749,7 @@ export default function EditJobPage() {
           {/* Main Content */}
           <div className="lg:col-span-3">
             <form
-              onSubmit={handleSubmit}
+              onSubmit={(e) => e.preventDefault()}
               className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
             >
               <div className="p-6 sm:p-8">
@@ -731,6 +766,82 @@ export default function EditJobPage() {
                     </div>
 
                     <div className="space-y-5">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Healthcare Title
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {HEALTHCARE_TITLES.map((title) => (
+                            <CheckboxPill
+                              key={title}
+                              label={title}
+                              checked={selectedTitle === title}
+                              onToggle={() => {
+                                const nextTitle = selectedTitle === title ? "" : title;
+                                setSelectedTitle(nextTitle);
+                                setSelectedSpecialization("");
+                                setSelectedField("");
+                                setQualifications([]);
+                                syncFinalSpecialization("", "");
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">
+                          Match this with Job Seeker profile title.
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Role Specialization
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {specializationOptions.map((spec) => (
+                            <CheckboxPill
+                              key={spec}
+                              label={spec}
+                              disabled={!selectedTitle}
+                              checked={selectedSpecialization === spec}
+                              onToggle={() => {
+                                if (!selectedTitle) return;
+                                const nextSpecialization =
+                                  selectedSpecialization === spec ? "" : spec;
+                                setSelectedSpecialization(nextSpecialization);
+                                setSelectedField("");
+                                setQualifications([]);
+                                syncFinalSpecialization(nextSpecialization, "");
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Role Field
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {fieldOptions.map((field) => (
+                            <CheckboxPill
+                              key={field}
+                              label={field}
+                              disabled={!selectedTitle || !selectedSpecialization}
+                              checked={selectedField === field}
+                              onToggle={() => {
+                                if (!selectedTitle || !selectedSpecialization) return;
+                                const nextField = selectedField === field ? "" : field;
+                                setSelectedField(nextField);
+                                syncFinalSpecialization(selectedSpecialization, nextField);
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">
+                          Selected field becomes the job specialization used across listings.
+                        </p>
+                      </div>
+
                       {/* Job Title */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -753,29 +864,24 @@ export default function EditJobPage() {
                         )}
                       </div>
 
-                      {/* Medical Specialty */}
+                      {/* Specialization */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Medical Specialty/Department{" "}
+                          Final Specialization{" "}
                           <span className="text-red-500">*</span>
                         </label>
-                        <select
+                        <input
+                          type="text"
                           name="specialization"
                           value={formData.specialization}
                           onChange={handleInputChange}
+                          placeholder="Ex. ICU RMO, Clinical Pharmacist, Ward Nurse"
                           className={`w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
                             errors.specialization
                               ? "border-red-500"
                               : "border-gray-300"
                           }`}
-                        >
-                          <option value="">Select a specialty</option>
-                          {SPECIALIZATIONS.map((spec) => (
-                            <option key={spec} value={spec}>
-                              {spec}
-                            </option>
-                          ))}
-                        </select>
+                        />
                         {errors.specialization && (
                           <p className="mt-1 text-sm text-red-600">
                             {errors.specialization}
@@ -921,16 +1027,21 @@ export default function EditJobPage() {
                     </div>
 
                     <div className="space-y-6">
-                      {/* Medical Qualifications */}
+                      {/* Qualifications */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-3">
-                          Medical Qualifications{" "}
+                          Required Education / Degrees{" "}
                           <span className="text-red-500">*</span>
                         </label>
+                        {qualificationOptions.length === 0 && (
+                          <p className="mb-3 text-xs text-gray-500">
+                            Select healthcare title and specialization in Step 1 to get recommended degree options.
+                          </p>
+                        )}
                         <div className="flex flex-wrap gap-2 mb-4">
-                          {MEDICAL_QUALIFICATIONS.map((qual) => (
+                          {qualificationOptions.map((qual, index) => (
                             <button
-                              key={qual}
+                              key={`${qual}-${index}`}
                               type="button"
                               onClick={() => {
                                 if (qualifications.includes(qual)) {
@@ -951,9 +1062,9 @@ export default function EditJobPage() {
                         </div>
                         {qualifications.length > 0 && (
                           <div className="flex flex-wrap gap-2 mb-3">
-                            {qualifications.map((qual) => (
+                            {qualifications.map((qual, index) => (
                               <span
-                                key={qual}
+                                key={`${qual}-${index}`}
                                 className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium"
                               >
                                 {qual}
@@ -970,6 +1081,34 @@ export default function EditJobPage() {
                             ))}
                           </div>
                         )}
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            id="qualificationInput"
+                            list="all-jobseeker-degrees"
+                            placeholder="Add other accepted degree/certification"
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const input = document.getElementById(
+                                "qualificationInput"
+                              ) as HTMLInputElement;
+                              if (addToArray("qualifications", input.value.trim())) {
+                                input.value = "";
+                              }
+                            }}
+                            className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-black font-medium text-sm"
+                          >
+                            Add
+                          </button>
+                        </div>
+                        <datalist id="all-jobseeker-degrees">
+                          {ALL_JOBSEEKER_DEGREES.map((degree) => (
+                            <option key={degree} value={degree} />
+                          ))}
+                        </datalist>
                         {errors.qualifications && (
                           <p className="mt-2 text-sm text-red-600">
                             {errors.qualifications}
@@ -1289,6 +1428,33 @@ export default function EditJobPage() {
                         <p className="text-xs text-gray-500 mb-3">
                           Add up to 10 questions candidates answer while applying.
                         </p>
+                        <div className="mb-3">
+                          <label className="block text-xs text-gray-600 mb-1">
+                            Suggested questions
+                          </label>
+                          <select
+                            value={selectedScreeningPreset}
+                            onChange={(e) => {
+                              const next = e.target.value;
+                              setSelectedScreeningPreset(next);
+                              if (next && next !== "__other__") {
+                                setScreeningQuestionInput(next);
+                              }
+                              if (next === "__other__") {
+                                setScreeningQuestionInput("");
+                              }
+                            }}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          >
+                            <option value="">Select a suggested question</option>
+                            {screeningQuestionPresets.map((question) => (
+                              <option key={question} value={question}>
+                                {question}
+                              </option>
+                            ))}
+                            <option value="__other__">Other (custom question)</option>
+                          </select>
+                        </div>
                         <div className="flex flex-col sm:flex-row gap-2 mb-3">
                           <input
                             type="text"
@@ -1665,7 +1831,8 @@ export default function EditJobPage() {
                   </button>
                 ) : (
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleSubmit}
                     disabled={updating}
                     className="order-1 sm:order-2 px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all"
                   >
