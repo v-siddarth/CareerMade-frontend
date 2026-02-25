@@ -139,7 +139,9 @@ export default function ViewEmployerProfile() {
                 {profile.organizationName || "N/A"}
               </h2>
               <p className="text-center text-sm text-gray-600 mb-4">
-                {profile.organizationType || "—"}
+                {profile.organizationType === "Other"
+                  ? profile.organizationTypeOther || "Other"
+                  : profile.organizationType || "—"}
               </p>
 
               {/* Meta Info */}
@@ -154,12 +156,20 @@ export default function ViewEmployerProfile() {
                     <span className="font-medium">{profile.employeeCount}</span> employees
                   </p>
                 )}
+                {typeof profile.numberOfBeds === "number" && (
+                  <p>
+                    <span className="font-medium">{profile.numberOfBeds}</span> beds
+                  </p>
+                )}
               </div>
 
               {/* Verification Badge */}
-              <div className="text-center text-xs text-green-600 font-medium mb-6 pb-6 border-b border-gray-200">
-                ✓ Verified on 15 Jan, 2024
-              </div>
+              {profile.verification?.isVerified && profile.verification?.verifiedAt && (
+                <div className="text-center text-xs text-green-600 font-medium mb-6 pb-6 border-b border-gray-200">
+                  ✓ Verified on{" "}
+                  {new Date(profile.verification.verifiedAt).toLocaleDateString()}
+                </div>
+              )}
 
               {/* Contact Information */}
               <div className="space-y-4 p-4">
@@ -250,6 +260,16 @@ export default function ViewEmployerProfile() {
                       </p>
                       <p className="text-lg font-semibold text-gray-900">
                         {profile.employeeCount}
+                      </p>
+                    </div>
+                  )}
+                  {typeof profile.numberOfBeds === "number" && (
+                    <div>
+                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">
+                        Number of Beds
+                      </p>
+                      <p className="text-lg font-semibold text-gray-900">
+                        {profile.numberOfBeds}
                       </p>
                     </div>
                   )}
@@ -348,6 +368,47 @@ export default function ViewEmployerProfile() {
                       <span className="text-sm font-medium text-green-900">
                         {acc.name || acc}
                       </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {profile.employerCertificates && profile.employerCertificates.length > 0 && (
+              <section className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+                <h2 className="text-lg font-bold text-gray-900 mb-6">
+                  Regulatory Certificates
+                </h2>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {profile.employerCertificates.map((cert: any, idx: number) => (
+                    <div key={idx} className="p-4 border border-gray-200 rounded-xl bg-gray-50">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-gray-900">
+                          {cert.name === "Other" ? cert.customName || "Other" : cert.name}
+                        </p>
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full ${
+                            cert.category === "Mandatory"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-blue-100 text-blue-700"
+                          }`}
+                        >
+                          {cert.category}
+                        </span>
+                      </div>
+                      {cert.issuingBody && (
+                        <p className="text-sm text-gray-600 mt-1">Issued by: {cert.issuingBody}</p>
+                      )}
+                      {cert.documentUrl && (
+                        <a
+                          href={cert.documentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 hover:underline mt-2 inline-block"
+                        >
+                          Open Document
+                        </a>
+                      )}
                     </div>
                   ))}
                 </div>

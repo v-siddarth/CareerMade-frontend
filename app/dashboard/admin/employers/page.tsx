@@ -25,12 +25,14 @@ interface Employer {
   _id: string;
   organizationName: string;
   organizationType?: string;
+  organizationTypeOther?: string;
   description?: string;
   email?: string;
   phone?: string;
   website?: string;
   foundedYear?: number;
   employeeCount?: string;
+  numberOfBeds?: number;
   contactPerson?: {
     name?: string;
     designation?: string;
@@ -55,6 +57,15 @@ interface Employer {
     issueDate?: string;
     expiryDate?: string;
     certificateUrl?: string;
+  }>;
+  employerCertificates?: Array<{
+    name: string;
+    customName?: string;
+    category?: "Mandatory" | "Optional";
+    issuingBody?: string;
+    issueDate?: string;
+    expiryDate?: string;
+    documentUrl?: string;
   }>;
   verification: {
     isVerified: boolean;
@@ -100,6 +111,14 @@ const formatDate = (value?: string) => {
 const textOrDash = (value?: string | number | null) => {
   if (value === null || value === undefined || value === "") return "-";
   return String(value);
+};
+
+const orgTypeLabel = (employer?: Employer | null) => {
+  if (!employer) return "-";
+  if (employer.organizationType === "Other") {
+    return employer.organizationTypeOther || "Other";
+  }
+  return employer.organizationType || "-";
 };
 
 const SectionCard = ({ title, children }: { title: string; children: React.ReactNode }) => (
@@ -385,7 +404,7 @@ export default function EmployersManagement() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-white text-lg">{employer.organizationName}</h3>
-                      <p className="text-xs text-blue-100">{textOrDash(employer.organizationType)}</p>
+                      <p className="text-xs text-blue-100">{textOrDash(orgTypeLabel(employer))}</p>
                     </div>
                   </div>
                   {employer.verification.isVerified ? (
@@ -533,7 +552,7 @@ export default function EmployersManagement() {
                   {selectedEmployer.organizationName}
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  {textOrDash(selectedEmployer.organizationType)} • Joined {formatDate(selectedEmployer.createdAt)}
+                  {textOrDash(orgTypeLabel(selectedEmployer))} • Joined {formatDate(selectedEmployer.createdAt)}
                 </p>
               </div>
               <button
@@ -550,9 +569,10 @@ export default function EmployersManagement() {
                 <SectionCard title="Organization Overview">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                     <p><span className="text-gray-500">Organization:</span> <span className="font-medium text-gray-900">{textOrDash(selectedEmployer.organizationName)}</span></p>
-                    <p><span className="text-gray-500">Type:</span> <span className="font-medium text-gray-900">{textOrDash(selectedEmployer.organizationType)}</span></p>
+                    <p><span className="text-gray-500">Type:</span> <span className="font-medium text-gray-900">{textOrDash(orgTypeLabel(selectedEmployer))}</span></p>
                     <p><span className="text-gray-500">Founded:</span> <span className="font-medium text-gray-900">{textOrDash(selectedEmployer.foundedYear)}</span></p>
                     <p><span className="text-gray-500">Employee Size:</span> <span className="font-medium text-gray-900">{textOrDash(selectedEmployer.employeeCount)}</span></p>
+                    <p><span className="text-gray-500">No. of Beds:</span> <span className="font-medium text-gray-900">{textOrDash(selectedEmployer.numberOfBeds)}</span></p>
                   </div>
                   <div className="mt-3 text-sm text-gray-700 leading-6">
                     {selectedEmployer.description || "No organization description provided."}
@@ -676,6 +696,41 @@ export default function EmployersManagement() {
                         </div>
                       ) : (
                         <p className="text-sm text-gray-500">No verification documents uploaded.</p>
+                      )}
+                    </div>
+
+                    <div className="pt-2 border-t border-gray-200">
+                      <p className="text-sm font-semibold text-gray-700 mb-2">Regulatory Certificates</p>
+                      {selectedEmployer.employerCertificates &&
+                      selectedEmployer.employerCertificates.length > 0 ? (
+                        <div className="space-y-2">
+                          {selectedEmployer.employerCertificates.map((doc, index) => (
+                            <div key={`${doc.name}-${index}`} className="text-sm text-gray-700">
+                              <p className="font-medium text-gray-900">
+                                {doc.name === "Other" ? doc.customName || "Other" : doc.name}{" "}
+                                {doc.category ? `(${doc.category})` : ""}
+                              </p>
+                              <p>Issued by: {textOrDash(doc.issuingBody)}</p>
+                              <p>
+                                {formatDate(doc.issueDate)} to {formatDate(doc.expiryDate)}
+                              </p>
+                              {doc.documentUrl ? (
+                                <a
+                                  href={doc.documentUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[#007BFF] hover:underline"
+                                >
+                                  Open Document
+                                </a>
+                              ) : (
+                                <p className="text-gray-500">No document URL available</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">No regulatory certificates uploaded.</p>
                       )}
                     </div>
                   </div>

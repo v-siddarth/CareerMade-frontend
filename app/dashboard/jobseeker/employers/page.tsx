@@ -23,10 +23,12 @@ interface Employer {
   _id: string;
   organizationName: string;
   organizationType: string;
+  organizationTypeOther?: string;
   description: string;
   website?: string;
   foundedYear?: number;
   employeeCount?: string;
+  numberOfBeds?: number;
   address: {
     city: string;
     state: string;
@@ -74,7 +76,13 @@ export default function EmployersPage() {
     "Pharmacy",
     "Healthcare Startup",
     "Telemedicine",
+    "Other",
   ];
+
+  const getOrganizationTypeLabel = (employer: Employer) =>
+    employer.organizationType === "Other"
+      ? employer.organizationTypeOther || "Other"
+      : employer.organizationType;
 
   const specializations = [
     "General Medicine",
@@ -176,7 +184,7 @@ export default function EmployersPage() {
   };
 
   const getTypeCount = (type: string) => {
-    return employers.filter(e => e.organizationType === type).length;
+    return employers.filter(e => getOrganizationTypeLabel(e) === type).length;
   };
 
   const getSpecializationCount = (spec: string) => {
@@ -204,13 +212,13 @@ export default function EmployersPage() {
       (e) =>
         e.organizationName?.toLowerCase().includes(q) ||
         e.description?.toLowerCase().includes(q) ||
-        e.organizationType?.toLowerCase().includes(q)
+        getOrganizationTypeLabel(e)?.toLowerCase().includes(q)
     );
   }
 
   if (selectedTypes.length > 0) {
     filteredEmployers = filteredEmployers.filter(e =>
-      selectedTypes.includes(e.organizationType)
+      selectedTypes.includes(getOrganizationTypeLabel(e))
     );
   }
 
@@ -475,11 +483,17 @@ export default function EmployersPage() {
 
                         {/* Organization Type */}
                         <p className="text-sm text-gray-600 mb-3">
-                          <span className="font-medium">{employer.organizationType}</span>
+                          <span className="font-medium">{getOrganizationTypeLabel(employer)}</span>
                           {employer.employeeCount && (
                             <>
                               <span className="text-gray-400 mx-1">|</span>
                               <span className="text-gray-500">{employer.employeeCount} employees</span>
+                            </>
+                          )}
+                          {typeof employer.numberOfBeds === "number" && (
+                            <>
+                              <span className="text-gray-400 mx-1">|</span>
+                              <span className="text-gray-500">{employer.numberOfBeds} beds</span>
                             </>
                           )}
                         </p>

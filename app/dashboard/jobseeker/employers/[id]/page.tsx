@@ -23,10 +23,12 @@ interface Employer {
   _id: string;
   organizationName: string;
   organizationType: string;
+  organizationTypeOther?: string;
   description: string;
   website?: string;
   foundedYear?: number;
   employeeCount?: string;
+  numberOfBeds?: number;
   contactPerson: {
     name: string;
     designation: string;
@@ -49,6 +51,15 @@ interface Employer {
     name: string;
     issuingBody: string;
     issueDate: string;
+  }>;
+  employerCertificates?: Array<{
+    name: string;
+    customName?: string;
+    category?: "Mandatory" | "Optional";
+    issuingBody?: string;
+    issueDate?: string;
+    expiryDate?: string;
+    documentUrl?: string;
   }>;
   logo?: {
     url: string;
@@ -95,6 +106,10 @@ export default function EmployerDetailPage() {
   const router = useRouter();
   const [employer, setEmployer] = useState<Employer | null>(null);
   const [loading, setLoading] = useState(true);
+  const organizationTypeLabel =
+    employer?.organizationType === "Other"
+      ? employer.organizationTypeOther || "Other"
+      : employer?.organizationType || "";
 
   useEffect(() => {
     if (params.id) {
@@ -208,7 +223,7 @@ export default function EmployerDetailPage() {
                   )}
                 </div>
 
-                <p className="text-xl text-blue-100 mb-4">{employer.organizationType}</p>
+                <p className="text-xl text-blue-100 mb-4">{organizationTypeLabel}</p>
 
                 <div className="flex flex-wrap gap-4 text-sm">
                   <div className="flex items-center gap-2">
@@ -221,6 +236,12 @@ export default function EmployerDetailPage() {
                     <div className="flex items-center gap-2">
                       <Users size={16} />
                       <span>{employer.employeeCount} employees</span>
+                    </div>
+                  )}
+                  {typeof employer.numberOfBeds === "number" && (
+                    <div className="flex items-center gap-2">
+                      <Building2 size={16} />
+                      <span>{employer.numberOfBeds} beds</span>
                     </div>
                   )}
                   {employer.foundedYear && (
@@ -416,6 +437,47 @@ export default function EmployerDetailPage() {
                             })}
                           </p>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {employer.employerCertificates && employer.employerCertificates.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Regulatory Certificates</h3>
+                  <div className="space-y-4">
+                    {employer.employerCertificates.map((cert, idx) => (
+                      <div key={idx} className="rounded-lg border border-gray-200 p-3 bg-gray-50">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-semibold text-gray-900">
+                            {cert.name === "Other" ? cert.customName || "Other" : cert.name}
+                          </p>
+                          {cert.category && (
+                            <span
+                              className={`text-xs px-2 py-0.5 rounded-full ${
+                                cert.category === "Mandatory"
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-blue-100 text-blue-700"
+                              }`}
+                            >
+                              {cert.category}
+                            </span>
+                          )}
+                        </div>
+                        {cert.issuingBody && (
+                          <p className="text-sm text-gray-600 mt-1">Issued by: {cert.issuingBody}</p>
+                        )}
+                        {cert.documentUrl && (
+                          <a
+                            href={cert.documentUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-[#155DFC] hover:underline mt-2 inline-block"
+                          >
+                            View document
+                          </a>
+                        )}
                       </div>
                     ))}
                   </div>

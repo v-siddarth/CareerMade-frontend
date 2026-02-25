@@ -218,6 +218,18 @@ export default function ApplicationDetailPage() {
     "—";
   const experienceYears =
     js.experience?.totalYears ?? js.experience?.years ?? undefined;
+  const doctorProfessionalInfo = js.professionalInfo || {};
+  const doctorCouncilNo = doctorProfessionalInfo.councilNo || "";
+  const regDateRaw = doctorProfessionalInfo.registrationDate
+    ? new Date(doctorProfessionalInfo.registrationDate)
+    : null;
+  const regExpRaw = doctorProfessionalInfo.registrationExpiryDate
+    ? new Date(doctorProfessionalInfo.registrationExpiryDate)
+    : null;
+  const doctorRegistrationDate =
+    regDateRaw && !Number.isNaN(regDateRaw.getTime()) ? regDateRaw.toLocaleDateString() : "";
+  const doctorRegistrationExpiryDate =
+    regExpRaw && !Number.isNaN(regExpRaw.getTime()) ? regExpRaw.toLocaleDateString() : "";
   const institution =
     (app.education?.[0]?.institution ||
       js.education?.[0]?.institution ||
@@ -401,6 +413,30 @@ export default function ApplicationDetailPage() {
                   {summaryText.split(/\r?\n/).map((p, i) => (
                     <p key={i}>{p}</p>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {(doctorCouncilNo || doctorRegistrationDate || doctorRegistrationExpiryDate) && (
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-base font-semibold text-gray-900 mb-4">
+                  Professional registration
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                  <div className="rounded-lg bg-gray-50 px-4 py-3">
+                    <p className="text-gray-500">Council No</p>
+                    <p className="font-medium text-gray-900">{doctorCouncilNo || "N/A"}</p>
+                  </div>
+                  <div className="rounded-lg bg-gray-50 px-4 py-3">
+                    <p className="text-gray-500">Registration Date</p>
+                    <p className="font-medium text-gray-900">{doctorRegistrationDate || "N/A"}</p>
+                  </div>
+                  <div className="rounded-lg bg-gray-50 px-4 py-3">
+                    <p className="text-gray-500">Validity Expiry</p>
+                    <p className="font-medium text-gray-900">
+                      {doctorRegistrationExpiryDate || "N/A"}
+                    </p>
+                  </div>
                 </div>
               </div>
             )}

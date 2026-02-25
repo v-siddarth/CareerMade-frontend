@@ -78,6 +78,8 @@ type JobSeekerProfile = {
     doctorSubSpecialties?: string[];
     otherDoctorSubSpecialty?: string;
     councilNo?: string;
+    registrationDate?: string;
+    registrationExpiryDate?: string;
     location?: { country?: string; state?: string; city?: string };
   };
   education?: {
@@ -321,6 +323,13 @@ const MAHARASHTRA_CITIES = [
   "Washim",
   "Yavatmal",
 ];
+
+const toDateInputValue = (value?: string) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().split("T")[0];
+};
 
 const PLAN_SUMMARY = [
   { name: "Starter Care", price: 300, seats: "1 recruiter" },
@@ -982,6 +991,27 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                   className="space-y-5"
                   onSubmit={(e) => {
                     e.preventDefault();
+                    if (selectedCategory === "Doctor") {
+                      const councilNo = (profile.professionalInfo?.councilNo || "").trim();
+                      const registrationDate = profile.professionalInfo?.registrationDate || "";
+                      const registrationExpiryDate =
+                        profile.professionalInfo?.registrationExpiryDate || "";
+
+                      if (councilNo && (!registrationDate || !registrationExpiryDate)) {
+                        toast.error("Doctor registration date and validity expiry date are required");
+                        return;
+                      }
+
+                      if (registrationDate && registrationExpiryDate) {
+                        const reg = new Date(registrationDate);
+                        const exp = new Date(registrationExpiryDate);
+                        if (!Number.isNaN(reg.getTime()) && !Number.isNaN(exp.getTime()) && exp < reg) {
+                          toast.error("Validity expiry date must be after registration date");
+                          return;
+                        }
+                      }
+                    }
+
                     saveProfilePayload(
                       {
                         title: profile.title,
@@ -1033,6 +1063,8 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                                     doctorSubSpecialties: [],
                                     otherDoctorSubSpecialty: "",
                                     councilNo: "",
+                                    registrationDate: "",
+                                    registrationExpiryDate: "",
                                   },
                                   specializations: [],
                                 }))
@@ -1196,21 +1228,57 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                     </label>
 
                     {selectedCategory === "Doctor" && (
-                      <label className="text-sm font-medium text-gray-700">
-                        Council No
-                        <input
-                          type="text"
-                          value={profile.professionalInfo?.councilNo || ""}
-                          onChange={(e) =>
-                            updateProfile((prev) => ({
-                              ...prev,
-                              professionalInfo: { ...prev.professionalInfo, councilNo: e.target.value },
-                            }))
-                          }
-                          className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
-                          placeholder="Enter medical council registration number"
-                        />
-                      </label>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label className="text-sm font-medium text-gray-700 sm:col-span-2">
+                          Council No
+                          <input
+                            type="text"
+                            value={profile.professionalInfo?.councilNo || ""}
+                            onChange={(e) =>
+                              updateProfile((prev) => ({
+                                ...prev,
+                                professionalInfo: { ...prev.professionalInfo, councilNo: e.target.value },
+                              }))
+                            }
+                            className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
+                            placeholder="Enter medical council registration number"
+                          />
+                        </label>
+                        <label className="text-sm font-medium text-gray-700">
+                          Registration Date
+                          <input
+                            type="date"
+                            value={toDateInputValue(profile.professionalInfo?.registrationDate)}
+                            onChange={(e) =>
+                              updateProfile((prev) => ({
+                                ...prev,
+                                professionalInfo: {
+                                  ...prev.professionalInfo,
+                                  registrationDate: e.target.value || "",
+                                },
+                              }))
+                            }
+                            className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
+                          />
+                        </label>
+                        <label className="text-sm font-medium text-gray-700">
+                          Validity Expiry Date
+                          <input
+                            type="date"
+                            value={toDateInputValue(profile.professionalInfo?.registrationExpiryDate)}
+                            onChange={(e) =>
+                              updateProfile((prev) => ({
+                                ...prev,
+                                professionalInfo: {
+                                  ...prev.professionalInfo,
+                                  registrationExpiryDate: e.target.value || "",
+                                },
+                              }))
+                            }
+                            className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
+                          />
+                        </label>
+                      </div>
                     )}
                   </div>
 
