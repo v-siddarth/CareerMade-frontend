@@ -45,6 +45,15 @@ type ProfileHubProps = {
   initialTab?: TabId;
 };
 
+type DriveDocument = {
+  url?: string;
+  filename?: string;
+  uploadedAt?: string;
+  driveFileId?: string;
+  storageType?: string;
+  bytes?: number;
+};
+
 type JobSeekerProfile = {
   profileCompletion?: number;
   title?: string;
@@ -80,6 +89,7 @@ type JobSeekerProfile = {
     councilNo?: string;
     registrationDate?: string;
     registrationExpiryDate?: string;
+    councilRegistrationCertificate?: DriveDocument;
     location?: { country?: string; state?: string; city?: string };
   };
   education?: {
@@ -91,6 +101,7 @@ type JobSeekerProfile = {
     yearOfCompletion?: number;
     grade?: string;
     customDegree?: string;
+    educationCertificate?: DriveDocument;
   }[];
   workExperience?: {
     _id?: string;
@@ -102,6 +113,7 @@ type JobSeekerProfile = {
     endDate?: string;
     isCurrent?: boolean;
     description?: string;
+    experienceDocument?: DriveDocument;
   }[];
   experience?: {
     totalYears?: number;
@@ -139,6 +151,7 @@ type JobSeekerProfile = {
     email?: string;
     phone?: string;
     profileImage?: string;
+    profileImageDriveFileId?: string;
   };
 };
 
@@ -147,6 +160,11 @@ type ApiResponse = {
     jobSeeker?: JobSeekerProfile;
     resume?: JobSeekerProfile["resume"];
     coverLetter?: JobSeekerProfile["coverLetter"];
+    councilRegistrationCertificate?: DriveDocument;
+    educationId?: string;
+    educationCertificate?: DriveDocument;
+    experienceId?: string;
+    experienceDocument?: DriveDocument;
   };
 };
 
@@ -240,7 +258,7 @@ const DOCTOR_FIELD_OPTIONS: Record<string, string[]> = {
 };
 
 const DEGREE_OPTIONS: Record<string, string[]> = {
-  Doctor: ["MBBS", "MD", "MS", "DNB", "DM", "MCh", "BAMS", "BHMS", "BUMS", "Unani", "BDS", "MDS", "Fellowship", "FRCS", "MRCP", "Other"],
+  Doctor: ["MBBS", "MD", "MS", "DNB", "DM", "MCh", "BAMS", "BHMS", "BUMS", "Unani", "BDS", "MDS", "Fellowship", "FRCS", "MRCS", "Other"],
   Nurse: ["ANM", "GNM", "BSc Nursing", "Post Basic BSc Nursing", "MSc Nursing", "Certificate", "Diploma", "Other"],
   Technician: ["DMLT", "BMLT", "BPT", "MPT", "Diploma in OT Technician", "Diploma in Radiology Imaging", "Diploma in Dialysis Technician", "BSc", "Diploma", "Certificate", "Other"],
   Pharmacy: ["D.Pharm", "B.Pharm", "M.Pharm", "Pharm.D", "Diploma", "Certificate", "Other"],
@@ -336,11 +354,36 @@ const PLAN_SUMMARY = [
   { name: "Growth Care", price: 600, seats: "3 recruiters" },
   { name: "Pro Care", price: 900, seats: "Unlimited" },
 ];
+const MAX_PREFERRED_LOCATIONS = 10;
 
 const getNextFlowTab = (tab: TabId): TabId | null => {
   const idx = TAB_FLOW.indexOf(tab);
   if (idx === -1 || idx === TAB_FLOW.length - 1) return null;
   return TAB_FLOW[idx + 1];
+};
+
+const normalizeDriveImageUrl = (url?: string, driveFileId?: string) => {
+  if (driveFileId) {
+    return `https://drive.google.com/uc?export=view&id=${driveFileId}`;
+  }
+  if (!url) return "";
+  if (url.includes("drive.google.com/uc?")) return url;
+  const idMatch = url.match(/\/file\/d\/([^/]+)/);
+  if (idMatch?.[1]) return `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
+  return url;
+};
+
+const normalizeProfileData = (profile: JobSeekerProfile | null): JobSeekerProfile | null => {
+  if (!profile) return profile;
+  return {
+    ...profile,
+    education: (profile.education || []).map((item) => {
+      if (!item) return item;
+      const degree = item.degree === "MRCP" ? "MRCS" : item.degree;
+      const field = item.field === "MRCP" ? "MRCS" : item.field;
+      return { ...item, degree, field };
+    }),
+  };
 };
 
 export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps) {
@@ -350,7 +393,8 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
   const [profile, setProfile] = useState<JobSeekerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [deletingDoc, setDeletingDoc] = useState<"resume" | "coverLetter" | null>(null);
+  const [deletingDoc, setDeletingDoc] = useState<string | null>(null);
+  const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [panCardFile, setPanCardFile] = useState<File | null>(null);
   const [aadhaarFrontFile, setAadhaarFrontFile] = useState<File | null>(null);
@@ -365,7 +409,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
         const data = await apiFetch<ApiResponse>("/api/jobseeker/profile");
         const nextProfile = data?.data?.jobSeeker || null;
         if (mounted) {
-          setProfile(nextProfile);
+          setProfile(normalizeProfileData(nextProfile));
           if (nextProfile?.user) {
             authStorage.setUser(nextProfile.user);
           }
@@ -401,6 +445,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
   }, [profile]);
 
   const user = profile?.user || (authStorage.getUser<JobSeekerProfile["user"]>() ?? {});
+  const profileImageUrl = normalizeDriveImageUrl(user?.profileImage, user?.profileImageDriveFileId);
 
   const completion = useMemo(() => {
     if (!profile) return 0;
@@ -440,12 +485,66 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
     return items;
   }, [profile]);
 
+  const documentStatusItems = useMemo(() => {
+    if (!profile) return [] as { label: string; uploaded: boolean; details?: string }[];
+
+    const educationTotal = (profile.education || []).length;
+    const educationUploaded = (profile.education || []).filter((item) => Boolean(item.educationCertificate?.url)).length;
+    const workTotal = (profile.workExperience || []).length;
+    const workUploaded = (profile.workExperience || []).filter((item) => Boolean(item.experienceDocument?.url)).length;
+
+    return [
+      { label: "Profile Photo", uploaded: Boolean(profileImageUrl) },
+      { label: "Resume", uploaded: Boolean(profile.resume?.url) },
+      { label: "Cover Letter", uploaded: Boolean(profile.coverLetter?.url) },
+      {
+        label: "Council Registration Certificate",
+        uploaded: Boolean(profile.professionalInfo?.councilRegistrationCertificate?.url),
+      },
+      { label: "PAN Card Image", uploaded: Boolean(profile.documents?.panCardImage?.url) },
+      {
+        label: "Aadhaar Front Image",
+        uploaded: Boolean(profile.documents?.aadhaarCardFrontImage?.url || profile.documents?.aadhaarCardImage?.url),
+      },
+      { label: "Aadhaar Back Image", uploaded: Boolean(profile.documents?.aadhaarCardBackImage?.url) },
+      {
+        label: "Education Certificates",
+        uploaded: educationTotal > 0 && educationUploaded === educationTotal,
+        details: `${educationUploaded}/${educationTotal || 0} uploaded`,
+      },
+      {
+        label: "Work Experience Documents",
+        uploaded: workTotal > 0 && workUploaded === workTotal,
+        details: `${workUploaded}/${workTotal || 0} uploaded`,
+      },
+    ];
+  }, [profile, profileImageUrl]);
+
   const updateProfile = (updater: (prev: JobSeekerProfile) => JobSeekerProfile) => {
     setProfile((prev) => {
       if (!prev) return prev;
       return updater(prev);
     });
   };
+
+  const getNormalizedEducationPayload = (educationItems: JobSeekerProfile["education"] = profile?.education || []) =>
+    (educationItems || []).map((item) => {
+      const degree = item.degree === "MRCP" ? "MRCS" : item.degree || "";
+      const customDegree = item.customDegree?.trim() || "";
+      return {
+        _id: item._id,
+        degree,
+        field:
+          degree === "Other"
+            ? customDegree || "Other"
+            : (item.field === "MRCP" ? "MRCS" : item.field || degree),
+        institution: item.institution || "",
+        startYear: Number(item.startYear) || undefined,
+        yearOfCompletion: Number(item.yearOfCompletion) || undefined,
+        grade: item.grade || "",
+        educationCertificate: item.educationCertificate,
+      };
+    });
 
   const saveProfilePayload = async (
     payload: Record<string, unknown>,
@@ -465,7 +564,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
 
       normalizedPayload.jobPreferences = {
         ...jobPreferences,
-        preferredLocations: sanitizedLocations,
+        preferredLocations: sanitizedLocations.slice(0, MAX_PREFERRED_LOCATIONS),
       };
     }
 
@@ -477,7 +576,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
       });
       const nextProfile = data?.data?.jobSeeker;
       if (nextProfile) {
-        setProfile(nextProfile);
+        setProfile(normalizeProfileData(nextProfile));
         if (nextProfile.user) authStorage.setUser(nextProfile.user);
       }
       toast.success(message);
@@ -507,7 +606,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
       });
       const nextProfile = data?.data?.jobSeeker;
       if (nextProfile) {
-        setProfile(nextProfile);
+        setProfile(normalizeProfileData(nextProfile));
         if (nextProfile.user) authStorage.setUser(nextProfile.user);
       }
       setPanCardFile(null);
@@ -553,7 +652,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
       });
       const nextProfile = data?.data?.jobSeeker;
       if (nextProfile) {
-        setProfile(nextProfile);
+        setProfile(normalizeProfileData(nextProfile));
         if (nextProfile.user) authStorage.setUser(nextProfile.user);
       }
       setProfilePhotoFile(null);
@@ -598,6 +697,205 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
         [field]: null,
       }));
       toast.success(`${field === "resume" ? "Resume" : "Cover letter"} removed`);
+    } catch (error) {
+      const text = error instanceof Error ? error.message : "Delete failed";
+      toast.error(text);
+    } finally {
+      setDeletingDoc(null);
+    }
+  };
+
+  const uploadCouncilRegistrationCertificate = async (file: File) => {
+    const formData = new FormData();
+    formData.append("councilRegistrationCertificate", file);
+    setUploadingDoc("councilRegistrationCertificate");
+    try {
+      const data = await apiFetch<ApiResponse>("/api/jobseeker/professional-document/council-registration-certificate", {
+        method: "POST",
+        body: formData,
+      });
+      const nextDoc = data?.data?.councilRegistrationCertificate;
+      if (nextDoc) {
+        updateProfile((prev) => ({
+          ...prev,
+          professionalInfo: {
+            ...(prev.professionalInfo || {}),
+            councilRegistrationCertificate: nextDoc,
+          },
+        }));
+      }
+      toast.success("Council registration certificate uploaded");
+    } catch (error) {
+      const text = error instanceof Error ? error.message : "Upload failed";
+      toast.error(text);
+    } finally {
+      setUploadingDoc(null);
+    }
+  };
+
+  const deleteCouncilRegistrationCertificate = async () => {
+    setDeletingDoc("councilRegistrationCertificate");
+    try {
+      await apiFetch("/api/jobseeker/professional-document/council-registration-certificate", { method: "DELETE" });
+      updateProfile((prev) => ({
+        ...prev,
+        professionalInfo: {
+          ...(prev.professionalInfo || {}),
+          councilRegistrationCertificate: undefined,
+        },
+      }));
+      toast.success("Council registration certificate removed");
+    } catch (error) {
+      const text = error instanceof Error ? error.message : "Delete failed";
+      toast.error(text);
+    } finally {
+      setDeletingDoc(null);
+    }
+  };
+
+  const saveEducationThenUploadCertificate = async (educationIndex: number, file: File) => {
+    setUploadingDoc(`education:pending:${educationIndex}`);
+    try {
+      const saveResponse = await apiFetch<ApiResponse>("/api/jobseeker/profile", {
+        method: "PUT",
+        body: JSON.stringify({ education: getNormalizedEducationPayload(profile?.education) }),
+      });
+      const updatedProfile = normalizeProfileData(saveResponse?.data?.jobSeeker || null);
+      if (updatedProfile) {
+        setProfile(updatedProfile);
+        if (updatedProfile.user) authStorage.setUser(updatedProfile.user);
+      }
+
+      const educationId = updatedProfile?.education?.[educationIndex]?._id;
+      if (!educationId) {
+        toast.error("Education saved, but could not find the new entry for certificate upload.");
+        return;
+      }
+
+      await uploadEducationCertificate(educationId, file);
+    } catch (error) {
+      const text = error instanceof Error ? error.message : "Failed to save education before certificate upload";
+      toast.error(text);
+    } finally {
+      setUploadingDoc(null);
+    }
+  };
+
+  const uploadEducationCertificate = async (educationId: string, file: File) => {
+    const formData = new FormData();
+    formData.append("educationCertificate", file);
+    setUploadingDoc(`education:${educationId}`);
+    try {
+      const data = await apiFetch<ApiResponse>(`/api/jobseeker/education/${educationId}/certificate`, {
+        method: "POST",
+        body: formData,
+      });
+      const nextDoc = data?.data?.educationCertificate;
+      if (nextDoc) {
+        updateProfile((prev) => ({
+          ...prev,
+          education: (prev.education || []).map((item) =>
+            item._id === educationId ? { ...item, educationCertificate: nextDoc } : item
+          ),
+        }));
+      }
+      toast.success("Education certificate uploaded");
+    } catch (error) {
+      const text = error instanceof Error ? error.message : "Upload failed";
+      toast.error(text);
+    } finally {
+      setUploadingDoc(null);
+    }
+  };
+
+  const deleteEducationCertificate = async (educationId: string) => {
+    setDeletingDoc(`education:${educationId}`);
+    try {
+      await apiFetch(`/api/jobseeker/education/${educationId}/certificate`, { method: "DELETE" });
+      updateProfile((prev) => ({
+        ...prev,
+        education: (prev.education || []).map((item) =>
+          item._id === educationId ? { ...item, educationCertificate: undefined } : item
+        ),
+      }));
+      toast.success("Education certificate removed");
+    } catch (error) {
+      const text = error instanceof Error ? error.message : "Delete failed";
+      toast.error(text);
+    } finally {
+      setDeletingDoc(null);
+    }
+  };
+
+  const uploadWorkExperienceDocument = async (experienceId: string, file: File) => {
+    const formData = new FormData();
+    formData.append("experienceDocument", file);
+    setUploadingDoc(`experience:${experienceId}`);
+    try {
+      const data = await apiFetch<ApiResponse>(`/api/jobseeker/work-experience/${experienceId}/document`, {
+        method: "POST",
+        body: formData,
+      });
+      const nextDoc = data?.data?.experienceDocument;
+      if (nextDoc) {
+        updateProfile((prev) => ({
+          ...prev,
+          workExperience: (prev.workExperience || []).map((item) =>
+            item._id === experienceId ? { ...item, experienceDocument: nextDoc } : item
+          ),
+        }));
+      }
+      toast.success("Work experience document uploaded");
+    } catch (error) {
+      const text = error instanceof Error ? error.message : "Upload failed";
+      toast.error(text);
+    } finally {
+      setUploadingDoc(null);
+    }
+  };
+
+  const saveWorkExperienceThenUploadDocument = async (experienceIndex: number, file: File) => {
+    setUploadingDoc(`experience:pending:${experienceIndex}`);
+    try {
+      const saveResponse = await apiFetch<ApiResponse>("/api/jobseeker/profile", {
+        method: "PUT",
+        body: JSON.stringify({
+          experience: profile?.experience || {},
+          workExperience: profile?.workExperience || [],
+        }),
+      });
+      const updatedProfile = normalizeProfileData(saveResponse?.data?.jobSeeker || null);
+      if (updatedProfile) {
+        setProfile(updatedProfile);
+        if (updatedProfile.user) authStorage.setUser(updatedProfile.user);
+      }
+
+      const experienceId = updatedProfile?.workExperience?.[experienceIndex]?._id;
+      if (!experienceId) {
+        toast.error("Work experience saved, but could not find the new entry for document upload.");
+        return;
+      }
+
+      await uploadWorkExperienceDocument(experienceId, file);
+    } catch (error) {
+      const text = error instanceof Error ? error.message : "Failed to save work experience before document upload";
+      toast.error(text);
+    } finally {
+      setUploadingDoc(null);
+    }
+  };
+
+  const deleteWorkExperienceDocument = async (experienceId: string) => {
+    setDeletingDoc(`experience:${experienceId}`);
+    try {
+      await apiFetch(`/api/jobseeker/work-experience/${experienceId}/document`, { method: "DELETE" });
+      updateProfile((prev) => ({
+        ...prev,
+        workExperience: (prev.workExperience || []).map((item) =>
+          item._id === experienceId ? { ...item, experienceDocument: undefined } : item
+        ),
+      }));
+      toast.success("Work experience document removed");
     } catch (error) {
       const text = error instanceof Error ? error.message : "Delete failed";
       toast.error(text);
@@ -656,9 +954,9 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
           <aside className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
             <div className="flex items-start gap-4">
               <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-r from-[#155DFC] to-[#00B8DB] text-white">
-                {user?.profileImage ? (
+                {profileImageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={user.profileImage} alt="Profile" className="h-full w-full object-cover" />
+                  <img src={profileImageUrl} alt="Profile" className="h-full w-full object-cover" />
                 ) : (
                   <UserRound className="h-7 w-7" />
                 )}
@@ -776,6 +1074,26 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                       <h4 className="font-semibold text-gray-900">Professional Status</h4>
                       <p className="mt-2 text-sm text-gray-600">Category: {profile.professionalInfo?.category || "Missing"}</p>
                       <p className="mt-1 text-sm text-gray-600">Resume: {profile.resume?.url ? "Uploaded" : "Missing"}</p>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-gray-200 p-5">
+                    <h4 className="font-semibold text-gray-900">Document Status</h4>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      {documentStatusItems.map((item) => (
+                        <div key={item.label} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">{item.label}</p>
+                            {item.details ? <p className="text-xs text-gray-500">{item.details}</p> : null}
+                          </div>
+                          <span
+                            className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                              item.uploaded ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                            }`}
+                          >
+                            {item.uploaded ? "Uploaded" : "Missing"}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -1278,6 +1596,42 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                             className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
                           />
                         </label>
+                        <div className="sm:col-span-2 rounded-xl border border-gray-200 p-3">
+                          <p className="text-sm font-medium text-gray-700">Council Registration Certificate</p>
+                          {profile.professionalInfo?.councilRegistrationCertificate?.url ? (
+                            <div className="mt-2 space-y-2">
+                              <a
+                                href={profile.professionalInfo.councilRegistrationCertificate.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="block text-sm text-blue-700 underline"
+                              >
+                                {profile.professionalInfo.councilRegistrationCertificate.filename || "View certificate"}
+                              </a>
+                              <button
+                                type="button"
+                                disabled={deletingDoc === "councilRegistrationCertificate"}
+                                onClick={deleteCouncilRegistrationCertificate}
+                                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600"
+                              >
+                                {deletingDoc === "councilRegistrationCertificate" ? "Removing..." : "Remove certificate"}
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="mt-2 block cursor-pointer rounded-xl border border-dashed border-blue-300 bg-blue-50 p-3 text-center text-xs font-semibold text-blue-700">
+                              {uploadingDoc === "councilRegistrationCertificate" ? "Uploading..." : "Upload Council Registration Certificate"}
+                              <input
+                                type="file"
+                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) uploadCouncilRegistrationCertificate(file);
+                                }}
+                              />
+                            </label>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1308,20 +1662,8 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                   className="space-y-5"
                   onSubmit={(e) => {
                     e.preventDefault();
-                    const normalizedEducation = (profile.education || []).map((item) => {
-                      const degree = item.degree || "";
-                      const customDegree = item.customDegree?.trim() || "";
-                      return {
-                        degree,
-                        field: degree === "Other" ? customDegree || "Other" : degree,
-                        institution: item.institution || "",
-                        startYear: Number(item.startYear) || undefined,
-                        yearOfCompletion: Number(item.yearOfCompletion) || undefined,
-                        grade: item.grade || "",
-                      };
-                    });
                     saveProfilePayload(
-                      { education: normalizedEducation },
+                      { education: getNormalizedEducationPayload(profile.education) },
                       "Education details updated",
                       getNextFlowTab("education") || undefined
                     );
@@ -1455,6 +1797,59 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                               className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
                             />
                           </label>
+                          <div className="sm:col-span-2 rounded-xl border border-gray-200 p-3">
+                            <p className="text-sm font-medium text-gray-700">Education Certificate (Optional)</p>
+                            {edu.educationCertificate?.url ? (
+                              <div className="mt-2 space-y-2">
+                                <a
+                                  href={edu.educationCertificate.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="block text-sm text-blue-700 underline"
+                                >
+                                  {edu.educationCertificate.filename || "View certificate"}
+                                </a>
+                                {edu._id ? (
+                                  <button
+                                    type="button"
+                                    disabled={deletingDoc === `education:${edu._id}`}
+                                    onClick={() => deleteEducationCertificate(edu._id!)}
+                                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600"
+                                  >
+                                    {deletingDoc === `education:${edu._id}` ? "Removing..." : "Remove certificate"}
+                                  </button>
+                                ) : null}
+                              </div>
+                            ) : edu._id ? (
+                              <label className="mt-2 block cursor-pointer rounded-xl border border-dashed border-blue-300 bg-blue-50 p-3 text-center text-xs font-semibold text-blue-700">
+                                {uploadingDoc === `education:${edu._id}` ? "Uploading..." : "Upload Education Certificate"}
+                                <input
+                                  type="file"
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) uploadEducationCertificate(edu._id!, file);
+                                  }}
+                                />
+                              </label>
+                            ) : (
+                              <label className="mt-2 block cursor-pointer rounded-xl border border-dashed border-blue-300 bg-blue-50 p-3 text-center text-xs font-semibold text-blue-700">
+                                {uploadingDoc === `education:pending:${index}`
+                                  ? "Saving education and uploading..."
+                                  : "Upload Education Certificate"}
+                                <input
+                                  type="file"
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) saveEducationThenUploadCertificate(index, file);
+                                  }}
+                                />
+                              </label>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -1631,6 +2026,59 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                               className="mt-1 min-h-[90px] w-full rounded-xl border border-gray-300 px-3 py-2"
                             />
                           </label>
+                          <div className="sm:col-span-2 rounded-xl border border-gray-200 p-3">
+                            <p className="text-sm font-medium text-gray-700">Work Experience Document</p>
+                            {exp.experienceDocument?.url ? (
+                              <div className="mt-2 space-y-2">
+                                <a
+                                  href={exp.experienceDocument.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="block text-sm text-blue-700 underline"
+                                >
+                                  {exp.experienceDocument.filename || "View document"}
+                                </a>
+                                {exp._id ? (
+                                  <button
+                                    type="button"
+                                    disabled={deletingDoc === `experience:${exp._id}`}
+                                    onClick={() => deleteWorkExperienceDocument(exp._id!)}
+                                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600"
+                                  >
+                                    {deletingDoc === `experience:${exp._id}` ? "Removing..." : "Remove document"}
+                                  </button>
+                                ) : null}
+                              </div>
+                            ) : exp._id ? (
+                              <label className="mt-2 block cursor-pointer rounded-xl border border-dashed border-blue-300 bg-blue-50 p-3 text-center text-xs font-semibold text-blue-700">
+                                {uploadingDoc === `experience:${exp._id}` ? "Uploading..." : "Upload Work Experience Document"}
+                                <input
+                                  type="file"
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) uploadWorkExperienceDocument(exp._id!, file);
+                                  }}
+                                />
+                              </label>
+                            ) : (
+                              <label className="mt-2 block cursor-pointer rounded-xl border border-dashed border-blue-300 bg-blue-50 p-3 text-center text-xs font-semibold text-blue-700">
+                                {uploadingDoc === `experience:pending:${index}`
+                                  ? "Saving work experience and uploading..."
+                                  : "Upload Work Experience Document"}
+                                <input
+                                  type="file"
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) saveWorkExperienceThenUploadDocument(index, file);
+                                  }}
+                                />
+                              </label>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -1761,24 +2209,35 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                       <h4 className="text-sm font-semibold text-gray-800">Preferred Locations</h4>
                       <button
                         type="button"
+                        disabled={(profile.jobPreferences?.preferredLocations || []).length >= MAX_PREFERRED_LOCATIONS}
                         onClick={() =>
-                          updateProfile((prev) => ({
-                            ...prev,
-                            jobPreferences: {
-                              ...(prev.jobPreferences || {}),
-                              preferredLocations: [
-                                ...(prev.jobPreferences?.preferredLocations || []),
-                                { city: "", state: "Maharashtra", country: "India" },
-                              ],
-                            },
-                          }))
+                          updateProfile((prev) => {
+                            const current = prev.jobPreferences?.preferredLocations || [];
+                            if (current.length >= MAX_PREFERRED_LOCATIONS) {
+                              toast.error(`You can add up to ${MAX_PREFERRED_LOCATIONS} preferred locations only.`);
+                              return prev;
+                            }
+                            return {
+                              ...prev,
+                              jobPreferences: {
+                                ...(prev.jobPreferences || {}),
+                                preferredLocations: [
+                                  ...current,
+                                  { city: "", state: "Maharashtra", country: "India" },
+                                ],
+                              },
+                            };
+                          })
                         }
-                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700"
+                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <Plus className="h-3.5 w-3.5" />
                         Add Location
                       </button>
                     </div>
+                    <p className="mb-3 text-xs text-gray-500">
+                      {(profile.jobPreferences?.preferredLocations || []).length}/{MAX_PREFERRED_LOCATIONS} locations added
+                    </p>
                     <div className="space-y-3">
                       {(profile.jobPreferences?.preferredLocations || []).map((location, index) => (
                         <div key={index} className="grid gap-3 sm:grid-cols-4">

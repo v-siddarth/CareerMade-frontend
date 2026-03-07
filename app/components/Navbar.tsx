@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, CheckCheck, ExternalLink, Menu, Shield, X } from "lucide-react";
-import Image from "next/image";
 import { authStorage } from "@/lib/api-client";
 import {
   type AppNotification,
@@ -576,14 +575,7 @@ export default function Navbar() {
               onClick={() => navigate("/")}
               aria-label="Go to home"
             >
-              <Image
-                src="/logo.png"
-                alt="CareerMade"
-                width={140}
-                height={32}
-                priority
-                style={{ width: "140px", height: "auto" }}
-              />
+              <img src="/logo.png" alt="CareerMade" className="h-8 w-auto" />
             </motion.button>
 
             <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
@@ -612,7 +604,7 @@ export default function Navbar() {
                     className="flex h-9 items-center justify-center gap-1 rounded-md px-2 text-sm font-medium text-gray-800 transition hover:bg-gray-100"
                     aria-label="Open InstantCV"
                   >
-                    <Image src="/star.png" alt="InstantCV" width={16} height={16} />
+                    <img src="/star.png" alt="InstantCV" className="h-4 w-4" />
                     <span>InstantCV</span>
                   </button>
                 )}
@@ -679,7 +671,7 @@ export default function Navbar() {
                 className="flex h-9 items-center justify-center gap-1 rounded-md px-2 text-sm font-medium text-gray-800 transition hover:bg-gray-100"
                 aria-label="Open InstantCV"
               >
-                <Image src="/star.png" alt="InstantCV" width={16} height={16} />
+                <img src="/star.png" alt="InstantCV" className="h-4 w-4" />
                 <span className="hidden sm:inline">InstantCV</span>
               </button>
             )}
