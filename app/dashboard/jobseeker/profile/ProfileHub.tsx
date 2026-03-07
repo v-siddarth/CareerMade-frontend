@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
 import { apiFetch, authStorage, logout } from "@/lib/api-client";
+import { CITY_OPTIONS_BY_STATE, LOCATION_STATE_OPTIONS } from "@/lib/location-options";
 import {
   Bell,
   Briefcase,
@@ -289,59 +290,6 @@ const BENEFITS_OPTIONS = [
   "Indemnity Insurance",
 ];
 
-const MAHARASHTRA_CITIES = [
-  "Ahmednagar",
-  "Akola",
-  "Alibag",
-  "Amravati",
-  "Aurangabad",
-  "Baramati",
-  "Beed",
-  "Bhandara",
-  "Bhiwandi",
-  "Bhusawal",
-  "Boisar",
-  "Chandrapur",
-  "Dhule",
-  "Gadchiroli",
-  "Gondia",
-  "Hinganghat",
-  "Hingoli",
-  "Ichalkaranji",
-  "Jalgaon",
-  "Jalna",
-  "Karad",
-  "Khamgaon",
-  "Kolhapur",
-  "Latur",
-  "Malegaon",
-  "Mira-Bhayandar",
-  "Mumbai",
-  "Nagpur",
-  "Nanded",
-  "Nandurbar",
-  "Nashik",
-  "Navi Mumbai",
-  "Osmanabad",
-  "Palghar",
-  "Panvel",
-  "Parbhani",
-  "Pimpri-Chinchwad",
-  "Pune",
-  "Raigad",
-  "Ratnagiri",
-  "Sangamner",
-  "Sangli",
-  "Satara",
-  "Sindhudurg",
-  "Solapur",
-  "Thane",
-  "Ulhasnagar",
-  "Wardha",
-  "Washim",
-  "Yavatmal",
-];
-
 const toDateInputValue = (value?: string) => {
   if (!value) return "";
   const date = new Date(value);
@@ -438,7 +386,9 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
         ...prev,
         jobPreferences: {
           ...(prev.jobPreferences || {}),
-          preferredLocations: [{ country: "India", state: "Maharashtra", city: "" }],
+          preferredLocations: [
+            { country: "India", state: LOCATION_STATE_OPTIONS[0] || "Maharashtra", city: "" },
+          ],
         },
       };
     });
@@ -557,7 +507,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
       const sanitizedLocations = (jobPreferences.preferredLocations || [])
         .map((location) => ({
           city: (location.city || "").trim(),
-          state: (location.state || "Maharashtra").trim(),
+          state: (location.state || LOCATION_STATE_OPTIONS[0] || "Maharashtra").trim(),
           country: (location.country || "India").trim(),
         }))
         .filter((location) => Boolean(location.city));
@@ -2223,7 +2173,11 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                                 ...(prev.jobPreferences || {}),
                                 preferredLocations: [
                                   ...current,
-                                  { city: "", state: "Maharashtra", country: "India" },
+                                  {
+                                    city: "",
+                                    state: LOCATION_STATE_OPTIONS[0] || "Maharashtra",
+                                    country: "India",
+                                  },
                                 ],
                               },
                             };
@@ -2239,7 +2193,11 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                       {(profile.jobPreferences?.preferredLocations || []).length}/{MAX_PREFERRED_LOCATIONS} locations added
                     </p>
                     <div className="space-y-3">
-                      {(profile.jobPreferences?.preferredLocations || []).map((location, index) => (
+                      {(profile.jobPreferences?.preferredLocations || []).map((location, index) => {
+                        const selectedState =
+                          location.state || LOCATION_STATE_OPTIONS[0] || "Maharashtra";
+                        const cityOptions = CITY_OPTIONS_BY_STATE[selectedState] || [];
+                        return (
                         <div key={index} className="grid gap-3 sm:grid-cols-4">
                           <select
                             value={location.city || ""}
@@ -2254,31 +2212,39 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                                 },
                               }))
                             }
+                            disabled={!selectedState}
                             className="rounded-xl border border-gray-300 px-3 py-2"
                           >
                             <option value="">Select City</option>
-                            {MAHARASHTRA_CITIES.map((city) => (
+                            {cityOptions.map((city) => (
                               <option key={city} value={city}>
                                 {city}
                               </option>
                             ))}
                           </select>
                           <select
-                            value={location.state || "Maharashtra"}
+                            value={selectedState}
                             onChange={(e) =>
                               updateProfile((prev) => ({
                                 ...prev,
                                 jobPreferences: {
                                   ...(prev.jobPreferences || {}),
                                   preferredLocations: (prev.jobPreferences?.preferredLocations || []).map((x, i) =>
-                                    i === index ? { ...x, state: e.target.value } : x
+                                    i === index
+                                      ? { ...x, state: e.target.value, city: "" }
+                                      : x
                                   ),
                                 },
                               }))
                             }
                             className="rounded-xl border border-gray-300 px-3 py-2"
                           >
-                            <option value="Maharashtra">Maharashtra</option>
+                            <option value="">Select State</option>
+                            {LOCATION_STATE_OPTIONS.map((state) => (
+                              <option key={state} value={state}>
+                                {state}
+                              </option>
+                            ))}
                           </select>
                           <select
                             value={location.country || "India"}
@@ -2313,7 +2279,8 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                             Remove
                           </button>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
 
