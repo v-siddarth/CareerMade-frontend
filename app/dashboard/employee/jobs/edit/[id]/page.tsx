@@ -18,6 +18,7 @@ import {
   inferHealthcareSpecialization,
   inferHealthcareTitle,
 } from "@/lib/healthcare-taxonomy";
+import { CITY_OPTIONS_BY_STATE, LOCATION_STATE_OPTIONS } from "@/lib/location-options";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
@@ -150,6 +151,7 @@ export default function EditJobPage() {
   const fieldOptions = getFieldOptions(selectedTitle, selectedSpecialization);
   const qualificationOptions = getDegreeOptions(selectedTitle, selectedSpecialization);
   const screeningQuestionPresets = getScreeningQuestionPresets(selectedTitle);
+  const cityOptions = CITY_OPTIONS_BY_STATE[formData.location.state] || [];
 
   const syncFinalSpecialization = (specialization: string, field: string) => {
     const normalizedSpecialization = specialization.trim();
@@ -381,6 +383,9 @@ export default function EditJobPage() {
         [parent]: {
           ...(prev[parent as keyof FormData] as Record<string, any>),
           [child]: type === "checkbox" ? checked : value,
+          ...(parent === "location" && child === "state"
+            ? { city: "" }
+            : {}),
         },
       }));
     } else {
@@ -895,18 +900,24 @@ export default function EditJobPage() {
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             City <span className="text-red-500">*</span>
                           </label>
-                          <input
-                            type="text"
+                          <select
                             name="location.city"
                             value={formData.location.city}
                             onChange={handleInputChange}
-                            placeholder="Mumbai"
+                            disabled={!formData.location.state}
                             className={`w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
                               errors["location.city"]
                                 ? "border-red-500"
                                 : "border-gray-300"
                             }`}
-                          />
+                          >
+                            <option value="">Select city</option>
+                            {cityOptions.map((city) => (
+                              <option key={city} value={city}>
+                                {city}
+                              </option>
+                            ))}
+                          </select>
                           {errors["location.city"] && (
                             <p className="mt-1 text-sm text-red-600">
                               {errors["location.city"]}
@@ -918,18 +929,23 @@ export default function EditJobPage() {
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             State <span className="text-red-500">*</span>
                           </label>
-                          <input
-                            type="text"
+                          <select
                             name="location.state"
                             value={formData.location.state}
                             onChange={handleInputChange}
-                            placeholder="Maharashtra"
                             className={`w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
                               errors["location.state"]
                                 ? "border-red-500"
                                 : "border-gray-300"
                             }`}
-                          />
+                          >
+                            <option value="">Select state</option>
+                            {LOCATION_STATE_OPTIONS.map((state) => (
+                              <option key={state} value={state}>
+                                {state}
+                              </option>
+                            ))}
+                          </select>
                           {errors["location.state"] && (
                             <p className="mt-1 text-sm text-red-600">
                               {errors["location.state"]}

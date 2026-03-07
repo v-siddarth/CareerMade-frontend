@@ -14,6 +14,10 @@ export default function ViewEmployerProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
+  const MANDATORY_CERTIFICATE_NAMES = new Set([
+    "Bombay Nursing Certificate",
+    "Hospital Registration Certificate",
+  ]);
 
   const handleLogout = async () => {
     try {
@@ -380,7 +384,11 @@ export default function ViewEmployerProfile() {
                   Regulatory Certificates
                 </h2>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  {profile.employerCertificates.map((cert: any, idx: number) => (
+                  {profile.employerCertificates.map((cert: any, idx: number) => {
+                    const effectiveCategory = MANDATORY_CERTIFICATE_NAMES.has(cert.name)
+                      ? "Mandatory"
+                      : "Optional";
+                    return (
                     <div key={idx} className="p-4 border border-gray-200 rounded-xl bg-gray-50">
                       <div className="flex items-center justify-between gap-2">
                         <p className="font-semibold text-gray-900">
@@ -388,12 +396,12 @@ export default function ViewEmployerProfile() {
                         </p>
                         <span
                           className={`text-xs px-2 py-0.5 rounded-full ${
-                            cert.category === "Mandatory"
+                            effectiveCategory === "Mandatory"
                               ? "bg-red-100 text-red-700"
                               : "bg-blue-100 text-blue-700"
                           }`}
                         >
-                          {cert.category}
+                          {effectiveCategory}
                         </span>
                       </div>
                       {cert.issuingBody && (
@@ -410,7 +418,8 @@ export default function ViewEmployerProfile() {
                         </a>
                       )}
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               </section>
             )}

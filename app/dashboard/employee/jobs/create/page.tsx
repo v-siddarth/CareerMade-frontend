@@ -15,6 +15,7 @@ import {
   getScreeningQuestionPresets,
   getSpecializationOptions,
 } from "@/lib/healthcare-taxonomy";
+import { CITY_OPTIONS_BY_STATE, LOCATION_STATE_OPTIONS } from "@/lib/location-options";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
@@ -99,6 +100,7 @@ export default function CreateJobPage() {
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
+  const [hasCompleteAddress, setHasCompleteAddress] = useState<boolean | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [workMode, setWorkMode] = useState("on-site");
 
@@ -145,6 +147,7 @@ export default function CreateJobPage() {
   const fieldOptions = getFieldOptions(selectedTitle, selectedSpecialization);
   const qualificationOptions = getDegreeOptions(selectedTitle, selectedSpecialization);
   const screeningQuestionPresets = getScreeningQuestionPresets(selectedTitle);
+  const cityOptions = CITY_OPTIONS_BY_STATE[formData.location.state] || [];
 
   const syncFinalSpecialization = (specialization: string, field: string) => {
     const normalizedSpecialization = specialization.trim();
@@ -217,13 +220,22 @@ export default function CreateJobPage() {
         if (res.ok && data?.data?.employer) {
           const emp = data.data.employer;
           setIsVerified(!!(emp?.verification?.isVerified));
+          const completeAddress = Boolean(
+            emp?.address?.street?.trim() &&
+              emp?.address?.city?.trim() &&
+              emp?.address?.state?.trim() &&
+              emp?.address?.pincode?.trim()
+          );
+          setHasCompleteAddress(completeAddress);
         } else {
           // fallback: not verified
           setIsVerified(false);
+          setHasCompleteAddress(false);
         }
       } catch (err) {
         console.error("Failed to fetch employer profile:", err);
         setIsVerified(false);
+        setHasCompleteAddress(false);
       } finally {
         setPageLoading(false);
       }
@@ -245,6 +257,9 @@ export default function CreateJobPage() {
         [parent]: {
           ...(prev[parent as keyof FormData] as object),
           [child]: type === "checkbox" ? checked : value,
+          ...(parent === "location" && child === "state"
+            ? { city: "" }
+            : {}),
         },
       }));
     } else {
@@ -407,6 +422,11 @@ export default function CreateJobPage() {
   };
 
   const handleNext = () => {
+    if (hasCompleteAddress === false) {
+      toast.error("Complete employer address is required before posting jobs.");
+      router.push("/dashboard/employee/profile/create");
+      return;
+    }
     if (validateStep(currentStep)) {
       if (currentStep < 5) {
         setCurrentStep((currentStep + 1) as Step);
@@ -425,6 +445,12 @@ export default function CreateJobPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateStep(5)) return;
+
+    if (hasCompleteAddress === false) {
+      toast.error("Complete employer address is required before posting jobs.");
+      router.push("/dashboard/employee/profile/create");
+      return;
+    }
 
     if (isVerified === false) {
       toast.error("Your account is not verified. An admin must verify your account before posting jobs.");
@@ -550,6 +576,34 @@ export default function CreateJobPage() {
                     className="px-4 py-2 bg-blue-600 text-white rounded-full text-sm"
                   >
                     Back
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {hasCompleteAddress === false && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg mx-4">
+            <div className="flex items-start gap-4">
+              <div className="text-white bg-orange-600 rounded-full p-2 flex items-center justify-center">
+                <X className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900">Complete address required</h3>
+                <p className="text-sm text-gray-600 mt-2">
+                  Please complete your employer profile address (street, city, state, and pincode) before posting jobs.
+                </p>
+
+                <div className="mt-4 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => router.push("/dashboard/employee/profile/create")}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-full text-sm"
+                  >
+                    Update Profile
                   </button>
                 </div>
               </div>
@@ -773,17 +827,23 @@ export default function CreateJobPage() {
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             City <span className="text-red-500">*</span>
                           </label>
-                          <input
-                            type="text"
+                          <select
                             name="location.city"
                             value={formData.location.city}
                             onChange={handleInputChange}
-                            placeholder="Mumbai"
+                            disabled={!formData.location.state}
                             className={`w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${errors["location.city"]
                                 ? "border-red-500"
                                 : "border-gray-300"
                               }`}
-                          />
+                          >
+                            <option value="">Select city</option>
+                            {cityOptions.map((city) => (
+                              <option key={city} value={city}>
+                                {city}
+                              </option>
+                            ))}
+                          </select>
                           {errors["location.city"] && (
                             <p className="mt-1 text-sm text-red-600">
                               {errors["location.city"]}
@@ -795,17 +855,22 @@ export default function CreateJobPage() {
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             State <span className="text-red-500">*</span>
                           </label>
-                          <input
-                            type="text"
+                          <select
                             name="location.state"
                             value={formData.location.state}
                             onChange={handleInputChange}
-                            placeholder="Maharashtra"
                             className={`w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${errors["location.state"]
                                 ? "border-red-500"
                                 : "border-gray-300"
                               }`}
-                          />
+                          >
+                            <option value="">Select state</option>
+                            {LOCATION_STATE_OPTIONS.map((state) => (
+                              <option key={state} value={state}>
+                                {state}
+                              </option>
+                            ))}
+                          </select>
                           {errors["location.state"] && (
                             <p className="mt-1 text-sm text-red-600">
                               {errors["location.state"]}

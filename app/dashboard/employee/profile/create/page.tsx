@@ -32,7 +32,7 @@ const ORGANIZATION_TYPES = [
 const CERTIFICATE_OPTIONS = [
   { name: "Bombay Nursing Certificate", category: "Mandatory" as const },
   { name: "Hospital Registration Certificate", category: "Mandatory" as const },
-  { name: "NABH Entry Level Certificate", category: "Mandatory" as const },
+  { name: "NABH Entry Level Certificate", category: "Optional" as const },
   { name: "ISO Certification", category: "Optional" as const },
   { name: "NABH Full Accreditation", category: "Optional" as const },
   { name: "NABL Accreditation", category: "Optional" as const },
@@ -85,12 +85,12 @@ const normalizeEmployerCertificates = (input: any[]): EmployerCertificate[] => {
     ? input
         .filter((item) => item && typeof item === "object")
         .map((item) => ({
-          localId: makeLocalId(),
           name: item.name || "",
+          category: MANDATORY_CERTIFICATES.includes(item.name || "")
+            ? ("Mandatory" as const)
+            : ("Optional" as const),
+          localId: makeLocalId(),
           customName: item.customName || "",
-          category: (item.category === "Mandatory" ? "Mandatory" : "Optional") as
-            | "Mandatory"
-            | "Optional",
           issuingBody: item.issuingBody || "",
           issueDate: item.issueDate
             ? new Date(item.issueDate).toISOString().split("T")[0]
@@ -805,7 +805,7 @@ export default function EmployerProfileCreatePage() {
               Regulatory Certificates
             </h2>
             <p className="text-sm text-gray-600 mb-4">
-              Mandatory: Bombay Nursing Certificate, Hospital Registration Certificate, NABH Entry Level Certificate.
+              Mandatory: Bombay Nursing Certificate, Hospital Registration Certificate.
             </p>
 
             <div className="space-y-4">
