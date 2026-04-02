@@ -25,6 +25,41 @@ type PricingPlan = {
 
 type UserRole = "jobseeker" | "employer" | "admin";
 
+type RazorpaySuccessPayload = {
+  razorpay_payment_id: string;
+  razorpay_subscription_id: string;
+  razorpay_signature: string;
+};
+
+type CreateCheckoutResponse = {
+  success: boolean;
+  message: string;
+  data?: {
+    paymentRequired: boolean;
+    keyId?: string;
+    subscriptionId?: string;
+    planId?: string;
+    amount?: number;
+    currency?: string;
+    name?: string;
+    description?: string;
+    prefill?: {
+      name?: string;
+      email?: string;
+      contact?: string;
+    };
+  };
+};
+
+declare global {
+  interface Window {
+    Razorpay?: new (options: Record<string, unknown>) => {
+      open: () => void;
+      on: (event: string, callback: (response: unknown) => void) => void;
+    };
+  }
+}
+
 const audienceLabel: Record<Audience, string> = {
   employer: "Employer",
   jobseeker: "Job Seeker",
@@ -38,6 +73,7 @@ export default function PricingPage() {
   const [lockedAudience, setLockedAudience] = useState<Audience | null>(null);
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [method, setMethod] = useState<PaymentMethod>("card");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   useEffect(() => {
     const user = authStorage.getUser<{ role?: UserRole }>();
@@ -122,9 +158,125 @@ export default function PricingPage() {
     }).catch(() => {});
   };
 
-  const handleCheckout = () => {
+  const loadRazorpayScript = async () => {
+    if (typeof window === "undefined") return false;
+    if (window.Razorpay) return true;
+
+    return new Promise<boolean>((resolve) => {
+      const existing = document.querySelector('script[data-razorpay-checkout="true"]');
+      if (existing) {
+        existing.addEventListener("load", () => resolve(true), { once: true });
+        existing.addEventListener("error", () => resolve(false), { once: true });
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.dataset.razorpayCheckout = "true";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handleCheckout = async () => {
     if (!selectedPlan) return;
     const token = authStorage.getAccessToken();
+    if (!token) {
+      toast.error("Please login first to purchase a plan.");
+      return;
+    }
+
+    if (selectedPlan.audience !== "employer") {
+      toast.error("Paid subscription is currently available for employer plans only.");
+      return;
+    }
+
+    setCheckoutLoading(true);
+    try {
+      const scriptReady = await loadRazorpayScript();
+      if (!scriptReady || !window.Razorpay) {
+        throw new Error("Razorpay checkout failed to load. Please check your internet and try again.");
+      }
+
+      const checkoutRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pricing/checkout-subscription`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          planId: selectedPlan.id,
+          preferredMethod: method,
+        }),
+      });
+      const checkoutData = (await checkoutRes.json()) as CreateCheckoutResponse;
+
+      if (!checkoutRes.ok || !checkoutData?.data) {
+        throw new Error(checkoutData?.message || "Unable to start checkout");
+      }
+
+      if (!checkoutData.data.paymentRequired) {
+        toast.success("Plan activated successfully.");
+        return;
+      }
+
+      if (!checkoutData.data.keyId || !checkoutData.data.subscriptionId) {
+        throw new Error("Invalid checkout details received from server");
+      }
+
+      const rzp = new window.Razorpay({
+        key: checkoutData.data.keyId,
+        subscription_id: checkoutData.data.subscriptionId,
+        name: checkoutData.data.name || "LifeMate",
+        description: checkoutData.data.description || "Subscription payment",
+        prefill: checkoutData.data.prefill || {},
+        notes: {
+          planId: selectedPlan.id,
+          audience: selectedPlan.audience,
+        },
+        theme: {
+          color: "#155DFC",
+        },
+        handler: async (response: RazorpaySuccessPayload) => {
+          try {
+            const verifyRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pricing/checkout-verify`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                planId: selectedPlan.id,
+                ...response,
+              }),
+            });
+
+            const verifyData = await verifyRes.json();
+            if (!verifyRes.ok) {
+              throw new Error(verifyData?.message || "Payment verification failed");
+            }
+            toast.success("Payment captured. Subscription activation is being confirmed.");
+          } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Payment verification failed";
+            toast.error(message);
+          }
+        },
+      });
+
+      rzp.on("payment.failed", (response: unknown) => {
+        const details = response as { error?: { description?: string } };
+        toast.error(details?.error?.description || "Payment failed. Please retry.");
+      });
+
+      rzp.open();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unable to start checkout";
+      toast.error(message);
+    } finally {
+      setCheckoutLoading(false);
+    }
     if (token) {
       createPricingNotificationEvent({
         eventType: "checkout_intent",
@@ -132,7 +284,6 @@ export default function PricingPage() {
         planName: selectedPlan.displayName,
       }).catch(() => {});
     }
-    toast.success("Checkout flow placeholder is ready. Payment gateway can be connected next.");
   };
 
   return (
@@ -338,9 +489,10 @@ export default function PricingPage() {
                     <button
                       type="button"
                       onClick={handleCheckout}
+                      disabled={checkoutLoading}
                       className="mt-8 w-full rounded-xl bg-gradient-to-r from-[#155DFC] to-[#00B8DB] px-4 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-95"
                     >
-                      Proceed to Secure Checkout
+                      {checkoutLoading ? "Processing..." : "Proceed to Secure Checkout"}
                     </button>
                   </aside>
                 </section>
