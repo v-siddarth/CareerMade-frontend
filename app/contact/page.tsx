@@ -1,4 +1,20 @@
 import Navbar from "@/app/components/Navbar";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Contact Us — Get Help & Support",
+  description:
+    "Reach out to CareerMed for support, business partnerships, or employer onboarding enquiries. We respond within 1 business day.",
+  openGraph: {
+    title: "Contact CareerMed — Support & Business Enquiries",
+    description:
+      "Need help with your account, jobs, employer onboarding, or billing? Get in touch with the CareerMed team.",
+    url: "https://www.careermed.in/contact",
+  },
+  alternates: {
+    canonical: "/contact",
+  },
+};
 
 export default function ContactPage() {
   return (

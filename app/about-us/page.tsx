@@ -1,4 +1,20 @@
 import Navbar from "@/app/components/Navbar";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "About Us — Healthcare Recruitment Platform",
+  description:
+    "Learn about CareerMed, India's trusted healthcare hiring platform connecting qualified medical professionals with verified hospitals, clinics, and diagnostic centres.",
+  openGraph: {
+    title: "About CareerMed — India's Healthcare Job Platform",
+    description:
+      "CareerMed is built to connect talented healthcare professionals with verified employers. Discover our mission, what we solve, and our promise.",
+    url: "https://www.careermed.in/about-us",
+  },
+  alternates: {
+    canonical: "/about-us",
+  },
+};
 
 export default function AboutUsPage() {
   return (

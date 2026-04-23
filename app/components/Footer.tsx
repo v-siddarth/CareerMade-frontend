@@ -96,6 +96,8 @@ const Footer = () => {
               <li><Link href="/contact" className="hover:text-white">Contact</Link></li>
               <li><Link href="/privacy-policy" className="hover:text-white">Privacy Policy</Link></li>
               <li><Link href="/terms-of-service" className="hover:text-white">Terms of Service</Link></li>
+              <li><Link href="/refund-policy" className="hover:text-white">Refund Policy</Link></li>
+              <li><Link href="/shipping-policy" className="hover:text-white">Shipping Policy</Link></li>
             </ul>
           </div>
 

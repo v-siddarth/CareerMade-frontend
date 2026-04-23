@@ -176,19 +176,6 @@ export default function SavedJobs() {
       </>
     );
 
-  if (!savedJobs.length)
-    return (
-      <>
-        <Navbar />
-        <div className="p-8 text-center">
-          <Bookmark className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg">You haven’t saved any jobs yet.</p>
-          <p className="text-sm text-gray-400">
-            Browse listings and tap the <Bookmark className="inline w-4 h-4 text-gray-400" /> icon to save them.
-          </p>
-        </div>
-      </>
-    );
 
   return (
     <>

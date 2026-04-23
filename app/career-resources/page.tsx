@@ -1,5 +1,21 @@
 import Navbar from "@/app/components/Navbar";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Career Resources — Resume Tips, Interview Prep & Job Search Strategy",
+  description:
+    "Free career resources for healthcare professionals. Resume writing tips, interview preparation checklists, and job search strategies for doctors, nurses, and technicians.",
+  openGraph: {
+    title: "Healthcare Career Resources — CareerMed",
+    description:
+      "Practical guides and tools to improve your healthcare job search. Build better resumes, prepare for interviews, and land your dream medical job.",
+    url: "https://www.careermed.in/career-resources",
+  },
+  alternates: {
+    canonical: "/career-resources",
+  },
+};
 
 const resources = [
   {
