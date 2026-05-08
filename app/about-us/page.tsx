@@ -22,9 +22,9 @@ export default function AboutUsPage() {
       <Navbar />
       <main className="min-h-screen bg-gradient-to-b from-white via-blue-50/50 to-white">
         <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold text-gray-900">About CareerMade</h1>
+          <h1 className="text-4xl font-bold text-gray-900">About CareerMed</h1>
           <p className="mt-5 text-lg leading-8 text-gray-700">
-            CareerMade is a healthcare-focused hiring platform built to connect talented professionals with verified employers.
+            CareerMed is a healthcare-focused hiring platform built to connect talented professionals with verified employers.
             We help job seekers discover the right opportunities faster and help employers hire quality candidates with confidence.
           </p>
 

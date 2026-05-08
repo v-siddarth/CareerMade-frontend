@@ -30,12 +30,12 @@ export default function ContactPage() {
           <div className="mt-10 grid gap-6 md:grid-cols-2">
             <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-gray-900">Support</h2>
-              <p className="mt-2 text-sm text-gray-600">Email: support@careermade.com</p>
+              <p className="mt-2 text-sm text-gray-600">Email: support@careermed.in</p>
               <p className="mt-1 text-sm text-gray-600">Response time: within 1 business day</p>
             </article>
             <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-gray-900">Business</h2>
-              <p className="mt-2 text-sm text-gray-600">Email: partnerships@careermade.com</p>
+              <p className="mt-2 text-sm text-gray-600">Email: partnerships@careermed.in</p>
               <p className="mt-1 text-sm text-gray-600">Mon-Fri, 10:00 AM to 6:00 PM IST</p>
             </article>
           </div>

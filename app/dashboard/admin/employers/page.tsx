@@ -20,6 +20,7 @@ import {
 import Navbar from "@/app/components/Navbar";
 import GradientLoader from "@/app/components/GradientLoader";
 import toast from "react-hot-toast";
+import { apiFetch, authStorage } from "@/lib/api-client";
 
 interface Employer {
   _id: string;
@@ -167,7 +168,7 @@ export default function EmployersManagement() {
   const fetchEmployers = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("accessToken");
+      const token = authStorage.getAccessToken();
       if (!token) {
         toast.error("Please log in again");
         router.push("/login");
@@ -182,26 +183,14 @@ export default function EmployersManagement() {
       if (appliedSearchQuery) params.append("q", appliedSearchQuery);
       if (verifiedFilter) params.append("isVerified", verifiedFilter);
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/employers?${params.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const data = await apiFetch<{ data: { items: Employer[]; total: number } }>(
+        `/api/admin/employers?${params.toString()}`
       );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to fetch employers");
-      }
 
       setEmployers(data.data.items);
       setTotal(data.data.total);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to load employers";
-      console.error("Error fetching employers:", err);
       toast.error(message);
     } finally {
       setLoading(false);
@@ -220,27 +209,15 @@ export default function EmployersManagement() {
 
   const handleVerify = async (employerId: string) => {
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = authStorage.getAccessToken();
       if (!token) {
         toast.error("Please log in again");
         return;
       }
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/employers/${employerId}/verify`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to verify employer");
-      }
+      await apiFetch(`/api/admin/employers/${employerId}/verify`, {
+        method: "PATCH",
+      });
 
       toast.success("Employer verified successfully");
       setSelectedEmployer((prev) =>
@@ -254,34 +231,21 @@ export default function EmployersManagement() {
       fetchEmployers();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to verify employer";
-      console.error("Error verifying employer:", err);
       toast.error(message);
     }
   };
 
   const handleUnverify = async (employerId: string) => {
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = authStorage.getAccessToken();
       if (!token) {
         toast.error("Please log in again");
         return;
       }
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/employers/${employerId}/unverify`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to unverify employer");
-      }
+      await apiFetch(`/api/admin/employers/${employerId}/unverify`, {
+        method: "PATCH",
+      });
 
       toast.success("Employer unverified successfully");
       setSelectedEmployer((prev) =>
@@ -295,7 +259,6 @@ export default function EmployersManagement() {
       fetchEmployers();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to unverify employer";
-      console.error("Error unverifying employer:", err);
       toast.error(message);
     }
   };

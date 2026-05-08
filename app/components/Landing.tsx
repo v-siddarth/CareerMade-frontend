@@ -5,6 +5,7 @@ import { FileText, TrendingUp, Users, Briefcase, DollarSign, Award, Building } f
 import Image from "next/image";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { apiFetch } from "@/lib/api-client";
 
 type UserRole = "jobseeker" | "employer" | "admin" | null;
 
@@ -91,7 +92,7 @@ const OPPORTUNITY_CARDS = [
   },
 ];
 
-export default function CareerMadeLanding() {
+export default function CareerMedLanding() {
     const router = useRouter();
     const [role, setRole] = useState<UserRole>(null);
     const [email, setEmail] = useState("");
@@ -128,17 +129,12 @@ export default function CareerMadeLanding() {
 
         try {
             setSubmitting(true);
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/newsletter/subscribe`, {
+            const data = await apiFetch<{ message?: string }>("/api/newsletter/subscribe", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                skipAuth: true,
+                retryOnAuthError: false,
                 body: JSON.stringify({ email: normalizedEmail, source: "landing-page-cta" }),
             });
-            const data = await response.json().catch(() => ({}));
-
-            if (!response.ok) {
-                throw new Error(data?.message || "Failed to subscribe");
-            }
-
             toast.success(data?.message || "Subscribed successfully.");
             setEmail("");
         } catch (error: any) {
@@ -438,7 +434,7 @@ export default function CareerMadeLanding() {
                     </div>
 
                     <div className="text-center mt-16">
-                        <p className="text-gray-400 mb-6">Ready to get started? Join CareerMade</p>
+                        <p className="text-gray-400 mb-6">Ready to get started? Join CareerMed</p>
                         <div className="flex items-center justify-center space-x-4">
                             {(role === "employer" || role === "admin") && (
                                 <button
@@ -602,7 +598,7 @@ export default function CareerMadeLanding() {
                     <div className="grid md:grid-cols-4 gap-8 mb-8">
                         <div>
                             <div className="text-2xl font-bold text-white mb-4">
-                                <img src="/logo.png" alt="CareerMade" className="h-7" />
+                                <img src="/logo.png" alt="CareerMed" className="h-7" />
                             </div>
                             <p className="text-sm mb-4">
                                 Empowering healthcare professionals to find their dream careers
@@ -642,7 +638,7 @@ export default function CareerMadeLanding() {
                         </div>
                     </div>
                     <div className="border-t border-gray-800 pt-8 text-center text-sm">
-                        <p>© 2025 CareerMade. All rights reserved.</p>
+                        <p>© 2025 CareerMed. All rights reserved.</p>
                     </div>
                 </div>
             </footer> */}

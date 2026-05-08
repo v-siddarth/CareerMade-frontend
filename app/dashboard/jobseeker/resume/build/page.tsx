@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/app/components/Navbar';
 import GradientLoader from '@/app/components/GradientLoader';
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { apiFetch, authStorage } from '@/lib/api-client';
 
 export default function BuildResumePage() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function BuildResumePage() {
     },
   });
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = authStorage.getAccessToken();
     const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
 
     if (!token) {
@@ -62,16 +62,11 @@ export default function BuildResumePage() {
   const fetchJobSeekerData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/jobseeker/profile`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-          },
-        }
-      );
-
-      const jobSeeker = response.data.data.jobSeeker;
+      const response = await apiFetch<any>('/api/jobseeker/profile');
+      const jobSeeker = response?.data?.jobSeeker;
+      if (!jobSeeker) {
+        throw new Error('Failed to load your profile');
+      }
       setJobSeekerData(jobSeeker);
 
       // Pre-populate form with job seeker data
@@ -95,8 +90,7 @@ export default function BuildResumePage() {
         summary: jobSeeker.summary || '',
       }));
     } catch (err: any) {
-      console.error('Failed to fetch job seeker data:', err);
-      toast.error(err.response?.data?.message || 'Failed to load your profile');
+      toast.error(err?.message || 'Failed to load your profile');
     } finally {
       setLoading(false);
     }
@@ -151,18 +145,17 @@ export default function BuildResumePage() {
     e.preventDefault();
     try {
       setCreating(true);
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/resume/build`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-          },
-        }
-      );
-      router.push(`/dashboard/jobseeker/resume/edit/${response.data.data.resume._id}`);
+      const response = await apiFetch<any>('/api/resume/build', {
+        method: 'POST',
+        body: JSON.stringify(formData),
+      });
+      const resumeId = response?.data?.resume?._id;
+      if (!resumeId) {
+        throw new Error('Resume created but identifier is missing');
+      }
+      router.push(`/dashboard/jobseeker/resume/edit/${resumeId}`);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to create resume');
+      toast.error(err?.message || 'Failed to create resume');
     } finally {
       setCreating(false);
     }

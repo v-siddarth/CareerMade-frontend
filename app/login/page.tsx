@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { apiFetch, authStorage } from "@/lib/api-client";
+import { apiFetch, authStorage, getApiBaseUrl } from "@/lib/api-client";
 
 const resolveRolePath = (role?: string) => {
   if (role === "jobseeker") return "/dashboard/jobseeker";
@@ -61,7 +61,11 @@ const Login = () => {
   };
 
   const handleGoogle = () => {
-    const backend = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+    const backend = getApiBaseUrl();
+    if (!backend) {
+      toast.error("Auth service is not configured. Please try again later.");
+      return;
+    }
     const redirectUri = typeof window !== "undefined" ? window.location.origin : "";
     window.location.href = `${backend}/api/auth/google?redirectUri=${encodeURIComponent(redirectUri)}`;
   };
@@ -88,7 +92,6 @@ const Login = () => {
 
       router.push(data.data.nextPath || resolveRolePath(user.role));
     } catch (error) {
-      console.error("Login error:", error);
       const message =
         error instanceof Error ? error.message : "Something went wrong. Please try again.";
       toast.error(message);
@@ -102,7 +105,7 @@ const Login = () => {
     <div className="min-h-screen flex flex-col md:flex-row bg-white overflow-hidden">
       {/* Mobile Top Logo */}
       <div className="flex md:hidden w-full justify-center pt-6">
-        <img src="/logo.png" alt="CareerMade" className="h-10" />
+        <img src="/logo.png" alt="CareerMed" className="h-10" />
       </div>
       {/* Left Section - Image */}
       <motion.div
@@ -133,8 +136,8 @@ const Login = () => {
           {/* <div className="bg-[#8F59ED] p-2 rounded-lg shadow-md">
             <Stethoscope className="w-6 h-6 text-white" />
           </div>
-          <span className="text-2xl font-bold text-gray-900">CareerMade</span> */}
-          <img src="/logo.png" alt="CareerMade" className="h-13" />
+          <span className="text-2xl font-bold text-gray-900">CareerMed</span> */}
+          <img src="/logo.png" alt="CareerMed" className="h-13" />
         </motion.div>
 
         {/* Heading */}

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
 import { MapPin, Briefcase, Bookmark, ArrowLeft } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { apiFetch, authStorage } from "@/lib/api-client";
 
 type Job = {
   _id: string;
@@ -22,7 +23,7 @@ export default function BrowseJobs() {
   const headerColors = ["#1A0152", "#9333EA", "#16A34A", "#0F172A"];
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = authStorage.getAccessToken();
     const userData = localStorage.getItem('user'); // assuming you store user info after login
 
     // If not logged in → redirect
@@ -37,10 +38,7 @@ export default function BrowseJobs() {
       router.push('/login');
       return;
     }
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobs?limit=30`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
+    apiFetch<{ data?: { items?: Job[] }; items?: Job[] }>("/api/jobs?limit=30")
       .then((data) => {
         const items = (data.data?.items || data.items || []) as Job[];
         setJobs(items);

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { User, Mail, Lock, Phone, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { apiFetch, authStorage } from "@/lib/api-client";
+import { apiFetch, authStorage, getApiBaseUrl } from "@/lib/api-client";
 import PasswordChecklist from "@/app/components/PasswordChecklist";
 import { isPasswordValid } from "@/lib/password-rules";
 
@@ -85,7 +85,11 @@ const Register = () => {
 
     const handleGoogle = () => {
         const role = formData.role || "jobseeker";
-        const backend = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+        const backend = getApiBaseUrl();
+        if (!backend) {
+            toast.error("Auth service is not configured. Please try again later.");
+            return;
+        }
         const redirectUri = typeof window !== "undefined" ? window.location.origin : "";
         window.location.href = `${backend}/api/auth/google?role=${encodeURIComponent(role)}&redirectUri=${encodeURIComponent(redirectUri)}`;
     };
@@ -174,7 +178,6 @@ const Register = () => {
                 setOtpSent(false);
             }
         } catch (err) {
-            console.error("Error:", err);
             const message = err instanceof Error ? err.message : "Server error. Please try again later.";
             toast.error(message);
             setMessage(message);
@@ -187,7 +190,7 @@ const Register = () => {
         <div className="min-h-screen flex flex-col md:flex-row bg-white">
             {/* Mobile Top Logo */}
             <div className="flex md:hidden w-full justify-center pt-6">
-                <img src="/logo.png" alt="CareerMade" className="h-10" />
+                <img src="/logo.png" alt="CareerMed" className="h-10" />
             </div>
             {/* LEFT SECTION - FORM */}
             <motion.div
@@ -205,9 +208,9 @@ const Register = () => {
                         <Stethoscope className="w-6 h-6 text-white" />
                     </div>
                     <span className="text-3xl font-bold text-gray-900 tracking-tight">
-                        CareerMade
+                        CareerMed
                     </span> */}
-                    <img src="/logo.png" alt="CareerMade" className="h-13" />
+                    <img src="/logo.png" alt="CareerMed" className="h-13" />
                 </motion.div>
 
                 {/* Heading */}
@@ -215,7 +218,7 @@ const Register = () => {
                     Create Your Account
                 </h2>
                 <p className="text-gray-600 mb-8 text-center max-w-sm leading-relaxed">
-                    Join the CareerMade community and start connecting with the best doctors
+                    Join the CareerMed community and start connecting with the best doctors
                     and employers.
                 </p>
 

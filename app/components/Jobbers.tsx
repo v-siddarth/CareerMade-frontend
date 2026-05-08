@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { motion } from "framer-motion";
+import { apiFetch } from "@/lib/api-client";
 
 const SPECIALIZATIONS = [
   "General Medicine", "Cardiology", "Neurology", "Orthopedics", "Pediatrics",
@@ -51,17 +52,9 @@ export default function JobSeekerJobs() {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobs?limit=50`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        if (res.ok) {
-          setJobs(data.data?.items || data.items || []);
-          setFilteredJobs(data.data?.items || data.items || []);
-        } else {
-          toast.error(data.message || "Failed to fetch jobs");
-        }
+        const data = await apiFetch<any>("/api/jobs?limit=50");
+        setJobs(data?.data?.items || data?.items || []);
+        setFilteredJobs(data?.data?.items || data?.items || []);
       } catch {
         toast.error("Something went wrong fetching jobs");
       } finally {

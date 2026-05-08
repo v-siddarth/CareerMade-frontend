@@ -19,6 +19,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import { apiFetch, authStorage } from "@/lib/api-client";
 
 interface ApplicationDetail {
   _id: string;
@@ -192,23 +193,20 @@ export default function MyApplications() {
   useEffect(() => {
     const fetchApplications = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
+        const token = authStorage.getAccessToken();
         if (!token) {
           router.push("/login");
           return;
         }
 
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/applications/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const data = await res.json();
+        const data = await apiFetch<{ data?: { items?: ApplicationDetail[] }; items?: ApplicationDetail[] }>(
+          "/api/applications/me"
+        );
         const items = (data.data?.items || data.items || []) as ApplicationDetail[];
 
         setApplications(items);
         setSelectedApp(items[0] || null);
-      } catch (error) {
-        console.error("Failed to fetch applications", error);
+      } catch (_error) {
         toast.error("Failed to load applications");
       } finally {
         setLoading(false);
@@ -239,26 +237,18 @@ export default function MyApplications() {
 
     try {
       setWithdrawing(true);
-      const token = localStorage.getItem("accessToken");
+      const token = authStorage.getAccessToken();
       if (!token) {
         router.push("/login");
         return;
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/applications/${selectedApp._id}/withdraw`, {
+      const data = await apiFetch<{ message?: string; data?: { application?: ApplicationDetail }; application?: ApplicationDetail }>(
+        `/api/applications/${selectedApp._id}/withdraw`,
+        {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ note: "Withdrawn by candidate" }),
       });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        toast.error(data?.message || "Failed to withdraw application");
-        return;
-      }
 
       const updatedApplication = (data?.data?.application || data?.application || null) as ApplicationDetail | null;
       if (updatedApplication) {
@@ -269,8 +259,7 @@ export default function MyApplications() {
       }
 
       toast.success(data?.message || "Application withdrawn successfully");
-    } catch (error) {
-      console.error("Withdraw application error", error);
+    } catch (_error) {
       toast.error("Failed to withdraw application");
     } finally {
       setWithdrawing(false);

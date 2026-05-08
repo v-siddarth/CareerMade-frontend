@@ -44,7 +44,7 @@ const Land = () => {
                   <Stethoscope className="w-6 h-6 text-white" />
                 </div>
                 <span className="text-xl sm:text-2xl font-bold text-gray-900">
-                  CareerMade
+                  CareerMed
                 </span>
               </motion.div>
 
@@ -330,11 +330,11 @@ const Land = () => {
                 <Stethoscope className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
               <span className="text-lg sm:text-xl font-bold text-white">
-                CareerMade
+                CareerMed
               </span>
             </div>
             <p className="text-xs sm:text-sm text-gray-400">
-              © 2025 CareerMade. All rights reserved.
+              © 2025 CareerMed. All rights reserved.
             </p>
           </div>
         </div>

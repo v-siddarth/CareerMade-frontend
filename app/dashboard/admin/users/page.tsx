@@ -18,6 +18,7 @@ import {
 import Navbar from "@/app/components/Navbar";
 import GradientLoader from "@/app/components/GradientLoader";
 import toast from "react-hot-toast";
+import { apiFetch, authStorage } from "@/lib/api-client";
 
 interface User {
   _id: string;
@@ -55,7 +56,7 @@ export default function UsersManagement() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("accessToken");
+      const token = authStorage.getAccessToken();
       if (!token) {
         toast.error("Please log in again");
         router.push("/login");
@@ -72,25 +73,13 @@ export default function UsersManagement() {
       if (statusFilter) params.append("isActive", statusFilter);
       if (blockedFilter) params.append("isBlocked", blockedFilter);
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/users?${params.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const data = await apiFetch<{ data: { items: User[]; total: number } }>(
+        `/api/admin/users?${params.toString()}`
       );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to fetch users");
-      }
 
       setUsers(data.data.items);
       setTotal(data.data.total);
     } catch (err: any) {
-      console.error("Error fetching users:", err);
       toast.error(err.message || "Failed to load users");
     } finally {
       setLoading(false);
@@ -119,70 +108,42 @@ export default function UsersManagement() {
 
   const handleUpdateStatus = async (userId: string, isActive: boolean, isBlocked: boolean) => {
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = authStorage.getAccessToken();
       if (!token) {
         toast.error("Please log in again");
         return;
       }
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/users/${userId}/status`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ isActive, isBlocked }),
-        }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to update user status");
-      }
+      await apiFetch(`/api/admin/users/${userId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ isActive, isBlocked }),
+      });
 
       toast.success("User status updated successfully");
       fetchUsers();
       setActiveMenu(null);
     } catch (err: any) {
-      console.error("Error updating user status:", err);
       toast.error(err.message || "Failed to update user status");
     }
   };
 
   const handleChangeRole = async (userId: string, newRole: string) => {
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = authStorage.getAccessToken();
       if (!token) {
         toast.error("Please log in again");
         return;
       }
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/users/${userId}/role`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ role: newRole }),
-        }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to change user role");
-      }
+      await apiFetch(`/api/admin/users/${userId}/role`, {
+        method: "PATCH",
+        body: JSON.stringify({ role: newRole }),
+      });
 
       toast.success("User role changed successfully");
       fetchUsers();
       setActiveMenu(null);
     } catch (err: any) {
-      console.error("Error changing user role:", err);
       toast.error(err.message || "Failed to change user role");
     }
   };

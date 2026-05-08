@@ -21,6 +21,7 @@ import {
 import Navbar from "@/app/components/Navbar";
 import GradientLoader from "@/app/components/GradientLoader";
 import toast from "react-hot-toast";
+import { apiFetch, authStorage } from "@/lib/api-client";
 
 interface Job {
   _id: string;
@@ -74,7 +75,7 @@ export default function JobsManagement() {
   const fetchJobs = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("accessToken");
+      const token = authStorage.getAccessToken();
       if (!token) {
         toast.error("Please log in again");
         router.push("/login");
@@ -90,25 +91,13 @@ export default function JobsManagement() {
       if (statusFilter) params.append("status", statusFilter);
       if (jobTypeFilter) params.append("jobType", jobTypeFilter);
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/jobs?${params.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const data = await apiFetch<{ data: { items: Job[]; total: number } }>(
+        `/api/admin/jobs?${params.toString()}`
       );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to fetch jobs");
-      }
 
       setJobs(data.data.items);
       setTotal(data.data.total);
     } catch (err: any) {
-      console.error("Error fetching jobs:", err);
       toast.error(err.message || "Failed to load jobs");
     } finally {
       setLoading(false);
@@ -132,35 +121,21 @@ export default function JobsManagement() {
 
   const handleChangeStatus = async (jobId: string, newStatus: string) => {
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = authStorage.getAccessToken();
       if (!token) {
         toast.error("Please log in again");
         return;
       }
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/jobs/${jobId}/status`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to change job status");
-      }
+      await apiFetch(`/api/jobs/${jobId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: newStatus }),
+      });
 
       toast.success("Job status updated successfully");
       fetchJobs();
       setActiveMenu(null);
     } catch (err: any) {
-      console.error("Error changing job status:", err);
       toast.error(err.message || "Failed to change job status");
     }
   };

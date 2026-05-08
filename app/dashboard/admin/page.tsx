@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/app/components/Navbar";
 import GradientLoader from "@/app/components/GradientLoader";
-import { logout } from "@/lib/api-client";
+import { apiFetch, authStorage, logout } from "@/lib/api-client";
 import toast from "react-hot-toast";
 
 type Stats = {
@@ -209,27 +209,17 @@ export default function AdminDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = authStorage.getAccessToken();
       if (!token) {
         toast.error("Please log in again");
         router.push("/login");
         return;
       }
 
-      const [statsRes, analyticsRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/stats`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/analytics?months=6`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+      const [statsData, analyticsData] = await Promise.all([
+        apiFetch<{ data: Stats }>("/api/admin/stats"),
+        apiFetch<{ data: Analytics }>("/api/admin/analytics?months=6"),
       ]);
-
-      const statsData = await statsRes.json();
-      const analyticsData = await analyticsRes.json();
-
-      if (!statsRes.ok) throw new Error(statsData.message || "Failed to fetch stats");
-      if (!analyticsRes.ok) throw new Error(analyticsData.message || "Failed to fetch analytics");
 
       setStats(statsData.data);
       setAnalytics(analyticsData.data);

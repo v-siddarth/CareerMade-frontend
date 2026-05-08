@@ -16,6 +16,7 @@ import {
 import Navbar from "@/app/components/Navbar";
 import GradientLoader from "@/app/components/GradientLoader";
 import toast from "react-hot-toast";
+import { apiFetch, authStorage } from "@/lib/api-client";
 
 interface Job {
   _id: string;
@@ -65,7 +66,7 @@ export default function JobViewPage() {
   const [showAllBenefits, setShowAllBenefits] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = authStorage.getAccessToken();
     const userData = localStorage.getItem("user");
 
     // 🔒 Authentication check
@@ -85,7 +86,6 @@ export default function JobViewPage() {
         return;
       }
     } catch (error) {
-      console.error("Error parsing user data:", error);
       router.push("/login");
       return;
     }
@@ -98,33 +98,7 @@ export default function JobViewPage() {
     // ✅ Fetch job details
     const fetchJobDetails = async () => {
       try {
-        console.log("🔄 Fetching job with ID:", id);
-
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/jobs/${id}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        console.log("📡 Response status:", response.status);
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("❌ Error response:", errorData);
-          toast.error(errorData.message || "Failed to load job details");
-          setTimeout(() => router.push("/dashboard/employee/jobs"), 2000);
-          return;
-        }
-
-        // ...existing code...
-        const data = await response.json();
-        console.log("📦 Full API response:", data);
-
+        const data = await apiFetch<any>(`/api/jobs/${id}`);
         // Extract job data - handle multiple response structures
         let jobData: any = null;
 
@@ -139,10 +113,7 @@ export default function JobViewPage() {
           jobData = data;
         }
 
-        console.log("📄 Extracted raw job data:", jobData);
-
         if (!jobData || !jobData._id) {
-          console.error("❌ Invalid job data structure:", data);
           toast.error("Job not found or invalid data");
           setTimeout(() => router.push("/dashboard/employee/jobs"), 2000);
           return;
@@ -216,10 +187,8 @@ export default function JobViewPage() {
           },
         };
 
-        console.log("✅ Processed job data:", processedJob);
         setJob(processedJob);
       } catch (error) {
-        console.error("❌ Error fetching job:", error);
         toast.error("Failed to fetch job details");
         setTimeout(() => router.push("/dashboard/employee/jobs"), 2000);
       } finally {

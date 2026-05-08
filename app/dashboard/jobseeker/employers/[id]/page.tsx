@@ -18,6 +18,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import { apiFetch } from "@/lib/api-client";
 
 interface Employer {
   _id: string;
@@ -119,26 +120,14 @@ export default function EmployerDetailPage() {
 
   const fetchEmployerDetails = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/employer/${params.id}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
-        }
-      );
-
-      const data = await response.json();
+      const data = await apiFetch<any>(`/api/employer/${params.id}`);
 
       if (data.success) {
         setEmployer(data.data.employer);
       } else {
         toast.error(data.message || "Failed to fetch employer details");
       }
-    } catch (error) {
-      console.error("Failed to fetch employer:", error);
+    } catch {
       toast.error("Failed to load employer details");
     } finally {
       setLoading(false);

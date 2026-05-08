@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, CheckCheck, ExternalLink, Menu, Shield, X } from "lucide-react";
-import { authStorage } from "@/lib/api-client";
+import { apiFetch, authStorage } from "@/lib/api-client";
 import {
   type AppNotification,
   listNotifications,
@@ -185,12 +185,6 @@ export default function Navbar() {
         return;
       }
 
-      const token = authStorage.getAccessToken();
-      if (!token) {
-        setProfileCompletion(null);
-        return;
-      }
-
       try {
         const rawCache = sessionStorage.getItem(PROFILE_COMPLETION_CACHE_KEY);
         if (rawCache) {
@@ -214,10 +208,7 @@ export default function Navbar() {
         const endpoint =
           user.role === "jobseeker" ? "/api/jobseeker/profile" : "/api/employer/profile";
 
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
+        const data = await apiFetch<any>(endpoint);
 
         if (user.role === "jobseeker") {
           const completion = data?.data?.jobSeeker?.profileCompletion;
@@ -575,7 +566,7 @@ export default function Navbar() {
               onClick={() => navigate("/")}
               aria-label="Go to home"
             >
-              <img src="/logo.png" alt="CareerMade" className="h-8 w-auto" />
+              <img src="/logo.png" alt="CareerMed" className="h-8 w-auto" />
             </motion.button>
 
             <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">

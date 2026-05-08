@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import {
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/app/components/Navbar";
 import GradientLoader from "@/app/components/GradientLoader";
+import { apiFetch, authStorage } from "@/lib/api-client";
 
 type User = {
   firstName?: string;
@@ -89,16 +90,11 @@ export default function ApplicationDetailPage() {
   const [rating, setRating] = useState<number>(0);
   const [isSaving, setIsSaving] = useState(false);
 
-  const apiBase = useMemo(
-    () => process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000",
-    []
-  );
-
   // 🟦 Fetch application details
   useEffect(() => {
     const load = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
+        const token = authStorage.getAccessToken();
         const user = localStorage.getItem("user");
 
         if (!token || !user) {
@@ -114,16 +110,7 @@ export default function ApplicationDetailPage() {
           return;
         }
 
-        const res = await fetch(`${apiBase}/api/applications/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        const json = await res.json();
-        if (!res.ok)
-          throw new Error(json.message || "Failed to load application");
+        const json = await apiFetch<{ data?: any }>(`/api/applications/${id}`);
 
         const application = json.data?.application || json.data || json;
         setApp(application);
@@ -138,23 +125,16 @@ export default function ApplicationDetailPage() {
     };
 
     if (id) load();
-  }, [id, apiBase, router]);
+  }, [id, router]);
 
   // 🟨 Save status change
   const saveStatus = async (newStatus: string) => {
     try {
       setIsSaving(true);
-      const token = localStorage.getItem("accessToken");
-      const res = await fetch(`${apiBase}/api/applications/${id}/status`, {
+      await apiFetch(`/api/applications/${id}/status`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ status: newStatus }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || "Failed to update status");
 
       setStatus(newStatus);
       setApp({ ...app, status: newStatus });
@@ -170,17 +150,10 @@ export default function ApplicationDetailPage() {
   const saveRating = async (newRating: number) => {
     try {
       setIsSaving(true);
-      const token = localStorage.getItem("accessToken");
-      const res = await fetch(`${apiBase}/api/applications/${id}/rating`, {
+      await apiFetch(`/api/applications/${id}/rating`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ rating: newRating }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || "Failed to save rating");
 
       setRating(newRating);
       toast.success("Rating saved successfully");

@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useParams, useRouter } from 'next/navigation';
 import Navbar from '@/app/components/Navbar';
 import GradientLoader from '@/app/components/GradientLoader';
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { apiFetch, authStorage } from '@/lib/api-client';
 
 export default function PreviewResumePage() {
     const params = useParams();
@@ -15,7 +15,7 @@ export default function PreviewResumePage() {
     const [loading, setLoading] = useState(true);
     const [downloading, setDownloading] = useState(false);
     useEffect(() => {
-        const token = localStorage.getItem("accessToken");
+        const token = authStorage.getAccessToken();
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
 
         if (!token) {
@@ -38,14 +38,10 @@ export default function PreviewResumePage() {
     const fetchResume = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/resume/${params.id}/preview`, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                },
-            });
-            setResume(response.data.data.resume);
+            const response = await apiFetch<any>(`/api/resume/${params.id}/preview`);
+            setResume(response?.data?.resume);
         } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Failed to load resume');
+            toast.error(err?.message || 'Failed to load resume');
             router.push('/dashboard/jobseeker/resume');
         } finally {
             setLoading(false);
@@ -55,14 +51,16 @@ export default function PreviewResumePage() {
     const handleDownload = async () => {
         try {
             setDownloading(true);
-            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/resume/${params.id}/download`, {}, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                },
+            const response = await apiFetch<any>(`/api/resume/${params.id}/download`, {
+                method: "POST",
             });
-            window.open(response.data.data.downloadUrl, '_blank');
+            const downloadUrl = response?.data?.downloadUrl;
+            if (!downloadUrl) {
+                throw new Error("Download URL unavailable");
+            }
+            window.open(downloadUrl, '_blank');
         } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Failed to download resume');
+            toast.error(err?.message || 'Failed to download resume');
         } finally {
             setDownloading(false);
         }

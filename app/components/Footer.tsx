@@ -53,7 +53,7 @@ const Footer = () => {
         <div className="mb-8 grid gap-8 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
           <div>
             <div className="mb-4 text-2xl font-bold text-white">
-              <img src="/logo.png" alt="CareerMade" className="h-13" />
+              <img src="/logo.png" alt="CareerMed" className="h-13" />
             </div>
             <p className="mb-4 text-sm">
               Empowering healthcare professionals to find their dream careers
@@ -121,13 +121,13 @@ const Footer = () => {
         <div className="border-t border-gray-800 pt-8 text-center text-sm">
           <p className="mb-2">
             Support Email:{" "}
-            <a href="mailto:support@carreermed.in" className="text-gray-200 transition hover:text-white">
-              support@carreermed.in
+            <a href="mailto:support@careermed.in" className="text-gray-200 transition hover:text-white">
+              support@careermed.in
             </a>{" "}
             <span className="mx-2 hidden sm:inline">|</span>
             <span className="block sm:inline">Contact: +91 98765 43210</span>
           </p>
-          <p>© 2026 CareerMade. All rights reserved.</p>
+          <p>© 2026 CareerMed. All rights reserved.</p>
           <p className="mt-2">
             Designed, developed, and maintained by{" "}
             <a

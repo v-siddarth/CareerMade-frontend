@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast, Toaster } from "react-hot-toast";
 import {
@@ -13,6 +13,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import Navbar from "@/app/components/Navbar";
+import { apiFetch, authStorage } from "@/lib/api-client";
 
 // Helper function to safely convert any value to string
 const toText = (value: any): string => {
@@ -150,10 +151,6 @@ export default function JobApplicationsPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   const itemsPerPage = 8;
-  const apiBase = useMemo(
-    () => process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000",
-    []
-  );
 
   const filterRef = useRef<HTMLDivElement>(null);
   // Close popovers on outside click
@@ -168,7 +165,7 @@ export default function JobApplicationsPage() {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = authStorage.getAccessToken();
     const user = localStorage.getItem("user");
 
     if (!token || !user) {
@@ -186,26 +183,10 @@ export default function JobApplicationsPage() {
 
     const fetchApplications = async () => {
       try {
-        const res = await fetch(`${apiBase}/api/applications/job/${jobId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          console.error("Error fetching applications:", data.message);
-          setApplications([]);
-          throw new Error(data.message || "Failed to fetch applications");
-        } else {
-          setApplications(
-            Array.isArray(data.data?.applications) ? data.data.applications : []
-          );
-        }
+        const data = await apiFetch<{ data?: { applications?: Application[] } }>(`/api/applications/job/${jobId}`);
+        setApplications(Array.isArray(data.data?.applications) ? data.data.applications : []);
       } catch (err) {
-        console.error("Network error:", err);
+        setApplications([]);
         toast.error("Failed to load applications");
       } finally {
         setLoading(false);
@@ -213,29 +194,20 @@ export default function JobApplicationsPage() {
     };
 
     if (jobId) fetchApplications();
-  }, [jobId, router, apiBase]);
+  }, [jobId, router]);
 
   const updateApplicationStatus = async (applicationId: string, newStatus: string) => {
     try {
-      const token = localStorage.getItem("accessToken");
-      const res = await fetch(`${apiBase}/api/applications/${applicationId}/status`, {
+      await apiFetch(`/api/applications/${applicationId}/status`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ status: newStatus }),
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to update status");
 
       setApplications((prev) =>
         prev.map((app) => (app._id === applicationId ? { ...app, status: newStatus } : app))
       );
       toast.success("Status updated");
     } catch (err: any) {
-      console.error("Error updating status:", err);
       toast.error(err.message || "Failed to update status");
     }
   };

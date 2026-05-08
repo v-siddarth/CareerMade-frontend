@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import Navbar from '@/app/components/Navbar';
 import GradientLoader from '@/app/components/GradientLoader';
 // Assuming these icons are available or you'd use a library like 'lucide-react'
@@ -10,6 +9,7 @@ import Link from 'next/link';
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from 'next/navigation';
+import { apiFetch, authStorage } from '@/lib/api-client';
 
 interface Resume {
     _id: string;
@@ -34,21 +34,16 @@ export default function ResumePage() {
     const router = useRouter();
     const hasRequestedRef = useRef(false);
 
-    const fetchResumes = async (token: string) => {
+    const fetchResumes = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/resume/list`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            // Ensure response structure is correct based on your API
-            setResumes(response.data.data.resumes);
+            const response = await apiFetch<any>('/api/resume/list');
+            setResumes(response?.data?.resumes || []);
         } catch (err: any) {
-            if (err?.response?.status === 429) {
+            if (typeof err?.message === "string" && err.message.toLowerCase().includes("too many")) {
                 setError("Too many requests. Please wait a few seconds and try again.");
             } else {
-                setError(err.response?.data?.message || 'Failed to load resumes');
+                setError(err?.message || 'Failed to load resumes');
             }
         } finally {
             setLoading(false);
@@ -59,7 +54,7 @@ export default function ResumePage() {
         if (hasRequestedRef.current) return;
         hasRequestedRef.current = true;
 
-        const token = localStorage.getItem("accessToken");
+        const token = authStorage.getAccessToken();
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
 
         if (!token) {
@@ -76,22 +71,18 @@ export default function ResumePage() {
             return;
         }
 
-        fetchResumes(token);
+        fetchResumes();
     }, [router]);
 
     const handleDelete = async (id: string) => {
         if (confirm('Are you sure you want to delete this resume? This action cannot be undone.')) {
             try {
-                await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/resume/${id}`, {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                    },
-                });
+                await apiFetch(`/api/resume/${id}`, { method: "DELETE" });
                 // Optimistically update the UI
                 setResumes(resumes.filter(r => r._id !== id));
             } catch (err: any) {
                 // Check for specific error message or fallback
-                const errorMessage = err.response?.data?.message || 'Failed to delete resume.';
+                const errorMessage = err?.message || 'Failed to delete resume.';
                 toast.error(errorMessage);
             }
         }

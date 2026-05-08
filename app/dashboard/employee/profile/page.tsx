@@ -6,7 +6,7 @@ import Navbar from "@/app/components/Navbar";
 import { User2, Edit, Mail, Phone, Globe, MapPin, Award, Building2, ArrowLeft, LogOut } from "lucide-react";
 import GradientLoader from "@/app/components/GradientLoader";
 import toast from "react-hot-toast";
-import { logout } from "@/lib/api-client";
+import { apiFetch, authStorage, logout } from "@/lib/api-client";
 
 export default function ViewEmployerProfile() {
   const router = useRouter();
@@ -34,19 +34,16 @@ export default function ViewEmployerProfile() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = authStorage.getAccessToken();
     if (!token) {
       router.push("/login");
       return;
     }
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/employer/profile`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(async (res) => {
-        const data = await res.json();
-        if (res.ok) setProfile(data.data.employer);
-        else setError(data.message || "Profile not found");
+    apiFetch<{ data?: { employer?: any } }>("/api/employer/profile")
+      .then((data) => {
+        if (data?.data?.employer) setProfile(data.data.employer);
+        else setError("Profile not found");
       })
       .catch(() => setError("Failed to load profile"))
       .finally(() => setLoading(false));

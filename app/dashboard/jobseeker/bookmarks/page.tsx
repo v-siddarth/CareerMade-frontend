@@ -19,6 +19,7 @@ import {
   FileText,
 } from "lucide-react";
 import GradientLoader from "@/app/components/GradientLoader";
+import { apiFetch, authStorage } from "@/lib/api-client";
 
 
 const SPECIALIZATIONS = [
@@ -69,7 +70,7 @@ export default function SavedJobs() {
   useEffect(() => {
     const fetchSavedJobs = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
+        const token = authStorage.getAccessToken();
         const user = localStorage.getItem("user");
 
         // 🔒 If no token or user, redirect to login
@@ -93,14 +94,9 @@ export default function SavedJobs() {
         }
 
         // ✅ Fetch saved jobs
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/saved-jobs/saved-jobs`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+        const data = await apiFetch<{ data?: { items?: any[] }; items?: any[] }>(
+          "/api/saved-jobs/saved-jobs"
         );
-
-        const data = await res.json();
         const rawItems = data?.data?.items || data?.items || [];
         const normalizedItems = Array.isArray(rawItems)
           ? rawItems
@@ -110,8 +106,9 @@ export default function SavedJobs() {
 
         setSavedJobs(normalizedItems);
         setFilteredJobs(normalizedItems);
-      } catch (error) {
-        console.error("Failed to fetch saved jobs", error);
+      } catch {
+        setSavedJobs([]);
+        setFilteredJobs([]);
       } finally {
         setLoading(false);
       }

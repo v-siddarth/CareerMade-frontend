@@ -11,6 +11,7 @@ import {
   Bookmark,
 } from "lucide-react";
 import Navbar from "@/app/components/Navbar";
+import { apiFetch, authStorage } from "@/lib/api-client";
 
 export default function EmployeeDashboardPage() {
   const router = useRouter();
@@ -26,13 +27,10 @@ export default function EmployeeDashboardPage() {
   }
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = authStorage.getAccessToken();
     if (!token) return;
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobs?limit=5`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
+    apiFetch<{ data?: { items?: any[] } }>("/api/jobs?limit=5")
       .then((data) => {
         setJobs(data.data?.items || []);
         setLoading(false);

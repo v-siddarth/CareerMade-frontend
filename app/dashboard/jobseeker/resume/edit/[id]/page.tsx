@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useParams, useRouter } from 'next/navigation';
 import Navbar from '@/app/components/Navbar';
 import GradientLoader from '@/app/components/GradientLoader';
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { apiFetch, authStorage } from '@/lib/api-client';
 import {
   User,
   Mail,
@@ -36,7 +36,7 @@ export default function EditResumePage() {
 
     const [activeTab, setActiveTab] = useState('personal');
     useEffect(() => {
-        const token = localStorage.getItem("accessToken");
+        const token = authStorage.getAccessToken();
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
 
         if (!token) {
@@ -59,17 +59,10 @@ export default function EditResumePage() {
     const fetchResume = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/resume/${params.id}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                    },
-                }
-            );
-            setResume(response.data.data.resume);
+            const response = await apiFetch<any>(`/api/resume/${params.id}`);
+            setResume(response?.data?.resume);
         } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Failed to load resume');
+            toast.error(err?.message || 'Failed to load resume');
             router.push('/dashboard/jobseeker/resume');
         } finally {
             setLoading(false);
@@ -79,18 +72,13 @@ export default function EditResumePage() {
     const handleSave = async () => {
         try {
             setSaving(true);
-            await axios.put(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/resume/${params.id}`,
-                { ...resume, regeneratePdf: false },
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                    },
-                }
-            );
+            await apiFetch(`/api/resume/${params.id}`, {
+                method: "PUT",
+                body: JSON.stringify({ ...resume, regeneratePdf: false }),
+            });
             toast.success('Resume saved successfully');
         } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Failed to save resume');
+            toast.error(err?.message || 'Failed to save resume');
         } finally {
             setSaving(false);
         }
@@ -101,26 +89,15 @@ export default function EditResumePage() {
             setGenerating(true);
 
             // Step 1: Save first
-            await axios.put(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/resume/${params.id}`,
-                { ...resume, regeneratePdf: false },
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                    },
-                }
-            );
+            await apiFetch(`/api/resume/${params.id}`, {
+                method: "PUT",
+                body: JSON.stringify({ ...resume, regeneratePdf: false }),
+            });
 
             // Step 2: Generate PDF
-            const res = await axios.post(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/resume/${params.id}/generate-pdf`,
-                {},
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                    },
-                }
-            );
+            await apiFetch(`/api/resume/${params.id}/generate-pdf`, {
+                method: "POST",
+            });
 
             toast.success('PDF generated successfully');
 
@@ -128,7 +105,7 @@ export default function EditResumePage() {
             const resumeId = params.id;
             router.push(`/dashboard/jobseeker/resume/preview/${resumeId}`);
         } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Failed to generate PDF');
+            toast.error(err?.message || 'Failed to generate PDF');
         } finally {
             setGenerating(false);
         }
@@ -136,19 +113,13 @@ export default function EditResumePage() {
 
     const handleSetDefault = async () => {
         try {
-            await axios.post(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/resume/${params.id}/set-default`,
-                {},
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                    },
-                }
-            );
+            await apiFetch(`/api/resume/${params.id}/set-default`, {
+                method: "POST",
+            });
             toast.success('Resume set as default');
             fetchResume();
         } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Failed to set default');
+            toast.error(err?.message || 'Failed to set default');
         }
     };
 

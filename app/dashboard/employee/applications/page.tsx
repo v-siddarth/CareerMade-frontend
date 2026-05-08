@@ -18,6 +18,7 @@ import {
 import toast from "react-hot-toast";
 import Navbar from "@/app/components/Navbar";
 import GradientLoader from "@/app/components/GradientLoader";
+import { apiFetch, authStorage } from "@/lib/api-client";
 
 type Status =
   | "Applied"
@@ -162,7 +163,7 @@ export default function EmployerApplicationsPage() {
   const itemsPerPage = 10;
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = authStorage.getAccessToken();
     const userRaw = localStorage.getItem("user");
 
     if (!token || !userRaw) {
@@ -186,17 +187,9 @@ export default function EmployerApplicationsPage() {
 
     const fetchApplications = async () => {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/applications/employer?limit=100`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+        const data = await apiFetch<{ data?: { items?: Application[] } }>(
+          "/api/applications/employer?limit=100"
         );
-
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data?.message || "Failed to load applications");
-        }
 
         const items = Array.isArray(data?.data?.items) ? data.data.items : [];
         setApplications(items);
@@ -264,7 +257,7 @@ export default function EmployerApplicationsPage() {
 
   const updateStatus = async (applicationId: string, status: Status) => {
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = authStorage.getAccessToken();
       if (!token) {
         toast.error("Please log in to continue.");
         return;
@@ -272,22 +265,10 @@ export default function EmployerApplicationsPage() {
 
       setSavingKey(`status:${applicationId}`);
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/applications/${applicationId}/status`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ status }),
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.message || "Failed to update status");
-      }
+      await apiFetch(`/api/applications/${applicationId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
 
       setApplications((prev) =>
         prev.map((app) => (app._id === applicationId ? { ...app, status } : app))
@@ -302,7 +283,7 @@ export default function EmployerApplicationsPage() {
 
   const updateRating = async (applicationId: string, rating: number) => {
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = authStorage.getAccessToken();
       if (!token) {
         toast.error("Please log in to continue.");
         return;
@@ -310,22 +291,10 @@ export default function EmployerApplicationsPage() {
 
       setSavingKey(`rating:${applicationId}`);
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/applications/${applicationId}/rating`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ rating }),
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.message || "Failed to update rating");
-      }
+      await apiFetch(`/api/applications/${applicationId}/rating`, {
+        method: "PATCH",
+        body: JSON.stringify({ rating }),
+      });
 
       setApplications((prev) =>
         prev.map((app) => (app._id === applicationId ? { ...app, rating } : app))

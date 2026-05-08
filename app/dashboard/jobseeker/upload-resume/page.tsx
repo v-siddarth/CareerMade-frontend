@@ -1,20 +1,19 @@
 "use client";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { apiFetch, authStorage } from "@/lib/api-client";
 
 export default function UploadResume() {
   const [resume, setResume] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+  const token = authStorage.getAccessToken();
 
   useEffect(() => {
     if (!token) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobseeker/profile`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => setResume(data.data?.jobSeeker?.resume || null));
+    apiFetch<{ data?: { jobSeeker?: { resume?: unknown } } }>("/api/jobseeker/profile")
+      .then((data) => setResume(data.data?.jobSeeker?.resume || null))
+      .catch(() => setResume(null));
   }, []);
 
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -26,33 +25,35 @@ export default function UploadResume() {
     formData.append("resume", fileInput.files[0]);
 
     setLoading(true);
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobseeker/resume`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
-    const data = await res.json();
-    setLoading(false);
-
-    if (res.ok) {
-      setResume(data.data.resume);
+    try {
+      const data = await apiFetch<{ data?: { resume?: unknown } }>("/api/jobseeker/resume", {
+        method: "POST",
+        body: formData,
+      });
+      setResume(data?.data?.resume || null);
       toast.success("Resume uploaded!");
-    } else {
-      toast.error(data.message || "Upload failed");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload failed";
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async () => {
     if (!confirm("Delete resume?")) return;
     setLoading(true);
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobseeker/resume`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setLoading(false);
-    if (res.ok) {
+    try {
+      await apiFetch("/api/jobseeker/resume", {
+        method: "DELETE",
+      });
       setResume(null);
       toast.success("Resume deleted");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to delete resume";
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
   };
 

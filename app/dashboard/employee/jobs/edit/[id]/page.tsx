@@ -19,6 +19,7 @@ import {
   inferHealthcareTitle,
 } from "@/lib/healthcare-taxonomy";
 import { CITY_OPTIONS_BY_STATE, LOCATION_STATE_OPTIONS } from "@/lib/location-options";
+import { apiFetch, authStorage } from "@/lib/api-client";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
@@ -198,7 +199,7 @@ export default function EditJobPage() {
   );
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = authStorage.getAccessToken();
     const userData = localStorage.getItem("user");
 
     if (!token || !userData) {
@@ -222,28 +223,8 @@ export default function EditJobPage() {
     // Fetch job data
     const fetchJobData = async () => {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/jobs/${jobId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Error response:", errorData);
-          toast.error(errorData.message || "Failed to load job details");
-          return;
-        }
-
-        const data = await response.json();
-        console.log("Full response:", data);
-
+        const data = await apiFetch<any>(`/api/jobs/${jobId}`);
         const job = data?.data?.job || data?.data || data;
-        console.log("Job data:", job);
 
         if (!job) {
           toast.error("Job not found");
@@ -358,7 +339,6 @@ export default function EditJobPage() {
           expiresAt: formattedExpiry,
         });
       } catch (error) {
-        console.error("Error fetching job:", error);
         toast.error("Failed to fetch job details");
       } finally {
         setLoading(false);
@@ -577,7 +557,7 @@ export default function EditJobPage() {
     if (currentStep !== 5) return;
     if (!validateStep(5)) return;
 
-    const token = localStorage.getItem("accessToken");
+    const token = authStorage.getAccessToken();
     if (!token) {
       toast.error("Please log in again.");
       return;
@@ -620,29 +600,13 @@ export default function EditJobPage() {
     };
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/jobs/${jobId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success("Job updated successfully!");
-        router.push("/dashboard/employee/jobs");
-      } else {
-        toast.error(data.message || "Failed to update job");
-        console.error("Error response:", data);
-      }
-    } catch (error) {
-      console.error("Error submitting form:", error);
+      await apiFetch(`/api/jobs/${jobId}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
+      toast.success("Job updated successfully!");
+      router.push("/dashboard/employee/jobs");
+    } catch {
       toast.error("Something went wrong while updating the job.");
     } finally {
       setUpdating(false);

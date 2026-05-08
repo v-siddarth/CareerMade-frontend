@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
 import toast from "react-hot-toast";
 import { JOB_SPECIALIZATION_ENUM } from "@/lib/healthcare-taxonomy";
+import { apiFetch, authStorage } from "@/lib/api-client";
 
 const ALLOWED_SPECIALIZATIONS = JOB_SPECIALIZATION_ENUM;
 
@@ -153,7 +154,7 @@ export default function EmployerProfileCreatePage() {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = authStorage.getAccessToken();
     const user = localStorage.getItem("user");
 
     if (!token || !user) {
@@ -170,12 +171,9 @@ export default function EmployerProfileCreatePage() {
       return;
     }
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/employer/profile`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(async (res) => {
-        const data = await res.json();
-        if (res.ok && data?.data?.employer) {
+    apiFetch<{ data?: { employer?: any } }>("/api/employer/profile")
+      .then((data) => {
+        if (data?.data?.employer) {
           const p = data.data.employer;
           setFormData({
             organizationName: p.organizationName || "",
@@ -199,7 +197,7 @@ export default function EmployerProfileCreatePage() {
           setIsEditing(true);
         }
       })
-      .catch((err) => console.error("Error fetching profile:", err));
+      .catch(() => {});
   }, [router]);
 
   const handleChange = (
@@ -339,7 +337,7 @@ export default function EmployerProfileCreatePage() {
       return toast.error("Number of beds cannot be negative");
     }
 
-    const token = localStorage.getItem("accessToken");
+    const token = authStorage.getAccessToken();
     if (!token) {
       toast.error("Please log in again");
       return;
@@ -442,29 +440,17 @@ export default function EmployerProfileCreatePage() {
     });
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/employer/profile`, {
+      await apiFetch("/api/employer/profile", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
         body: formPayload,
       });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        toast.success(
-          isEditing
-            ? "Profile updated successfully!"
-            : "Profile created successfully!"
-        );
-        router.push("/dashboard/employee/profile");
-      } else {
-        toast.error(data.message || "Failed to save profile");
-        console.error("Error response:", data);
-      }
-    } catch (err) {
-      console.error(err);
+      toast.success(
+        isEditing
+          ? "Profile updated successfully!"
+          : "Profile created successfully!"
+      );
+      router.push("/dashboard/employee/profile");
+    } catch {
       toast.error("Something went wrong while saving the profile.");
     } finally {
       setLoading(false);

@@ -6,6 +6,7 @@ import Navbar from "@/app/components/Navbar";
 import GradientLoader from "@/app/components/GradientLoader";
 import toast from "react-hot-toast";
 import { ChevronRight, CheckCircle, X } from "lucide-react";
+import { apiFetch, authStorage } from "@/lib/api-client";
 import {
   ALL_JOBSEEKER_DEGREES,
   HEALTHCARE_TITLES,
@@ -194,7 +195,7 @@ export default function CreateJobPage() {
   );
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = authStorage.getAccessToken();
     const user = localStorage.getItem("user");
 
     if (!token || !user) {
@@ -213,11 +214,8 @@ export default function CreateJobPage() {
     // fetch employer profile to read verification status (user object may not include employer record)
     (async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/employer/profile`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        if (res.ok && data?.data?.employer) {
+        const data = await apiFetch<{ data?: { employer?: any } }>("/api/employer/profile");
+        if (data?.data?.employer) {
           const emp = data.data.employer;
           setIsVerified(!!(emp?.verification?.isVerified));
           const completeAddress = Boolean(
@@ -232,8 +230,7 @@ export default function CreateJobPage() {
           setIsVerified(false);
           setHasCompleteAddress(false);
         }
-      } catch (err) {
-        console.error("Failed to fetch employer profile:", err);
+      } catch (_err) {
         setIsVerified(false);
         setHasCompleteAddress(false);
       } finally {
@@ -500,27 +497,15 @@ export default function CreateJobPage() {
     };
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobs`, {
+      await apiFetch("/api/jobs", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify(payload),
       });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        toast.success("Job posted successfully!");
-        router.push("/dashboard/employee/jobs");
-      } else {
-        toast.error(data.message || "Failed to post job");
-        console.error("Error:", data);
-      }
+      toast.success("Job posted successfully!");
+      router.push("/dashboard/employee/jobs");
     } catch (err) {
-      console.error(err);
-      toast.error("Something went wrong while posting the job.");
+      const message = err instanceof Error ? err.message : "Something went wrong while posting the job.";
+      toast.error(message);
     } finally {
       setLoading(false);
     }

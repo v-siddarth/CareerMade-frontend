@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Check, CreditCard, Landmark, ShieldCheck, Sparkles, Wallet } from "lucide-react";
 import toast from "react-hot-toast";
 import Navbar from "@/app/components/Navbar";
-import { authStorage } from "@/lib/api-client";
+import { apiFetch, authStorage } from "@/lib/api-client";
 import { createPricingNotificationEvent } from "@/lib/notifications-client";
 
 type Audience = "employer" | "jobseeker";
@@ -90,25 +90,18 @@ export default function PricingPage() {
   const fetchPlans = async (preferredAudience?: Audience) => {
     try {
       setLoading(true);
-      const token = authStorage.getAccessToken();
       const audienceParam = preferredAudience || lockedAudience;
       const query = new URLSearchParams();
       if (audienceParam) query.set("audience", audienceParam);
       query.set("t", Date.now().toString());
-      const pricingUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/pricing/plans?${query.toString()}`;
-      const res = await fetch(
-        pricingUrl,
+      const data = await apiFetch<{ data?: { plans?: PricingPlan[] } }>(
+        `/api/pricing/plans?${query.toString()}`,
         {
         cache: "no-store",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
         }
       );
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to fetch pricing plans");
-      }
 
-      const allPlans = (data.data.plans || []) as PricingPlan[];
+      const allPlans = (data?.data?.plans || []) as PricingPlan[];
       const activePlans = allPlans.filter((plan) => plan.isActive !== false);
       setPlans(activePlans);
 
@@ -200,20 +193,15 @@ export default function PricingPage() {
         throw new Error("Razorpay checkout failed to load. Please check your internet and try again.");
       }
 
-      const checkoutRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pricing/checkout-subscription`, {
+      const checkoutData = await apiFetch<CreateCheckoutResponse>("/api/pricing/checkout-subscription", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           planId: selectedPlan.id,
           preferredMethod: method,
         }),
       });
-      const checkoutData = (await checkoutRes.json()) as CreateCheckoutResponse;
 
-      if (!checkoutRes.ok || !checkoutData?.data) {
+      if (!checkoutData?.data) {
         throw new Error(checkoutData?.message || "Unable to start checkout");
       }
 
@@ -229,7 +217,7 @@ export default function PricingPage() {
       const rzp = new window.Razorpay({
         key: checkoutData.data.keyId,
         subscription_id: checkoutData.data.subscriptionId,
-        name: checkoutData.data.name || "LifeMate",
+        name: checkoutData.data.name || "CareerMed",
         description: checkoutData.data.description || "Subscription payment",
         prefill: checkoutData.data.prefill || {},
         notes: {
@@ -241,22 +229,14 @@ export default function PricingPage() {
         },
         handler: async (response: RazorpaySuccessPayload) => {
           try {
-            const verifyRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pricing/checkout-verify`, {
+            const verifyData = await apiFetch<{ message?: string }>("/api/pricing/checkout-verify", {
               method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
               body: JSON.stringify({
                 planId: selectedPlan.id,
                 ...response,
               }),
             });
-
-            const verifyData = await verifyRes.json();
-            if (!verifyRes.ok) {
-              throw new Error(verifyData?.message || "Payment verification failed");
-            }
+            if (!verifyData) throw new Error("Payment verification failed");
             toast.success("Payment captured. Subscription activation is being confirmed.");
           } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Payment verification failed";

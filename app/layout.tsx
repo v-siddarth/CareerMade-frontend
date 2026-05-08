@@ -167,7 +167,7 @@ export default function RootLayout({
         sameAs: [],
         contactPoint: {
           "@type": "ContactPoint",
-          email: "support@careermade.com",
+          email: "support@careermed.in",
           contactType: "customer support",
           availableLanguage: ["English", "Hindi"],
         },

@@ -33,6 +33,7 @@ import GradientLoader from "@/app/components/GradientLoader";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { Dialog } from "@headlessui/react";
+import { apiFetch, authStorage } from "@/lib/api-client";
 
 export default function JobViewPage() {
     const { id } = useParams();
@@ -57,7 +58,7 @@ export default function JobViewPage() {
     const [screeningErrors, setScreeningErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
-        const token = localStorage.getItem("accessToken");
+        const token = authStorage.getAccessToken();
         const user = localStorage.getItem("user");
         if (!token || !user) {
             router.push("/login");
@@ -73,13 +74,9 @@ export default function JobViewPage() {
 
     // Check if user has already applied
     useEffect(() => {
-        const token = localStorage.getItem("accessToken");
-        if (!token || !id) return;
+        if (!authStorage.getAccessToken() || !id) return;
 
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/applications/me?job=${id}&limit=1`, {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => res.json())
+        apiFetch<{ data?: { items?: any[] }; items?: any[] }>(`/api/applications/me?job=${id}&limit=1`)
             .then((data) => {
                 const applications = data?.data?.items || data?.items || [];
                 const firstApplication = Array.isArray(applications) ? applications[0] : null;
@@ -92,8 +89,7 @@ export default function JobViewPage() {
                 setHasApplied(Boolean(firstApplication?._id) && !allowReapply);
                 setAppliedStatus(status);
             })
-            .catch((err) => {
-                console.error("Error checking application status:", err);
+            .catch(() => {
                 setHasApplied(false);
                 setAppliedStatus(null);
                 setApplyAttempts(0);
@@ -102,25 +98,13 @@ export default function JobViewPage() {
     }, [id]);
 
     useEffect(() => {
-        const token = localStorage.getItem("accessToken");
+        const token = authStorage.getAccessToken();
         if (!token) {
             toast.error("No access token found. Please log in first!");
             return;
         }
 
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/api/jobs/${id}`;
-
-        fetch(url, {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => {
-                return res
-                    .json()
-                    .catch((e) => {
-                        toast.error(`[JobView] Failed to parse JSON: ${String(e)}`);
-                        throw e;
-                    });
-            })
+        apiFetch<{ data?: { job?: any } | any }>(`/api/jobs/${id}`)
             .then((data) => {
                 const dataLayer = data?.data ?? data;
                 const base = dataLayer?.job ?? dataLayer;
@@ -139,7 +123,6 @@ export default function JobViewPage() {
                         maxYears: exp?.maxYears ?? exp?.max ?? exp?.maximum ?? null,
                     },
                 };
-                console.log(normalized);
                 setJob(normalized);
             })
             .catch((err) => {
@@ -150,12 +133,9 @@ export default function JobViewPage() {
     }, [id]);
 
     useEffect(() => {
-        const token = localStorage.getItem("accessToken");
+        const token = authStorage.getAccessToken();
         if (!token) return;
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobseeker/profile`, {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((r) => r.json())
+        apiFetch<{ data?: { jobSeeker?: any }; jobSeeker?: any }>("/api/jobseeker/profile")
             .then((data) => {
                 const js = data?.data?.jobSeeker ?? data?.jobSeeker ?? data;
                 setResume(js?.resume ?? null);
@@ -167,15 +147,15 @@ export default function JobViewPage() {
     const handleUploadResume = async (file: File) => {
         try {
             setUploadingResume(true);
-            const token = localStorage.getItem("accessToken");
             const fd = new FormData();
             fd.append("resume", file);
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobseeker/resume`, {
+            const data = await apiFetch<{ message?: string; data?: { resume?: any }; resume?: any }>(
+              "/api/jobseeker/resume",
+              {
                 method: "POST",
-                headers: { Authorization: `Bearer ${token}` },
                 body: fd,
-            });
-            const data = await res.json();
+              }
+            );
             setResume(data?.data?.resume ?? data?.resume ?? null);
             setMessage(data?.message || "Resume uploaded");
             toast.success(data?.message || "Resume uploaded");
@@ -189,16 +169,12 @@ export default function JobViewPage() {
 
     const handleDeleteResume = async () => {
         try {
-            const token = localStorage.getItem("accessToken");
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobseeker/resume`, {
+            const data = await apiFetch<{ message?: string }>("/api/jobseeker/resume", {
                 method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` },
             });
-            const data = await res.json();
-            if (res.ok) setResume(null);
-            setMessage(data?.message || (res.ok ? "Resume deleted" : "Failed to delete resume"));
-            if (res.ok) toast.success(data?.message || "Resume deleted");
-            else toast.error(data?.message || "Failed to delete resume");
+            setResume(null);
+            setMessage(data?.message || "Resume deleted");
+            toast.success(data?.message || "Resume deleted");
         } catch (e) {
             setMessage("Failed to delete resume");
             toast.error("Failed to delete resume");
@@ -208,15 +184,15 @@ export default function JobViewPage() {
     const handleUploadCover = async (file: File) => {
         try {
             setUploadingCover(true);
-            const token = localStorage.getItem("accessToken");
             const fd = new FormData();
             fd.append("coverLetter", file);
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobseeker/cover-letter`, {
+            const data = await apiFetch<{ message?: string; data?: { coverLetter?: any }; coverLetter?: any }>(
+              "/api/jobseeker/cover-letter",
+              {
                 method: "POST",
-                headers: { Authorization: `Bearer ${token}` },
                 body: fd,
-            });
-            const data = await res.json();
+              }
+            );
             setCoverLetter(data?.data?.coverLetter ?? data?.coverLetter ?? null);
             setMessage(data?.message || "Cover letter uploaded");
             toast.success(data?.message || "Cover letter uploaded");
@@ -230,16 +206,12 @@ export default function JobViewPage() {
 
     const handleDeleteCover = async () => {
         try {
-            const token = localStorage.getItem("accessToken");
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobseeker/cover-letter`, {
+            const data = await apiFetch<{ message?: string }>("/api/jobseeker/cover-letter", {
                 method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` },
             });
-            const data = await res.json();
-            if (res.ok) setCoverLetter(null);
-            setMessage(data?.message || (res.ok ? "Cover letter deleted" : "Failed to delete cover letter"));
-            if (res.ok) toast.success(data?.message || "Cover letter deleted");
-            else toast.error(data?.message || "Failed to delete cover letter");
+            setCoverLetter(null);
+            setMessage(data?.message || "Cover letter deleted");
+            toast.success(data?.message || "Cover letter deleted");
         } catch (e) {
             setMessage("Failed to delete cover letter");
             toast.error("Failed to delete cover letter");
@@ -292,7 +264,7 @@ export default function JobViewPage() {
 
     const applyJob = async () => {
         try {
-            const token = localStorage.getItem("accessToken");
+            const token = authStorage.getAccessToken();
             if (!token) {
                 toast.error("Please log in to apply.");
                 return;
@@ -332,52 +304,39 @@ export default function JobViewPage() {
                     .filter((item: any) => item.answer.length > 0);
             }
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobs/${id}/apply`, {
+            const data = await apiFetch<{
+              message?: string;
+              data?: { attemptNumber?: number; application?: { status?: string } };
+            }>(`/api/jobs/${id}/apply`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
                 body: JSON.stringify(payload),
             });
 
-            const data = await res.json();
-
-            if (res.ok) {
-                setHasApplied(true);
-                setCanReapply(false);
-                const nextAttempt = Number(data?.data?.attemptNumber || applyAttempts || 1);
-                setApplyAttempts(nextAttempt);
-                setAppliedStatus(data?.data?.application?.status || "Applied");
-                setMessage(data.message || "Application submitted successfully!");
-                toast.success(data.message || "Application submitted successfully!");
-                if (nextAttempt === 2) {
-                    toast("Warning: if you withdraw again, you cannot apply for this job anymore.", {
-                        icon: "⚠️",
-                    });
-                }
-            } else {
-                setMessage(data.message || "Failed to submit application.");
-                toast.error(data.message || "Failed to submit application.");
+            setHasApplied(true);
+            setCanReapply(false);
+            const nextAttempt = Number(data?.data?.attemptNumber || applyAttempts || 1);
+            setApplyAttempts(nextAttempt);
+            setAppliedStatus(data?.data?.application?.status || "Applied");
+            setMessage(data.message || "Application submitted successfully!");
+            toast.success(data.message || "Application submitted successfully!");
+            if (nextAttempt === 2) {
+                toast("Warning: if you withdraw again, you cannot apply for this job anymore.", {
+                    icon: "⚠️",
+                });
             }
         } catch (error) {
-            console.error("Error applying:", error);
-            setMessage("Something went wrong while applying.");
-            toast.error("Something went wrong while applying.");
+            const friendlyMessage =
+              error instanceof Error ? error.message : "Something went wrong while applying.";
+            setMessage(friendlyMessage);
+            toast.error(friendlyMessage);
         }
     };
 
     const saveJob = async () => {
         try {
-            const token = localStorage.getItem("accessToken");
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/saved-jobs/jobs/${id}/save`,
-                {
-                    method: "POST",
-                    headers: { Authorization: `Bearer ${token}` },
-                }
-            );
-            const data = await res.json();
+            const data = await apiFetch<{ message?: string }>(`/api/saved-jobs/jobs/${id}/save`, {
+              method: "POST",
+            });
             setMessage(data.message || "Job saved successfully!");
             toast.success(data.message || "Job saved successfully!");
         } catch {

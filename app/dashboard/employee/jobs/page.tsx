@@ -26,6 +26,7 @@ import Navbar from "@/app/components/Navbar";
 import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { apiFetch, authStorage } from "@/lib/api-client";
 
 
 interface Location {
@@ -193,7 +194,7 @@ export default function JobListing() {
   const handleDelete = async (id: string): Promise<void> => {
     if (!confirm("Are you sure you want to delete this job?")) return;
 
-    const token = localStorage.getItem("accessToken");
+    const token = authStorage.getAccessToken();
     if (!token) {
       toast.error("Unauthorized");
       router.push("/login");
@@ -201,29 +202,16 @@ export default function JobListing() {
     }
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/jobs/${id}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const data = await res.json();
-
-      if (res.ok) {
-        setJobs((prev) => prev.filter((job) => job._id !== id));
-        toast.success("Job deleted successfully");
-      } else {
-        toast.error(data.message || "Failed to delete job");
-      }
-    } catch (err) {
-      console.error("Delete error:", err);
+      await apiFetch(`/api/jobs/${id}`, { method: "DELETE" });
+      setJobs((prev) => prev.filter((job) => job._id !== id));
+      toast.success("Job deleted successfully");
+    } catch {
       toast.error("Something went wrong while deleting the job");
     }
   };
   // ✅ Fetch jobs
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = authStorage.getAccessToken();
     const userData = localStorage.getItem("user");
 
     if (!token || !userData) {
@@ -243,17 +231,10 @@ export default function JobListing() {
     // ✅ Only fetch jobs if valid employer
     const fetchJobs = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobs/my?limit=50`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        if (res.ok) {
-          setJobs(data.data?.items || data.items || []);
-          setFilteredJobs(data.data?.items || data.items || []);
-        } else {
-          toast.error(data.message || "Failed to fetch jobs");
-        }
-      } catch (e) {
+        const data = await apiFetch<{ data?: { items?: Job[] }; items?: Job[] }>("/api/jobs/my?limit=50");
+        setJobs(data.data?.items || data.items || []);
+        setFilteredJobs(data.data?.items || data.items || []);
+      } catch {
         toast.error("Something went wrong fetching jobs");
       } finally {
         setLoading(false);

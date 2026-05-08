@@ -15,6 +15,7 @@ import {
 import Navbar from "@/app/components/Navbar";
 import GradientLoader from "@/app/components/GradientLoader";
 import toast from "react-hot-toast";
+import { apiFetch, authStorage } from "@/lib/api-client";
 
 type Audience = "employer" | "jobseeker";
 type SubscriptionStatus = "Active" | "Inactive" | "Cancelled" | "Expired";
@@ -167,29 +168,22 @@ export default function AdminPricingPage() {
 
   const fetchPlanConfigs = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = authStorage.getAccessToken();
       if (!token) {
         toast.error("Please log in again");
         router.push("/login");
         return;
       }
 
-      const pricingUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/pricing-plans?t=${Date.now()}`;
-      const res = await fetch(pricingUrl, {
-        cache: "no-store",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to fetch pricing plans");
-      }
+      const data = await apiFetch<{ data: { plans: PricingPlanConfig[] } }>(
+        `/api/admin/pricing-plans?t=${Date.now()}`,
+        { cache: "no-store" }
+      );
 
       const plans = (data.data.plans || []) as PricingPlanConfig[];
       applyPlanConfigs(plans);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to load plan configuration";
-      console.error("Error fetching plan configs:", err);
       toast.error(message);
     }
   };
@@ -197,7 +191,7 @@ export default function AdminPricingPage() {
   const fetchSubscriptions = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("accessToken");
+      const token = authStorage.getAccessToken();
       if (!token) {
         toast.error("Please log in again");
         router.push("/login");
@@ -215,18 +209,11 @@ export default function AdminPricingPage() {
       if (autoRenewFilter) params.append("autoRenew", autoRenewFilter);
 
       params.append("t", Date.now().toString());
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/subscriptions?${params.toString()}`,
-        {
-          cache: "no-store",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to fetch subscriptions");
-      }
+      const data = await apiFetch<{
+        data: { items: EmployerSubscription[]; overview: Overview; total: number };
+      }>(`/api/admin/subscriptions?${params.toString()}`, {
+        cache: "no-store",
+      });
 
       const responseItems = data.data.items as EmployerSubscription[];
       setItems(responseItems);
@@ -247,7 +234,6 @@ export default function AdminPricingPage() {
       setSubscriptionDrafts(nextSubDrafts);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to load subscriptions";
-      console.error("Error fetching subscriptions:", err);
       toast.error(message);
     } finally {
       setLoading(false);
@@ -378,7 +364,7 @@ export default function AdminPricingPage() {
   const handleSavePlanConfigs = async () => {
     try {
       setSavingPlans(true);
-      const token = localStorage.getItem("accessToken");
+      const token = authStorage.getAccessToken();
       if (!token) {
         toast.error("Please log in again");
         return;
@@ -420,25 +406,13 @@ export default function AdminPricingPage() {
           )
         : [];
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/pricing-plans`, {
+      const data = await apiFetch<{ data?: { plans?: PricingPlanConfig[] } }>("/api/admin/pricing-plans", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           plans: sanitizedPayloadPlans,
           forceReseed: !hasVisibleCatalog,
         }),
       });
-
-      const data = await res.json();
-      if (!res.ok) {
-        const details = Array.isArray(data.errors)
-          ? data.errors.map((error: { message?: string }) => error.message).filter(Boolean).join(", ")
-          : "";
-        throw new Error(details ? `${data.message}: ${details}` : data.message || "Failed to update pricing plans");
-      }
 
       const updatedPlans = (data.data?.plans || []) as PricingPlanConfig[];
       if (updatedPlans.length > 0) {
@@ -449,7 +423,6 @@ export default function AdminPricingPage() {
       await fetchSubscriptions();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to update plan settings";
-      console.error("Error updating plan configs:", err);
       toast.error(message);
     } finally {
       setSavingPlans(false);
@@ -462,7 +435,7 @@ export default function AdminPricingPage() {
 
     try {
       setSavingId(item._id);
-      const token = localStorage.getItem("accessToken");
+      const token = authStorage.getAccessToken();
       if (!token) {
         toast.error("Please log in again");
         return;
@@ -475,28 +448,15 @@ export default function AdminPricingPage() {
         endDate: draft.endDate || null,
       };
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/subscriptions/${item._id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to update subscription");
-      }
+      await apiFetch(`/api/admin/subscriptions/${item._id}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
 
       toast.success("Employer subscription updated");
       await fetchSubscriptions();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to save changes";
-      console.error("Error updating subscription:", err);
       toast.error(message);
     } finally {
       setSavingId(null);

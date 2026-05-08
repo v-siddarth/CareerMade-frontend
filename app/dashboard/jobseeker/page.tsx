@@ -25,6 +25,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { apiFetch, authStorage } from "@/lib/api-client";
 import {
   HEALTHCARE_TITLES,
   TITLE_FIELD_OPTIONS,
@@ -123,7 +124,7 @@ export default function JobSeekerJobs() {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
+        const token = authStorage.getAccessToken();
         const rawUser = localStorage.getItem("user");
         const parsedParams = new URLSearchParams(searchParamsKey);
         const titleFromUrl = (parsedParams.get("title") || "").trim();
@@ -147,17 +148,7 @@ export default function JobSeekerJobs() {
 
         // If token exists but user cache is missing, hydrate from profile API.
         if (!parsedUser?.role) {
-          const profileRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/profile`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
-          if (!profileRes.ok) {
-            toast.error("Please log in to continue.");
-            router.push("/login");
-            return;
-          }
-
-          const profileData = await profileRes.json();
+          const profileData = await apiFetch<{ data?: { user?: { role?: string } } }>("/api/auth/profile");
           parsedUser = profileData?.data?.user || null;
           if (parsedUser) {
             localStorage.setItem("user", JSON.stringify(parsedUser));
@@ -187,12 +178,11 @@ export default function JobSeekerJobs() {
         // Prefill title filter from user's professional profile when available.
         if (!titleFromUrl) {
           try {
-            const profileRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobseeker/profile`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            const profileData = await profileRes.json();
+            const profileData = await apiFetch<{ data?: { jobSeeker?: { professionalInfo?: { category?: string } } } }>(
+              "/api/jobseeker/profile"
+            );
             const category = profileData?.data?.jobSeeker?.professionalInfo?.category;
-            if (category && TITLE_OPTIONS.includes(category)) {
+            if (category && TITLE_OPTIONS.includes(category as (typeof TITLE_OPTIONS)[number])) {
               setFilters((prev) => ({ ...prev, title: category }));
             }
           } catch {
@@ -201,18 +191,11 @@ export default function JobSeekerJobs() {
         }
 
         // ✅ Fetch jobs if authorized
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobs?limit=50`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-
-        if (res.ok) {
-          setJobs(data.data?.items || data.items || []);
-          setFilteredJobs(data.data?.items || data.items || []);
-        } else {
-          toast.error(data.message || "Failed to fetch jobs");
-        }
-      } catch (error) {
+        const data = await apiFetch<{ data?: { items?: any[] }; items?: any[] }>("/api/jobs?limit=50");
+        const items = data?.data?.items || data?.items || [];
+        setJobs(items);
+        setFilteredJobs(items);
+      } catch (_error) {
         toast.error("Something went wrong fetching jobs");
       } finally {
         setLoading(false);
@@ -324,27 +307,18 @@ export default function JobSeekerJobs() {
     // Fetch saved jobs for the current user and populate a Set of IDs
     const fetchSavedJobs = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
+        const token = authStorage.getAccessToken();
         if (!token) return;
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/saved-jobs/saved-jobs`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+        const data = await apiFetch<{ data?: { items?: any[] }; items?: any[] }>(
+          "/api/saved-jobs/saved-jobs"
         );
-        const data = await res.json();
-
-        if (res.ok) {
-          const savedJobIds = (data.data?.items || data.items || []).map(
-            (item: any) => String(item.job?._id || item.jobId || item.job)
-          );
-          setSavedIds(new Set(savedJobIds));
-        } else {
-          console.error("Failed to fetch saved jobs", data?.message || data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch saved jobs", error);
+        const savedJobIds = (data.data?.items || data.items || []).map(
+          (item: any) => String(item.job?._id || item.jobId || item.job)
+        );
+        setSavedIds(new Set(savedJobIds));
+      } catch (_error) {
+        setSavedIds(new Set());
       }
     };
 
@@ -352,7 +326,7 @@ export default function JobSeekerJobs() {
   }, []);
 
   const saveJob = async (id: string) => {
-    const token = localStorage.getItem("accessToken");
+    const token = authStorage.getAccessToken();
     if (!token) {
       toast.error("Please log in to save jobs.");
       return;
@@ -370,28 +344,11 @@ export default function JobSeekerJobs() {
     });
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/saved-jobs/jobs/${id}/${isSaved ? "unsave" : "save"}`,
-        {
-          method: isSaved ? "DELETE" : "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const data = await res.json();
-
-      if (!res.ok) {
-        // revert optimistic update on server error
-        setSavedIds((prev) => {
-          const revert = new Set(prev);
-          if (isSaved) revert.add(idStr);
-          else revert.delete(idStr);
-          return revert;
-        });
-        toast.error(data.message || "Failed to save job.");
-      } else {
-        toast.success(isSaved ? "Job removed from saved list." : "Job saved successfully!");
-      }
-    } catch (err) {
+      await apiFetch(`/api/saved-jobs/jobs/${id}/${isSaved ? "unsave" : "save"}`, {
+        method: isSaved ? "DELETE" : "POST",
+      });
+      toast.success(isSaved ? "Job removed from saved list." : "Job saved successfully!");
+    } catch (_err) {
       // revert optimistic update on network error
       setSavedIds((prev) => {
         const revert = new Set(prev);

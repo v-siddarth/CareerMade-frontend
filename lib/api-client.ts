@@ -1,6 +1,7 @@
 export type UserRole = 'jobseeker' | 'employer' | 'admin';
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '');
+const isProductionRuntime = process.env.NODE_ENV === 'production';
 const ACCESS_TOKEN_KEY = 'accessToken';
 const USER_KEY = 'user';
 
@@ -12,6 +13,13 @@ type ApiRequestOptions = RequestInit & {
 const isBrowser = () => typeof window !== 'undefined';
 const emitAuthChanged = () => {
   if (isBrowser()) window.dispatchEvent(new Event('auth-state-changed'));
+};
+
+export const getApiBaseUrl = () => {
+  if (!API_BASE && isProductionRuntime) {
+    throw new Error('NEXT_PUBLIC_API_URL is missing in production configuration.');
+  }
+  return API_BASE;
 };
 
 export const authStorage = {
@@ -57,7 +65,8 @@ export const authStorage = {
 };
 
 export async function refreshAccessToken(): Promise<string | null> {
-  const res = await fetch(`${API_BASE}/api/auth/refresh-token`, {
+  const apiBase = getApiBaseUrl();
+  const res = await fetch(`${apiBase}/api/auth/refresh-token`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -95,9 +104,10 @@ export async function apiFetch<T = unknown>(path: string, options: ApiRequestOpt
   }
 
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const apiBase = getApiBaseUrl();
 
   const makeRequest = () =>
-    fetch(`${API_BASE}${normalizedPath}`, {
+    fetch(`${apiBase}${normalizedPath}`, {
       ...rest,
       headers: requestHeaders,
       credentials: 'include',
