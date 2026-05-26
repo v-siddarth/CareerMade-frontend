@@ -35,6 +35,16 @@ import { useRouter } from "next/navigation";
 import { Dialog } from "@headlessui/react";
 import { apiFetch, authStorage } from "@/lib/api-client";
 
+type SubscriptionEntitlements = {
+    usage?: {
+        applicationsThisCycle?: number;
+        maxApplications?: number | null;
+        hasApplicationLimit?: boolean;
+        remainingApplications?: number | null;
+        canApply?: boolean;
+    };
+};
+
 export default function JobViewPage() {
     const { id } = useParams();
     const router = useRouter();
@@ -56,6 +66,15 @@ export default function JobViewPage() {
     const [showAllBenefits, setShowAllBenefits] = useState(false);
     const [screeningAnswers, setScreeningAnswers] = useState<Record<string, string>>({});
     const [screeningErrors, setScreeningErrors] = useState<Record<string, string>>({});
+    const [entitlements, setEntitlements] = useState<SubscriptionEntitlements | null>(null);
+    const applicationUsage = entitlements?.usage;
+    const canApplyByPlan = applicationUsage?.canApply !== false;
+    const applicationUsageLabel =
+        applicationUsage?.hasApplicationLimit &&
+        typeof applicationUsage.applicationsThisCycle === "number" &&
+        typeof applicationUsage.maxApplications === "number"
+            ? `${applicationUsage.applicationsThisCycle} / ${applicationUsage.maxApplications} applications used this cycle`
+            : "";
 
     useEffect(() => {
         const token = authStorage.getAccessToken();
@@ -142,6 +161,14 @@ export default function JobViewPage() {
                 setCoverLetter(js?.coverLetter ?? null);
             })
             .catch((e) => toast.error(`[JobView] Failed to load profile: ${String(e)}`));
+    }, []);
+
+    useEffect(() => {
+        const token = authStorage.getAccessToken();
+        if (!token) return;
+        apiFetch<{ data?: { entitlements?: SubscriptionEntitlements } }>("/api/pricing/my-subscription")
+            .then((data) => setEntitlements(data.data?.entitlements || null))
+            .catch(() => setEntitlements(null));
     }, []);
 
     const handleUploadResume = async (file: File) => {
@@ -272,6 +299,11 @@ export default function JobViewPage() {
 
             if (!resume) {
                 toast.error("Please upload a resume before applying!");
+                return;
+            }
+
+            if (!canApplyByPlan) {
+                toast.error("You have reached your application limit for the current billing cycle.");
                 return;
             }
 
@@ -639,7 +671,12 @@ export default function JobViewPage() {
                                             </button>
                                         ) : (
                                             <button
+                                                disabled={!canApplyByPlan}
                                                 onClick={() => {
+                                                    if (!canApplyByPlan) {
+                                                        toast.error("You have reached your application limit for the current billing cycle.");
+                                                        return;
+                                                    }
                                                     // if (!resume) {
                                                     //     toast.error("Please upload a resume before applying!");
                                                     //     return;
@@ -647,13 +684,29 @@ export default function JobViewPage() {
                                                     prepareScreeningState();
                                                     setIsApplyModalOpen(true);
                                                 }}
-                                                className="px-4 py-2 bg-[#007BFF] hover:bg-[#006AE6] text-white rounded-full text-sm font-semibold"
+                                                className="px-4 py-2 bg-[#007BFF] hover:bg-[#006AE6] disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-full text-sm font-semibold"
                                             >
                                         {canReapply ? "Apply Again" : "Apply"}
                                     </button>
                                 )}
                                     </div>
                                 </div>
+                                {applicationUsageLabel && (
+                                    <div
+                                        className={`mt-3 rounded-lg border px-3 py-2 text-xs ${
+                                            canApplyByPlan
+                                                ? "border-blue-200 bg-blue-50 text-blue-700"
+                                                : "border-red-200 bg-red-50 text-red-700"
+                                        }`}
+                                    >
+                                        {applicationUsageLabel}
+                                        {!canApplyByPlan && (
+                                            <span className="block mt-1">
+                                                Upgrade your plan to keep applying this cycle.
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Description Section */}
@@ -1052,7 +1105,12 @@ export default function JobViewPage() {
                                 Cancel
                             </button>
                             <button
+                                disabled={!canApplyByPlan}
                                 onClick={() => {
+                                    if (!canApplyByPlan) {
+                                        toast.error("You have reached your application limit for the current billing cycle.");
+                                        return;
+                                    }
                                     if (!resume) {
                                         toast.error("Please select or upload a resume before applying!");
                                         return;
@@ -1064,7 +1122,7 @@ export default function JobViewPage() {
                                     applyJob();
                                     setIsApplyModalOpen(false);
                                 }}
-                                className="px-5 py-2 bg-[#1A0152] hover:bg-[#2B0D85] text-white rounded-lg text-sm font-semibold transition"
+                                className="px-5 py-2 bg-[#1A0152] hover:bg-[#2B0D85] disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition"
                             >
                                 Submit Application
                             </button>

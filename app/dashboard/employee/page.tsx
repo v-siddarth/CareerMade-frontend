@@ -9,14 +9,24 @@ import {
   MapPin,
   Clock,
   Bookmark,
+  CheckCircle,
+  CreditCard,
 } from "lucide-react";
 import Navbar from "@/app/components/Navbar";
 import { apiFetch, authStorage } from "@/lib/api-client";
+
+type SubscriptionSummary = {
+  plan?: string;
+  planName?: string;
+  status?: string;
+  isActive?: boolean;
+};
 
 export default function EmployeeDashboardPage() {
   const router = useRouter();
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [subscription, setSubscription] = useState<SubscriptionSummary | null>(null);
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
@@ -36,9 +46,15 @@ export default function EmployeeDashboardPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    apiFetch<{ data?: { subscription?: SubscriptionSummary } }>("/api/pricing/my-subscription")
+      .then((data) => setSubscription(data.data?.subscription || null))
+      .catch(() => setSubscription(null));
   }, []);
 
   const colors = ["bg-blue-500", "bg-purple-600", "bg-green-500", "bg-gray-800"];
+  const activeSubscription =
+    subscription?.status === "Active" && subscription.isActive !== false ? subscription : null;
 
   return (
     <>
@@ -56,9 +72,17 @@ export default function EmployeeDashboardPage() {
             <div className="bg-[#8F59ED] p-2 rounded-lg">
               <Briefcase className="text-white w-5 h-5" />
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-              Employee Dashboard
-            </h1>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+                Employee Dashboard
+              </h1>
+              {activeSubscription && (
+                <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  {activeSubscription.planName || activeSubscription.plan} active
+                </div>
+              )}
+            </div>
           </div>
 
           {/* <motion.button
@@ -76,6 +100,13 @@ export default function EmployeeDashboardPage() {
         <div className="max-w-6xl mx-auto flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-gray-800">Job Listings</h2>
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push("/pricing")}
+              className="inline-flex items-center gap-2 text-[#155DFC] hover:underline text-sm font-medium"
+            >
+              <CreditCard className="h-4 w-4" />
+              Manage plan
+            </button>
             <button
               onClick={() => router.push("/dashboard/employee/applications")}
               className="text-[#155DFC] hover:underline text-sm font-medium"

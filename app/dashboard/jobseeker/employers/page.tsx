@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { apiFetch } from "@/lib/api-client";
+import { getSpecialtyFilterOptions } from "@/lib/healthcare-taxonomy";
 
 interface Employer {
   _id: string;
@@ -84,17 +85,6 @@ export default function EmployersPage() {
     employer.organizationType === "Other"
       ? employer.organizationTypeOther || "Other"
       : employer.organizationType;
-
-  const specializations = [
-    "General Medicine",
-    "Cardiology",
-    "Neurology",
-    "Orthopedics",
-    "Pediatrics",
-    "Gynecology",
-    "Dermatology",
-    "Psychiatry",
-  ];
 
   // Filter section expansion states
   const [expandedSections, setExpandedSections] = useState({
@@ -177,7 +167,9 @@ export default function EmployersPage() {
   };
 
   const getSpecializationCount = (spec: string) => {
-    return employers.filter(e => e.specializations.includes(spec)).length;
+    return employers.filter(e =>
+      e.specializations.some((item) => item.toLowerCase() === spec.toLowerCase())
+    ).length;
   };
 
   const getTimeAgo = (date: string) => {
@@ -213,7 +205,9 @@ export default function EmployersPage() {
 
   if (selectedSpecializations.length > 0) {
     filteredEmployers = filteredEmployers.filter(e =>
-      selectedSpecializations.some(s => e.specializations.includes(s))
+      selectedSpecializations.some(s =>
+        e.specializations.some((item) => item.toLowerCase() === s.toLowerCase())
+      )
     );
   }
 
@@ -235,7 +229,10 @@ export default function EmployersPage() {
   const currentEmployers = filteredEmployers.slice(start, start + employersPerPage);
 
   const displayedTypes = showAllTypes ? organizationTypes : organizationTypes.slice(0, 4);
-  const displayedSpecializations = showAllSpecializations ? specializations : specializations.slice(0, 4);
+  const specializationOptions = getSpecialtyFilterOptions(
+    employers.flatMap((employer) => employer.specializations || [])
+  ).sort((a, b) => getSpecializationCount(b) - getSpecializationCount(a) || a.localeCompare(b));
+  const displayedSpecializations = showAllSpecializations ? specializationOptions : specializationOptions.slice(0, 4);
 
   return (
     <>

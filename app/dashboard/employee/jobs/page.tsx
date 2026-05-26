@@ -27,6 +27,7 @@ import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { apiFetch, authStorage } from "@/lib/api-client";
+import { getSpecialtyFilterOptions } from "@/lib/healthcare-taxonomy";
 
 
 interface Location {
@@ -62,16 +63,6 @@ interface EmployerProfile {
   email: string;
   companyName?: string;
 }
-
-const SPECIALIZATIONS = [
-  "General Medicine", "Cardiology", "Neurology", "Orthopedics", "Pediatrics",
-  "Gynecology", "Dermatology", "Psychiatry", "Radiology", "Anesthesiology",
-  "Emergency Medicine", "Internal Medicine", "Surgery", "Oncology", "Pathology",
-  "Ophthalmology", "ENT", "Urology", "Gastroenterology", "Pulmonology",
-  "Endocrinology", "Rheumatology", "Nephrology", "Hematology", "Infectious Disease",
-  "Physical Therapy", "Occupational Therapy", "Speech Therapy", "Nursing",
-  "Pharmacy", "Medical Technology", "Other",
-];
 
 const LOCATIONS = [
   "Mumbai", "Delhi NCR", "Bangalore", "Pune", "Hyderabad",
@@ -153,6 +144,12 @@ export default function JobListing() {
   const getSpecialtyCount = (specialty: string) => {
     return jobs.filter(j => j.specialization?.toLowerCase() === specialty.toLowerCase()).length;
   };
+
+  const specialtyOptions = getSpecialtyFilterOptions(
+    jobs
+      .map((job) => job.specialization?.trim())
+      .filter((item): item is string => Boolean(item))
+  ).sort((a, b) => getSpecialtyCount(b) - getSpecialtyCount(a) || a.localeCompare(b));
 
   const getLocationCount = (location: string) => {
     return jobs.filter(j =>
@@ -418,7 +415,7 @@ export default function JobListing() {
 
               {expandedSections.specialty && (
                 <div className="space-y-2.5">
-                  {(showAllSpecialties ? SPECIALIZATIONS : SPECIALIZATIONS.slice(0, 5)).map((specialty) => (
+                  {(showAllSpecialties ? specialtyOptions : specialtyOptions.slice(0, 5)).map((specialty) => (
                     <label
                       key={specialty}
                       className="flex items-center gap-2.5 cursor-pointer group"
@@ -435,7 +432,7 @@ export default function JobListing() {
                       <span className="text-xs text-gray-400">({getSpecialtyCount(specialty)})</span>
                     </label>
                   ))}
-                  {SPECIALIZATIONS.length > 5 && (
+                  {specialtyOptions.length > 5 && (
                     <button
                       onClick={() => setShowAllSpecialties(!showAllSpecialties)}
                       className="text-sm text-blue-600 hover:text-blue-700 font-medium mt-2"

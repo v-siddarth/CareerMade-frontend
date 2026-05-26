@@ -12,6 +12,7 @@ import {
   CheckCircle,
   Building2,
   Briefcase,
+  CreditCard,
   IndianRupee,
   FileText,
   Bookmark,
@@ -44,6 +45,13 @@ const WORK_MODES = ["On-site", "Remote", "Full-time"];
 
 const TITLE_OPTIONS = [...HEALTHCARE_TITLES];
 
+type SubscriptionSummary = {
+  plan?: string;
+  planName?: string;
+  status?: string;
+  isActive?: boolean;
+};
+
 export default function JobSeekerJobs() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -66,6 +74,7 @@ export default function JobSeekerJobs() {
   const [mobileFilters, setMobileFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [message, setMessage] = useState("");
+  const [subscription, setSubscription] = useState<SubscriptionSummary | null>(null);
 
   // Filter section expansion states
   const [expandedSections, setExpandedSections] = useState({
@@ -195,6 +204,10 @@ export default function JobSeekerJobs() {
         const items = data?.data?.items || data?.items || [];
         setJobs(items);
         setFilteredJobs(items);
+
+        apiFetch<{ data?: { subscription?: SubscriptionSummary } }>("/api/pricing/my-subscription")
+          .then((subscriptionData) => setSubscription(subscriptionData.data?.subscription || null))
+          .catch(() => setSubscription(null));
       } catch (_error) {
         toast.error("Something went wrong fetching jobs");
       } finally {
@@ -300,6 +313,8 @@ export default function JobSeekerJobs() {
   const availableFields = filters.title && filters.specialization
     ? TITLE_FIELD_OPTIONS[filters.title as keyof typeof TITLE_FIELD_OPTIONS]?.[filters.specialization] || ["Other"]
     : [];
+  const activeSubscription =
+    subscription?.status === "Active" && subscription.isActive !== false ? subscription : null;
 
   // --- Saved jobs handling (use Set for O(1) lookup) ---
 
@@ -711,6 +726,25 @@ export default function JobSeekerJobs() {
           >
             <Filter className="w-5 h-5" /> {mobileFilters ? "Close Filters" : "Filters"}
           </button>
+
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            {activeSubscription ? (
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700">
+                <CheckCircle className="h-4 w-4" />
+                {activeSubscription.planName || activeSubscription.plan} active
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500">No active paid plan</div>
+            )}
+            <button
+              type="button"
+              onClick={() => router.push("/pricing")}
+              className="inline-flex items-center gap-2 rounded-full border border-blue-100 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+            >
+              <CreditCard className="h-4 w-4" />
+              Manage plan
+            </button>
+          </div>
 
           {/* SEARCH BAR */}
           <div className="mb-8 flex flex-col lg:flex-row lg:items-center gap-4">

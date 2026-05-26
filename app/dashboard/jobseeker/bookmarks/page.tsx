@@ -20,17 +20,7 @@ import {
 } from "lucide-react";
 import GradientLoader from "@/app/components/GradientLoader";
 import { apiFetch, authStorage } from "@/lib/api-client";
-
-
-const SPECIALIZATIONS = [
-  "General Medicine",
-  "Cardiology",
-  "Neurology",
-  "Orthopedics",
-  "Pediatrics",
-  "Gynecology",
-  "Dermatology",
-];
+import { getSpecialtyFilterOptions } from "@/lib/healthcare-taxonomy";
 
 const WORK_MODES = ["On-site", "Remote", "Full-time"];
 
@@ -59,6 +49,12 @@ export default function SavedJobs() {
       item.job?.specialization?.toLowerCase() === specialty.toLowerCase()
     ).length;
   };
+
+  const specialtyOptions = getSpecialtyFilterOptions(
+    savedJobs
+      .map((item: any) => item.job?.specialization?.trim())
+      .filter((item: string | undefined): item is string => Boolean(item))
+  ).sort((a, b) => getSpecialtyCount(b) - getSpecialtyCount(a) || a.localeCompare(b));
 
   const clearAllFilters = () => {
     setSelectedSpecialties([]);
@@ -247,7 +243,7 @@ export default function SavedJobs() {
 
               {expandedSections.specialty && (
                 <div className="space-y-2.5">
-                  {(showAllSpecialties ? SPECIALIZATIONS : SPECIALIZATIONS.slice(0, 4)).map((specialty) => (
+                  {(showAllSpecialties ? specialtyOptions : specialtyOptions.slice(0, 4)).map((specialty) => (
                     <label
                       key={specialty}
                       className="flex items-center gap-2.5 cursor-pointer group"
@@ -270,7 +266,7 @@ export default function SavedJobs() {
                       <span className="text-xs text-gray-400">({getSpecialtyCount(specialty)})</span>
                     </label>
                   ))}
-                  {SPECIALIZATIONS.length > 4 && (
+                  {specialtyOptions.length > 4 && (
                     <button
                       onClick={() => setShowAllSpecialties(!showAllSpecialties)}
                       className="text-sm text-blue-600 hover:text-blue-700 font-medium mt-2"

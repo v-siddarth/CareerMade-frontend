@@ -17,14 +17,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { motion } from "framer-motion";
 import { apiFetch } from "@/lib/api-client";
-
-const SPECIALIZATIONS = [
-  "General Medicine", "Cardiology", "Neurology", "Orthopedics", "Pediatrics",
-  "Gynecology", "Dermatology", "Psychiatry", "Radiology", "Anesthesiology",
-  "Emergency Medicine", "Surgery", "Oncology", "Pathology", "Ophthalmology",
-  "ENT", "Urology", "Gastroenterology", "Pulmonology", "Endocrinology",
-  "Rheumatology", "Nephrology", "Hematology", "Infectious Disease",
-];
+import { getSpecialtyFilterOptions } from "@/lib/healthcare-taxonomy";
 
 const LOCATIONS = [
   "Mumbai", "Delhi NCR", "Bangalore", "Pune", "Hyderabad",
@@ -114,6 +107,11 @@ export default function JobSeekerJobs() {
   const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
   const start = (currentPage - 1) * jobsPerPage;
   const currentJobs = filteredJobs.slice(start, start + jobsPerPage);
+  const specialtyOptions = getSpecialtyFilterOptions(
+    jobs
+      .map((job) => job.specialization?.trim())
+      .filter((item): item is string => Boolean(item))
+  );
 
   const formatSalary = (amt?: number) => {
     if (!amt) return "—";
@@ -208,7 +206,7 @@ export default function JobSeekerJobs() {
               }
             >
               <option value="">All</option>
-              {SPECIALIZATIONS.map((s) => (
+              {specialtyOptions.map((s) => (
                 <option key={s} value={s}>
                   {s}
                 </option>

@@ -17,7 +17,7 @@ const OPPORTUNITY_CARDS = [
     image: "/man.png",
     iconBg: "bg-orange-100",
     accent: "text-[#2B7FFF]",
-    specialties: ["General Medicine", "Surgery", "Pediatrics", "Internal Medicine"],
+    specialties: ["General Medicine", "General Surgery", "Pediatrics", "Internal Medicine"],
     titleFilter: "Doctor",
   },
   {
@@ -27,7 +27,7 @@ const OPPORTUNITY_CARDS = [
     image: "/woman.png",
     iconBg: "bg-red-100",
     accent: "text-[#F6339A]",
-    specialties: ["Nursing"],
+    specialties: ["Nursing", "Staff Nurse", "ICU Nurse"],
     titleFilter: "Nurse",
   },
   {
@@ -37,7 +37,7 @@ const OPPORTUNITY_CARDS = [
     image: "/micro.png",
     iconBg: "bg-yellow-100",
     accent: "text-[#00C950]",
-    specialties: ["Medical Technology", "Radiology", "Pathology"],
+    specialties: ["Medical Laboratory Technician", "Radiology Technician", "Pathology"],
     titleFilter: "Technician",
   },
   {
@@ -47,7 +47,7 @@ const OPPORTUNITY_CARDS = [
     image: "/pad.png",
     iconBg: "bg-purple-100",
     accent: "text-[#AD46FF]",
-    specialties: ["Other"],
+    specialties: ["Hospital Administrator", "Medical Billing Officer", "Patient Care Assistant"],
     titleFilter: "Admin",
   },
   {
@@ -77,7 +77,7 @@ const OPPORTUNITY_CARDS = [
     image: "/teeth.png",
     iconBg: "bg-indigo-100",
     accent: "text-[#615FFF]",
-    specialties: ["Ophthalmology", "Other"],
+    specialties: ["General Dentistry", "Optometrist", "Dental Hygienist"],
     titleFilter: "Doctor",
   },
   {
@@ -87,7 +87,7 @@ const OPPORTUNITY_CARDS = [
     image: "/graph.png",
     iconBg: "bg-teal-100",
     accent: "text-[#00BBA7]",
-    specialties: ["Pathology", "Other"],
+    specialties: ["Clinical Research Medical Officer", "Medical Affairs", "Molecular Diagnostics Technician"],
     titleFilter: "Other",
   },
 ];

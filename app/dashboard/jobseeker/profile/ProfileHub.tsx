@@ -7,6 +7,12 @@ import Navbar from "@/app/components/Navbar";
 import { apiFetch, authStorage, logout } from "@/lib/api-client";
 import { CITY_OPTIONS_BY_STATE, LOCATION_STATE_OPTIONS } from "@/lib/location-options";
 import {
+  HEALTHCARE_TITLES,
+  TITLE_DEGREE_OPTIONS,
+  TITLE_FIELD_OPTIONS,
+  TITLE_SPECIALIZATION_OPTIONS,
+} from "@/lib/healthcare-taxonomy";
+import {
   Bell,
   Briefcase,
   ChevronRight,
@@ -185,90 +191,10 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
 
 const TAB_FLOW: TabId[] = ["personal", "professional", "education", "experience", "skills", "expectations", "documents"];
 
-const CATEGORY_OPTIONS = ["Doctor", "Nurse", "Technician", "Pharmacy", "Support", "Admin", "Insurance", "Marketing", "Other"];
-
-const SPEC_OPTIONS: Record<string, string[]> = {
-  Doctor: ["Specialist", "Super specialist", "Medicine officer", "RMO", "Other"],
-  Nurse: ["ANM", "GNM", "BSC", "Other"],
-  Technician: ["Cathlab", "Dialysis", "Operation theatre", "Laboratory", "Endoscopy", "X-ray", "CT/MRI", "Other"],
-  Pharmacy: ["D. Pharma", "B. Pharma", "Other"],
-  Support: ["Ward assistant", "OT assistant", "House keeping", "Security", "Accounting", "Other"],
-  Admin: ["Hospital administration", "Operations", "HR", "Finance", "Other"],
-  Insurance: ["Claims", "TPA operations", "Underwriting", "Customer support", "Other"],
-  Marketing: ["Digital marketing", "Field marketing", "Branding", "Sales", "Other"],
-  Other: ["Other"],
-};
-
-const DOCTOR_FIELD_OPTIONS: Record<string, string[]> = {
-  Specialist: [
-    "General Medicine",
-    "Pediatrics",
-    "General Surgery",
-    "Obstetrics & Gynecology",
-    "Orthopedics",
-    "ENT",
-    "Ophthalmology",
-    "Dermatology",
-    "Psychiatry",
-    "Anesthesiology",
-    "Radiology",
-    "Pathology",
-    "Emergency Medicine",
-    "Pulmonology",
-    "Other",
-  ],
-  "Super specialist": [
-    "Cardiology",
-    "Neurology",
-    "Nephrology",
-    "Gastroenterology",
-    "Endocrinology",
-    "Medical Oncology",
-    "Surgical Oncology",
-    "Urology",
-    "Neurosurgery",
-    "Cardiothoracic Surgery",
-    "Plastic Surgery",
-    "Pediatric Surgery",
-    "Rheumatology",
-    "Clinical Hematology",
-    "Critical Care Medicine",
-    "Other",
-  ],
-  "Medicine officer": [
-    "General Duty Medical Officer",
-    "Casualty Medical Officer",
-    "ICU Medical Officer",
-    "Public Health Medical Officer",
-    "Occupational Health Medical Officer",
-    "Community Health Medical Officer",
-    "Medical Officer (TB/IDSP/NHM)",
-    "Insurance Medical Officer",
-    "Other",
-  ],
-  RMO: [
-    "Emergency RMO",
-    "ICU RMO",
-    "Ward RMO",
-    "Night Duty RMO",
-    "Trauma RMO",
-    "OPD RMO",
-    "OT RMO",
-    "Other",
-  ],
-};
-
-const DEGREE_OPTIONS: Record<string, string[]> = {
-  Doctor: ["MBBS", "MD", "MS", "DNB", "DM", "MCh", "BAMS", "BHMS", "BUMS", "Unani", "BDS", "MDS", "Fellowship", "FRCS", "MRCS", "Other"],
-  Nurse: ["ANM", "GNM", "BSc Nursing", "Post Basic BSc Nursing", "MSc Nursing", "Certificate", "Diploma", "Other"],
-  Technician: ["DMLT", "BMLT", "BPT", "MPT", "Diploma in OT Technician", "Diploma in Radiology Imaging", "Diploma in Dialysis Technician", "BSc", "Diploma", "Certificate", "Other"],
-  Pharmacy: ["D.Pharm", "B.Pharm", "M.Pharm", "Pharm.D", "Diploma", "Certificate", "Other"],
-  Support: ["Certificate", "Diploma", "BSc", "BPT", "Other"],
-  Admin: ["BBA", "MBA", "MHA", "PG Diploma", "BCom", "Other"],
-  Insurance: ["BCom", "BBA", "MBA", "PG Diploma", "IRDA Certification", "Other"],
-  Marketing: ["BBA", "MBA", "PG Diploma", "Other"],
-  Other: ["Certificate", "Diploma", "BSc", "MSc", "PhD", "BPT", "MPT", "Other"],
-};
+const CATEGORY_OPTIONS = [...HEALTHCARE_TITLES];
+const SPEC_OPTIONS = TITLE_SPECIALIZATION_OPTIONS as Record<string, string[]>;
+const DOCTOR_FIELD_OPTIONS = TITLE_FIELD_OPTIONS.Doctor as Record<string, string[]>;
+const DEGREE_OPTIONS = TITLE_DEGREE_OPTIONS as Record<string, string[]>;
 
 const PREFERRED_JOB_TYPES = ["Full-time", "Part-time", "Contract", "Freelance", "Internship", "Volunteer"];
 

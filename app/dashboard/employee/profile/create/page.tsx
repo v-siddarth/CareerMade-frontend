@@ -4,10 +4,14 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
 import toast from "react-hot-toast";
-import { JOB_SPECIALIZATION_ENUM } from "@/lib/healthcare-taxonomy";
+import {
+  JOB_SPECIALIZATION_ENUM,
+  SPECIALIZATION_MAX_LENGTH,
+  normalizeSpecializationLabel,
+} from "@/lib/healthcare-taxonomy";
 import { apiFetch, authStorage } from "@/lib/api-client";
 
-const ALLOWED_SPECIALIZATIONS = JOB_SPECIALIZATION_ENUM;
+const SPECIALIZATION_SUGGESTIONS = JOB_SPECIALIZATION_ENUM;
 
 const ORGANIZATION_TYPES = [
   "Hospital",
@@ -133,6 +137,7 @@ export default function EmployerProfileCreatePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [certificateFiles, setCertificateFiles] = useState<Record<string, File>>({});
   const [certificateQuery, setCertificateQuery] = useState("");
+  const [specializationQuery, setSpecializationQuery] = useState("");
   const [formData, setFormData] = useState({
     organizationName: "",
     organizationType: "",
@@ -207,20 +212,53 @@ export default function EmployerProfileCreatePage() {
   };
 
   const addSpecialization = (spec: string) => {
-    const trimmed = spec.trim();
+    const trimmed = normalizeSpecializationLabel(spec);
     if (!trimmed) return;
 
-    if (!ALLOWED_SPECIALIZATIONS.includes(trimmed)) {
-      toast.error("Please select a specialization from the allowed list.");
+    if (trimmed.length > SPECIALIZATION_MAX_LENGTH) {
+      toast.error(`Specialization must be ${SPECIALIZATION_MAX_LENGTH} characters or less.`);
       return;
     }
 
-    if (!formData.specializations.includes(trimmed)) {
-      setFormData({
-        ...formData,
-        specializations: [...formData.specializations, trimmed],
-      });
+    const alreadyAdded = formData.specializations.some(
+      (item) => item.trim().toLowerCase() === trimmed.toLowerCase()
+    );
+    if (alreadyAdded) {
+      toast.error("Specialization already added");
+      return;
     }
+
+    setFormData((prev) => ({
+      ...prev,
+      specializations: [...prev.specializations, trimmed],
+    }));
+    setSpecializationQuery("");
+  };
+
+  const updateSpecializationQuery = (value: string) => {
+    if (value.length <= SPECIALIZATION_MAX_LENGTH) {
+      setSpecializationQuery(value);
+      return;
+    }
+
+    setSpecializationQuery(value.slice(0, SPECIALIZATION_MAX_LENGTH));
+  };
+
+  const specializationSuggestions = Array.from(
+    new Set([
+      ...SPECIALIZATION_SUGGESTIONS,
+      ...formData.specializations.map(normalizeSpecializationLabel).filter(Boolean),
+    ])
+  ).sort((a, b) => {
+    if (a === "Other") return 1;
+    if (b === "Other") return -1;
+    return a.localeCompare(b);
+  });
+
+  const handleSpecializationEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    addSpecialization(specializationQuery);
   };
 
   const removeSpecialization = (spec: string) => {
@@ -262,41 +300,42 @@ export default function EmployerProfileCreatePage() {
     field: keyof EmployerCertificate,
     value: string
   ) => {
-    setFormData((prev) => ({
-      ...prev,
-      employerCertificates: prev.employerCertificates.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
-      ),
-    }));
-  };
-
-  const removeEmployerCertificate = (index: number) => {
     setFormData((prev) => {
-      const removed = prev.employerCertificates[index];
-      if (removed?.category === "Mandatory") {
-        return prev;
-      }
-      if (removed?.localId) {
-        setCertificateFiles((existing) => {
-          const next = { ...existing };
-          delete next[removed.localId];
-          return next;
-        });
-      }
-      return {
-        ...prev,
-        employerCertificates: prev.employerCertificates.filter((_, i) => i !== index),
-      };
+      const next = [...prev.employerCertificates];
+      const current = next[index];
+      if (!current) return prev;
+      next[index] = { ...current, [field]: value };
+      return { ...prev, employerCertificates: next };
     });
   };
 
-  const setEmployerCertificateFile = (certificateLocalId: string, file?: File) => {
+  const setEmployerCertificateFile = (localId: string, file?: File) => {
     setCertificateFiles((prev) => {
       const next = { ...prev };
-      if (file) next[certificateLocalId] = file;
-      else delete next[certificateLocalId];
+      if (file) next[localId] = file;
+      else delete next[localId];
       return next;
     });
+  };
+
+  const removeEmployerCertificate = (targetRef: number | string) => {
+    const localId =
+      typeof targetRef === "number"
+        ? formData.employerCertificates[targetRef]?.localId
+        : targetRef;
+    if (!localId) return;
+
+    const target = formData.employerCertificates.find((item) => item.localId === localId);
+    if (target && MANDATORY_CERTIFICATES.includes(target.name)) {
+      toast.error("Mandatory certificates cannot be removed");
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      employerCertificates: prev.employerCertificates.filter((item) => item.localId !== localId),
+    }));
+    setEmployerCertificateFile(localId);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -344,14 +383,15 @@ export default function EmployerProfileCreatePage() {
     }
     setLoading(true);
 
-    const invalidSpecializations = formData.specializations.filter(
-      (s) => !ALLOWED_SPECIALIZATIONS.includes(s.trim())
+    const normalizedSpecializations = formData.specializations
+      .map(normalizeSpecializationLabel)
+      .filter(Boolean);
+    const oversizedSpecializations = normalizedSpecializations.filter(
+      (item) => item.length > SPECIALIZATION_MAX_LENGTH
     );
-    if (invalidSpecializations.length > 0) {
+    if (oversizedSpecializations.length > 0) {
       setLoading(false);
-      toast.error(
-        `Invalid specialization(s): ${invalidSpecializations.join(", ")}`
-      );
+      toast.error(`Each specialization must be ${SPECIALIZATION_MAX_LENGTH} characters or less.`);
       return;
     }
 
@@ -404,7 +444,7 @@ export default function EmployerProfileCreatePage() {
         pincode: formData.pincode.trim(),
         country: formData.country.trim() || "India",
       },
-      specializations: formData.specializations.filter((s) => s.trim()),
+      specializations: normalizedSpecializations,
       accreditations: formData.employerCertificates
         .filter((cert) => cert.name.trim())
         .map((cert) => ({
@@ -456,6 +496,7 @@ export default function EmployerProfileCreatePage() {
       setLoading(false);
     }
   };
+
 
   return (
     <>
@@ -741,31 +782,37 @@ export default function EmployerProfileCreatePage() {
             <h2 className="text-base font-semibold text-gray-900 mb-4">
               Medical Specialities
             </h2>
-            <div className="flex gap-2 mb-4">
+            <p className="text-sm text-gray-600 mb-3">
+              Search the global list or type a custom speciality if your exact service line is not listed.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 mb-2">
               <input
                 type="text"
-                id="specInput"
+                id="specialization-search"
+                value={specializationQuery}
+                onChange={(event) => updateSpecializationQuery(event.target.value)}
+                onKeyDown={handleSpecializationEnter}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Type an allowed specialization"
-                list="allowed-specializations"
+                placeholder="Search or type specialty, e.g. Neonatology, Ayurveda, Cath Lab"
+                list="specialization-options"
+                maxLength={SPECIALIZATION_MAX_LENGTH}
               />
-              <datalist id="allowed-specializations">
-                {ALLOWED_SPECIALIZATIONS.map((spec) => (
+              <datalist id="specialization-options">
+                {specializationSuggestions.map((spec) => (
                   <option key={spec} value={spec} />
                 ))}
               </datalist>
               <button
                 type="button"
-                onClick={() => {
-                  const input = document.getElementById("specInput") as HTMLInputElement;
-                  addSpecialization(input.value);
-                  input.value = "";
-                }}
+                onClick={() => addSpecialization(specializationQuery)}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
               >
                 Add
               </button>
             </div>
+            <p className="mb-4 text-xs text-gray-500">
+              Press Enter to add. Custom values are saved and will appear in employer/jobseeker filters.
+            </p>
             <div className="flex flex-wrap gap-2">
               {formData.specializations.map((spec) => (
                 <span

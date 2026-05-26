@@ -55,6 +55,18 @@ interface FormData {
   expiresAt: string;
 }
 
+type SubscriptionEntitlements = {
+  features?: Record<string, boolean>;
+  limits?: Record<string, number>;
+  usage?: {
+    openJobPosts?: number;
+    maxJobPosts?: number;
+    remainingJobPosts?: number;
+    canPostJob?: boolean;
+    canUseFeaturedJobs?: boolean;
+  };
+};
+
 const JOB_TYPES = [
   { value: "Full-time", label: "Full-time", desc: "Permanent position" },
   { value: "Part-time", label: "Part-time", desc: "Flexible hours" },
@@ -102,6 +114,7 @@ export default function CreateJobPage() {
   const [pageLoading, setPageLoading] = useState(true);
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
   const [hasCompleteAddress, setHasCompleteAddress] = useState<boolean | null>(null);
+  const [entitlements, setEntitlements] = useState<SubscriptionEntitlements | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [workMode, setWorkMode] = useState("on-site");
 
@@ -149,6 +162,13 @@ export default function CreateJobPage() {
   const qualificationOptions = getDegreeOptions(selectedTitle, selectedSpecialization);
   const screeningQuestionPresets = getScreeningQuestionPresets(selectedTitle);
   const cityOptions = CITY_OPTIONS_BY_STATE[formData.location.state] || [];
+  const jobUsage = entitlements?.usage;
+  const hasJobPostCapacity = jobUsage?.canPostJob !== false;
+  const canUseFeaturedJobs = jobUsage?.canUseFeaturedJobs === true;
+  const jobUsageLabel =
+    typeof jobUsage?.openJobPosts === "number" && typeof jobUsage?.maxJobPosts === "number"
+      ? `${jobUsage.openJobPosts} / ${jobUsage.maxJobPosts} open jobs used`
+      : "";
 
   const syncFinalSpecialization = (specialization: string, field: string) => {
     const normalizedSpecialization = specialization.trim();
@@ -214,7 +234,16 @@ export default function CreateJobPage() {
     // fetch employer profile to read verification status (user object may not include employer record)
     (async () => {
       try {
-        const data = await apiFetch<{ data?: { employer?: any } }>("/api/employer/profile");
+        const [profileResult, subscriptionResult] = await Promise.allSettled([
+          apiFetch<{ data?: { employer?: any } }>("/api/employer/profile"),
+          apiFetch<{ data?: { entitlements?: SubscriptionEntitlements } }>("/api/pricing/my-subscription"),
+        ]);
+
+        if (subscriptionResult.status === "fulfilled") {
+          setEntitlements(subscriptionResult.value.data?.entitlements || null);
+        }
+
+        const data = profileResult.status === "fulfilled" ? profileResult.value : null;
         if (data?.data?.employer) {
           const emp = data.data.employer;
           setIsVerified(!!(emp?.verification?.isVerified));
@@ -238,6 +267,12 @@ export default function CreateJobPage() {
       }
     })();
   }, [router]);
+
+  useEffect(() => {
+    if (entitlements && !canUseFeaturedJobs && formData.isFeatured) {
+      setFormData((prev) => ({ ...prev, isFeatured: false }));
+    }
+  }, [canUseFeaturedJobs, entitlements, formData.isFeatured]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -451,6 +486,16 @@ export default function CreateJobPage() {
 
     if (isVerified === false) {
       toast.error("Your account is not verified. An admin must verify your account before posting jobs.");
+      return;
+    }
+
+    if (!hasJobPostCapacity) {
+      toast.error("Your current plan has reached its open job post limit.");
+      return;
+    }
+
+    if (formData.isFeatured && !canUseFeaturedJobs) {
+      toast.error("Featured job posts are not included in your current plan.");
       return;
     }
 
@@ -1538,6 +1583,24 @@ export default function CreateJobPage() {
                     </div>
 
                     <div className="space-y-6">
+                      {jobUsageLabel && (
+                        <div
+                          className={`rounded-lg border px-4 py-3 text-sm ${
+                            hasJobPostCapacity
+                              ? "border-blue-200 bg-blue-50 text-blue-800"
+                              : "border-red-200 bg-red-50 text-red-700"
+                          }`}
+                        >
+                          <span className="font-semibold">Plan usage:</span>{" "}
+                          {jobUsageLabel}
+                          {!hasJobPostCapacity && (
+                            <span className="block mt-1">
+                              Upgrade your plan or close an existing job before posting another open job.
+                            </span>
+                          )}
+                        </div>
+                      )}
+
                       {/* Expiry Date */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1568,14 +1631,19 @@ export default function CreateJobPage() {
                           id="isFeatured"
                           name="isFeatured"
                           checked={formData.isFeatured}
+                          disabled={!canUseFeaturedJobs}
                           onChange={handleInputChange}
-                          className="w-4 h-4 text-blue-500 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                          className="w-4 h-4 text-blue-500 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                         />
                         <label
                           htmlFor="isFeatured"
-                          className="text-sm font-medium text-gray-700 cursor-pointer"
+                          className={`text-sm font-medium ${
+                            canUseFeaturedJobs ? "text-gray-700 cursor-pointer" : "text-gray-500 cursor-not-allowed"
+                          }`}
                         >
-                          Make this a featured job (gets more visibility)
+                          {canUseFeaturedJobs
+                            ? "Make this a featured job (gets more visibility)"
+                            : "Featured jobs are not included in your current plan"}
                         </label>
                       </div>
 
@@ -1664,10 +1732,16 @@ export default function CreateJobPage() {
                 ) : (
                   <button
                     type="submit"
-                    disabled={loading || isVerified === false}
+                    disabled={loading || isVerified === false || !hasJobPostCapacity}
                     className="order-1 sm:order-2 px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all"
                   >
-                    {loading ? "Posting..." : (isVerified === false ? "Account unverified" : "Post Job")}
+                    {loading
+                      ? "Posting..."
+                      : isVerified === false
+                        ? "Account unverified"
+                        : !hasJobPostCapacity
+                          ? "Plan limit reached"
+                          : "Post Job"}
                   </button>
                 )}
               </div>

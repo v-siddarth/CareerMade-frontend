@@ -6,10 +6,13 @@ import {
   ArrowLeft,
   CreditCard,
   Filter,
+  Info,
+  ListChecks,
   RefreshCw,
   Save,
   Search,
   Settings2,
+  SlidersHorizontal,
   TrendingUp,
 } from "lucide-react";
 import Navbar from "@/app/components/Navbar";
@@ -19,6 +22,35 @@ import { apiFetch, authStorage } from "@/lib/api-client";
 
 type Audience = "employer" | "jobseeker";
 type SubscriptionStatus = "Active" | "Inactive" | "Cancelled" | "Expired";
+type FeatureFlagMap = Record<string, boolean>;
+type LimitMap = Record<string, number>;
+type PlanMetadata = Record<string, string>;
+
+type FeatureDefinition = {
+  key: string;
+  label: string;
+  category?: string;
+  tooltip?: string;
+  icon?: string;
+};
+
+type LimitDefinition = {
+  key: string;
+  label: string;
+  category?: string;
+  unit?: string;
+  defaultValue?: number;
+  tooltip?: string;
+};
+
+type TextMetadataField = {
+  key: string;
+  label: string;
+  maxLength?: number;
+  tooltip?: string;
+};
+
+type RegistryMap<T> = Record<Audience, T[]>;
 
 type PricingPlanConfig = {
   id: string;
@@ -30,14 +62,13 @@ type PricingPlanConfig = {
   ctaLabel?: string;
   highlighted?: boolean;
   isActive?: boolean;
-  featureList: string[];
-  subscriptionFeatures?: {
-    maxJobPosts: number;
-    maxApplications: number;
-    advancedSearch: boolean;
-    prioritySupport: boolean;
-    customBranding: boolean;
-  } | null;
+  features?: FeatureFlagMap;
+  limits?: LimitMap;
+  metadata?: PlanMetadata;
+  featureList?: string[];
+  displayFeatures?: { key: string; label: string }[];
+  displayLimits?: { key: string; label: string; value: number; displayValue: string }[];
+  subscriptionFeatures?: Record<string, number | boolean> | null;
 };
 
 type EmployerSubscription = {
@@ -67,6 +98,11 @@ type Overview = {
   renewalDueSoon: number;
 };
 
+type SyncSummary = {
+  syncedSubscriberCount?: number;
+  modifiedSubscriberCount?: number;
+};
+
 type SubscriptionDraftState = {
   plan: string;
   status: SubscriptionStatus;
@@ -74,9 +110,185 @@ type SubscriptionDraftState = {
   endDate: string;
 };
 
-  const statuses: SubscriptionStatus[] = ["Active", "Inactive", "Cancelled", "Expired"];
+const statuses: SubscriptionStatus[] = ["Active", "Inactive", "Cancelled", "Expired"];
 const numberInputClass =
-  "no-spinner w-full rounded-lg border border-gray-300 px-3 py-2 text-sm";
+  "no-spinner w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#155DFC] focus:outline-none focus:ring-2 focus:ring-blue-100";
+const textInputClass =
+  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#155DFC] focus:outline-none focus:ring-2 focus:ring-blue-100";
+const checkboxClass = "h-4 w-4 rounded border-gray-300 text-[#155DFC] focus:ring-[#155DFC]";
+
+const emptyRegistry = <T,>(): RegistryMap<T> => ({ employer: [], jobseeker: [] });
+
+const humanizeKey = (key: string) =>
+  key
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const groupByCategory = <T extends { category?: string }>(items: T[]) =>
+  items.reduce<Record<string, T[]>>((acc, item) => {
+    const category = item.category || "General";
+    acc[category] = [...(acc[category] || []), item];
+    return acc;
+  }, {});
+
+const mergeDynamicDefinitions = <T extends { key: string; label: string }>(
+  definitions: T[],
+  keys: string[],
+  buildFallback: (key: string) => T
+) => {
+  const seen = new Set(definitions.map((item) => item.key));
+  return [
+    ...definitions,
+    ...keys.filter((key) => !seen.has(key)).map((key) => buildFallback(key)),
+  ];
+};
+
+const CapabilityEditor = ({
+  audience,
+  draft,
+  featureDefinitions,
+  limitDefinitions,
+  textMetadataFields,
+  onFeatureToggle,
+  onLimitChange,
+  onLimitToggle,
+  onMetadataChange,
+}: {
+  audience: Audience;
+  draft: PricingPlanConfig;
+  featureDefinitions: FeatureDefinition[];
+  limitDefinitions: LimitDefinition[];
+  textMetadataFields: TextMetadataField[];
+  onFeatureToggle: (key: string, value: boolean) => void;
+  onLimitChange: (key: string, value: number) => void;
+  onLimitToggle: (definition: LimitDefinition, enabled: boolean) => void;
+  onMetadataChange: (key: string, value: string) => void;
+}) => {
+  const features = draft.features || {};
+  const limits = draft.limits || {};
+  const metadata = draft.metadata || {};
+  const fullFeatureDefinitions = mergeDynamicDefinitions(
+    featureDefinitions,
+    Object.keys(features),
+    (key) => ({ key, label: humanizeKey(key), category: "Custom" })
+  );
+  const fullLimitDefinitions = mergeDynamicDefinitions(
+    limitDefinitions,
+    Object.keys(limits),
+    (key) => ({ key, label: humanizeKey(key), category: "Custom", defaultValue: 0 })
+  );
+  const featureGroups = groupByCategory(fullFeatureDefinitions);
+  const limitGroups = groupByCategory(fullLimitDefinitions);
+
+  return (
+    <div className="space-y-4 rounded-lg border border-blue-100 bg-white p-3">
+      <div>
+        <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-blue-700">
+          <ListChecks className="h-4 w-4" />
+          Feature Access
+        </p>
+        <div className="mt-3 space-y-4">
+          {Object.entries(featureGroups).map(([category, items]) => (
+            <div key={`${audience}-${category}`}>
+              <p className="mb-2 text-xs font-semibold text-gray-500">{category}</p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {items.map((feature) => (
+                  <label
+                    key={feature.key}
+                    className="flex min-h-11 items-start gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+                    title={feature.tooltip || feature.label}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={Boolean(features[feature.key])}
+                      onChange={(e) => onFeatureToggle(feature.key, e.target.checked)}
+                      className={`${checkboxClass} mt-0.5`}
+                    />
+                    <span className="min-w-0">
+                      <span className="block font-medium text-gray-900">{feature.label}</span>
+                      {feature.tooltip && (
+                        <span className="mt-0.5 line-clamp-2 block text-xs text-gray-500">{feature.tooltip}</span>
+                      )}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="border-t border-gray-100 pt-4">
+        <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-blue-700">
+          <SlidersHorizontal className="h-4 w-4" />
+          Numeric Limits
+        </p>
+        <div className="mt-3 space-y-4">
+          {Object.entries(limitGroups).map(([category, items]) => (
+            <div key={`${audience}-${category}`}>
+              <p className="mb-2 text-xs font-semibold text-gray-500">{category}</p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {items.map((limit) => {
+                  const enabled = Number(limits[limit.key] || 0) > 0;
+                  return (
+                    <div key={limit.key} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                      <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-900">
+                        <input
+                          type="checkbox"
+                          checked={enabled}
+                          onChange={(e) => onLimitToggle(limit, e.target.checked)}
+                          className={checkboxClass}
+                        />
+                        {limit.label}
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        disabled={!enabled}
+                        value={Number(limits[limit.key] || 0)}
+                        onChange={(e) => onLimitChange(limit.key, Number(e.target.value))}
+                        onWheel={(e) => e.currentTarget.blur()}
+                        className={`${numberInputClass} disabled:bg-gray-100 disabled:text-gray-400`}
+                        placeholder={limit.unit ? `Included ${limit.unit}` : "Limit"}
+                      />
+                      {limit.tooltip && (
+                        <p className="mt-1 flex items-start gap-1 text-xs text-gray-500">
+                          <Info className="mt-0.5 h-3 w-3 shrink-0" />
+                          {limit.tooltip}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="border-t border-gray-100 pt-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Plan Metadata</p>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {textMetadataFields.map((field) => (
+            <div key={field.key}>
+              <label className="mb-1 block text-xs font-medium text-gray-600">{field.label}</label>
+              <input
+                value={metadata[field.key] || ""}
+                maxLength={field.maxLength || 120}
+                onChange={(e) => onMetadataChange(field.key, e.target.value)}
+                className={textInputClass}
+                title={field.tooltip || field.label}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const DistributionBars = ({
   title,
@@ -132,6 +344,17 @@ export default function AdminPricingPage() {
 
   const [planConfigs, setPlanConfigs] = useState<PricingPlanConfig[]>([]);
   const [planDrafts, setPlanDrafts] = useState<Record<string, PricingPlanConfig>>({});
+  const [featureRegistry, setFeatureRegistry] = useState<RegistryMap<FeatureDefinition>>(() =>
+    emptyRegistry<FeatureDefinition>()
+  );
+  const [limitRegistry, setLimitRegistry] = useState<RegistryMap<LimitDefinition>>(() =>
+    emptyRegistry<LimitDefinition>()
+  );
+  const [textMetadataFields, setTextMetadataFields] = useState<TextMetadataField[]>([
+    { key: "planLabel", label: "Plan Label", maxLength: 80 },
+    { key: "badgeText", label: "Badge Text", maxLength: 80 },
+    { key: "ctaLabel", label: "CTA Label", maxLength: 80 },
+  ]);
   const [subscriptionDrafts, setSubscriptionDrafts] = useState<Record<string, SubscriptionDraftState>>({});
 
   const [total, setTotal] = useState(0);
@@ -149,9 +372,20 @@ export default function AdminPricingPage() {
     setPlanConfigs(plans);
     const nextDrafts: Record<string, PricingPlanConfig> = {};
     plans.forEach((plan) => {
+      const metadata = {
+        planLabel: plan.metadata?.planLabel || plan.displayName || "",
+        badgeText: plan.metadata?.badgeText || plan.tag || "",
+        ctaLabel: plan.metadata?.ctaLabel || plan.ctaLabel || "Choose Plan",
+        ...(plan.metadata || {}),
+      };
       nextDrafts[planKey(plan.audience, plan.id)] = {
         ...plan,
         featureList: Array.isArray(plan.featureList) ? [...plan.featureList] : [],
+        features: { ...(plan.features || {}) },
+        limits: { ...(plan.limits || {}) },
+        metadata,
+        ctaLabel: metadata.ctaLabel || plan.ctaLabel || "Choose Plan",
+        tag: metadata.badgeText || plan.tag || "",
         subscriptionFeatures: plan.subscriptionFeatures ? { ...plan.subscriptionFeatures } : null,
       };
     });
@@ -175,11 +409,21 @@ export default function AdminPricingPage() {
         return;
       }
 
-      const data = await apiFetch<{ data: { plans: PricingPlanConfig[] } }>(
+      const data = await apiFetch<{
+        data: {
+          plans: PricingPlanConfig[];
+          featureRegistry?: RegistryMap<FeatureDefinition>;
+          limitRegistry?: RegistryMap<LimitDefinition>;
+          textMetadataFields?: TextMetadataField[];
+        };
+      }>(
         `/api/admin/pricing-plans?t=${Date.now()}`,
         { cache: "no-store" }
       );
 
+      if (data.data.featureRegistry) setFeatureRegistry(data.data.featureRegistry);
+      if (data.data.limitRegistry) setLimitRegistry(data.data.limitRegistry);
+      if (data.data.textMetadataFields) setTextMetadataFields(data.data.textMetadataFields);
       const plans = (data.data.plans || []) as PricingPlanConfig[];
       applyPlanConfigs(plans);
     } catch (err: unknown) {
@@ -286,50 +530,110 @@ export default function AdminPricingPage() {
     value: string | number | boolean
   ) => {
     const key = planKey(audience, id);
-    setPlanDrafts((prev) => ({
-      ...prev,
-      [key]: {
-        ...prev[key],
-        [field]: value,
-      },
-    }));
+    setPlanDrafts((prev) => {
+      const current =
+        prev[key] ||
+        ({
+          id,
+          audience,
+          displayName: id,
+          price: 0,
+          description: "",
+          features: {},
+          limits: {},
+          metadata: {},
+        } satisfies PricingPlanConfig);
+      const metadata = { ...(current?.metadata || {}) };
+      if (field === "ctaLabel") metadata.ctaLabel = String(value);
+      if (field === "tag") metadata.badgeText = String(value);
+
+      return {
+        ...prev,
+        [key]: {
+          ...current,
+          [field]: value,
+          metadata,
+        },
+      };
+    });
   };
 
-  const handlePlanFeatureListUpdate = (audience: Audience, id: string, text: string) => {
-    const key = planKey(audience, id);
-    setPlanDrafts((prev) => ({
-      ...prev,
-      [key]: {
-        ...prev[key],
-        featureList: text
-          .split("\n")
-          .map((line) => line.trim())
-          .filter(Boolean),
-      },
-    }));
-  };
-
-  const handleEmployerSubFeatureUpdate = (
+  const handlePlanFeatureToggle = (
     audience: Audience,
     id: string,
-    field: "maxJobPosts" | "maxApplications" | "advancedSearch" | "prioritySupport" | "customBranding",
-    value: number | boolean
+    featureKey: string,
+    value: boolean
   ) => {
     const key = planKey(audience, id);
     setPlanDrafts((prev) => ({
       ...prev,
       [key]: {
         ...prev[key],
-        subscriptionFeatures: {
-          maxJobPosts: prev[key]?.subscriptionFeatures?.maxJobPosts ?? 1,
-          maxApplications: prev[key]?.subscriptionFeatures?.maxApplications ?? 10,
-          advancedSearch: prev[key]?.subscriptionFeatures?.advancedSearch ?? false,
-          prioritySupport: prev[key]?.subscriptionFeatures?.prioritySupport ?? false,
-          customBranding: prev[key]?.subscriptionFeatures?.customBranding ?? false,
-          [field]: value,
+        features: {
+          ...(prev[key]?.features || {}),
+          [featureKey]: value,
         },
       },
     }));
+  };
+
+  const handlePlanLimitUpdate = (audience: Audience, id: string, limitKey: string, value: number) => {
+    const key = planKey(audience, id);
+    setPlanDrafts((prev) => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        limits: {
+          ...(prev[key]?.limits || {}),
+          [limitKey]: Math.max(0, Number.isFinite(value) ? value : 0),
+        },
+      },
+    }));
+  };
+
+  const handlePlanLimitToggle = (
+    audience: Audience,
+    id: string,
+    definition: LimitDefinition,
+    enabled: boolean
+  ) => {
+    handlePlanLimitUpdate(audience, id, definition.key, enabled ? Number(definition.defaultValue || 1) : 0);
+  };
+
+  const handlePlanMetadataUpdate = (
+    audience: Audience,
+    id: string,
+    metadataKey: string,
+    value: string
+  ) => {
+    const key = planKey(audience, id);
+    setPlanDrafts((prev) => {
+      const current =
+        prev[key] ||
+        ({
+          id,
+          audience,
+          displayName: id,
+          price: 0,
+          description: "",
+          features: {},
+          limits: {},
+          metadata: {},
+        } satisfies PricingPlanConfig);
+      const nextMetadata = {
+        ...(current?.metadata || {}),
+        [metadataKey]: value,
+      };
+      return {
+        ...prev,
+        [key]: {
+          ...current,
+          metadata: nextMetadata,
+          ctaLabel: metadataKey === "ctaLabel" ? value : current?.ctaLabel,
+          tag: metadataKey === "badgeText" ? value : current?.tag,
+        },
+      };
+    });
   };
 
   const hasPlanChanges = useMemo(() => {
@@ -370,30 +674,54 @@ export default function AdminPricingPage() {
         return;
       }
 
+      const invalidDraft = planConfigs
+        .map((planConfig) => planDrafts[planKey(planConfig.audience, planConfig.id)] || planConfig)
+        .find((plan) => {
+          const hasInvalidLimit = Object.values(plan.limits || {}).some(
+            (value) => !Number.isFinite(Number(value)) || Number(value) < 0
+          );
+          return (
+            !String(plan.displayName || "").trim() ||
+            !Number.isFinite(Number(plan.price)) ||
+            Number(plan.price) < 0 ||
+            hasInvalidLimit
+          );
+        });
+
+      if (invalidDraft) {
+        toast.error(`Please fix ${invalidDraft.displayName || invalidDraft.id}: name, price, and limits are required.`);
+        return;
+      }
+
       const payloadPlans = planConfigs.map((planConfig) => {
         const key = planKey(planConfig.audience, planConfig.id);
         const plan = planDrafts[key] || planConfig;
+        const metadata = {
+          ...(plan.metadata || {}),
+          planLabel: plan.metadata?.planLabel || plan.displayName || "",
+          badgeText: plan.metadata?.badgeText || plan.tag || "",
+          ctaLabel: plan.metadata?.ctaLabel || plan.ctaLabel || "Choose Plan",
+        };
+        const limits = Object.fromEntries(
+          Object.entries(plan.limits || {}).map(([limitKey, value]) => [
+            limitKey,
+            Math.max(0, Number(value) || 0),
+          ])
+        );
         return {
           id: plan.id,
           audience: plan.audience,
-          displayName: plan.displayName,
+          displayName: String(plan.displayName || "").trim(),
           price: Number(plan.price) || 0,
-          description: plan.description,
-          tag: plan.tag || "",
-          ctaLabel: plan.ctaLabel || "Choose Plan",
+          description: plan.description || "",
+          tag: metadata.badgeText || plan.tag || "",
+          ctaLabel: metadata.ctaLabel || "Choose Plan",
           highlighted: Boolean(plan.highlighted),
           isActive: plan.isActive !== false,
-          featureList: Array.isArray(plan.featureList) ? plan.featureList : [],
-          subscriptionFeatures:
-            plan.audience === "employer"
-              ? {
-                  maxJobPosts: Number(plan.subscriptionFeatures?.maxJobPosts ?? 1),
-                  maxApplications: Number(plan.subscriptionFeatures?.maxApplications ?? 10),
-                  advancedSearch: Boolean(plan.subscriptionFeatures?.advancedSearch),
-                  prioritySupport: Boolean(plan.subscriptionFeatures?.prioritySupport),
-                  customBranding: Boolean(plan.subscriptionFeatures?.customBranding),
-                }
-              : null,
+          features: { ...(plan.features || {}) },
+          limits,
+          metadata,
+          featureList: [],
         };
       });
       const hasVisibleCatalog = employerPlans.length > 0 || jobSeekerPlans.length > 0;
@@ -406,7 +734,15 @@ export default function AdminPricingPage() {
           )
         : [];
 
-      const data = await apiFetch<{ data?: { plans?: PricingPlanConfig[] } }>("/api/admin/pricing-plans", {
+      const data = await apiFetch<{
+        data?: {
+          plans?: PricingPlanConfig[];
+          featureRegistry?: RegistryMap<FeatureDefinition>;
+          limitRegistry?: RegistryMap<LimitDefinition>;
+          textMetadataFields?: TextMetadataField[];
+          syncSummary?: SyncSummary;
+        };
+      }>("/api/admin/pricing-plans", {
         method: "PUT",
         body: JSON.stringify({
           plans: sanitizedPayloadPlans,
@@ -415,11 +751,19 @@ export default function AdminPricingPage() {
       });
 
       const updatedPlans = (data.data?.plans || []) as PricingPlanConfig[];
+      if (data.data?.featureRegistry) setFeatureRegistry(data.data.featureRegistry);
+      if (data.data?.limitRegistry) setLimitRegistry(data.data.limitRegistry);
+      if (data.data?.textMetadataFields) setTextMetadataFields(data.data.textMetadataFields);
       if (updatedPlans.length > 0) {
         applyPlanConfigs(updatedPlans);
       }
 
-      toast.success("Pricing plans updated successfully");
+      const syncedCount = Number(data.data?.syncSummary?.syncedSubscriberCount || 0);
+      toast.success(
+        syncedCount > 0
+          ? `Pricing plans updated and synced to ${syncedCount} subscribers`
+          : "Pricing plans updated successfully"
+      );
       await fetchSubscriptions();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to update plan settings";
@@ -643,75 +987,25 @@ export default function AdminPricingPage() {
                             />
                           </div>
 
-                          <div className="mb-3">
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Feature List (one per line)</label>
-                            <textarea
-                              rows={4}
-                              value={(draft.featureList || []).join("\n")}
-                              onChange={(e) => handlePlanFeatureListUpdate(plan.audience, plan.id, e.target.value)}
-                              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                            />
-                          </div>
-
-                          {plan.audience === "employer" && (
-                            <div className="rounded-lg border border-blue-100 bg-white p-3">
-                              <p className="text-xs font-semibold text-blue-700 mb-2">Employer Subscription Features</p>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                <input
-                                  type="number"
-                                  min={0}
-                                  value={draft.subscriptionFeatures?.maxJobPosts ?? 1}
-                                  onChange={(e) =>
-                                    handleEmployerSubFeatureUpdate(plan.audience, plan.id, "maxJobPosts", Number(e.target.value))
-                                  }
-                                  onWheel={(e) => e.currentTarget.blur()}
-                                  className="no-spinner rounded-lg border border-gray-300 px-2 py-2 text-sm"
-                                  placeholder="Max Job Posts"
-                                />
-                                <input
-                                  type="number"
-                                  min={0}
-                                  value={draft.subscriptionFeatures?.maxApplications ?? 10}
-                                  onChange={(e) =>
-                                    handleEmployerSubFeatureUpdate(plan.audience, plan.id, "maxApplications", Number(e.target.value))
-                                  }
-                                  onWheel={(e) => e.currentTarget.blur()}
-                                  className="no-spinner rounded-lg border border-gray-300 px-2 py-2 text-sm"
-                                  placeholder="Max Applications"
-                                />
-                                <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-                                  <input
-                                    type="checkbox"
-                                    checked={Boolean(draft.subscriptionFeatures?.advancedSearch)}
-                                    onChange={(e) =>
-                                      handleEmployerSubFeatureUpdate(plan.audience, plan.id, "advancedSearch", e.target.checked)
-                                    }
-                                  />
-                                  Advanced Search
-                                </label>
-                                <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-                                  <input
-                                    type="checkbox"
-                                    checked={Boolean(draft.subscriptionFeatures?.prioritySupport)}
-                                    onChange={(e) =>
-                                      handleEmployerSubFeatureUpdate(plan.audience, plan.id, "prioritySupport", e.target.checked)
-                                    }
-                                  />
-                                  Priority Support
-                                </label>
-                                <label className="inline-flex items-center gap-2 text-sm text-gray-700 sm:col-span-2">
-                                  <input
-                                    type="checkbox"
-                                    checked={Boolean(draft.subscriptionFeatures?.customBranding)}
-                                    onChange={(e) =>
-                                      handleEmployerSubFeatureUpdate(plan.audience, plan.id, "customBranding", e.target.checked)
-                                    }
-                                  />
-                                  Custom Branding
-                                </label>
-                              </div>
-                            </div>
-                          )}
+                          <CapabilityEditor
+                            audience={plan.audience}
+                            draft={draft}
+                            featureDefinitions={featureRegistry[plan.audience] || []}
+                            limitDefinitions={limitRegistry[plan.audience] || []}
+                            textMetadataFields={textMetadataFields}
+                            onFeatureToggle={(featureKey, value) =>
+                              handlePlanFeatureToggle(plan.audience, plan.id, featureKey, value)
+                            }
+                            onLimitChange={(limitKey, value) =>
+                              handlePlanLimitUpdate(plan.audience, plan.id, limitKey, value)
+                            }
+                            onLimitToggle={(definition, enabled) =>
+                              handlePlanLimitToggle(plan.audience, plan.id, definition, enabled)
+                            }
+                            onMetadataChange={(metadataKey, value) =>
+                              handlePlanMetadataUpdate(plan.audience, plan.id, metadataKey, value)
+                            }
+                          />
                         </div>
                       );
                     })}

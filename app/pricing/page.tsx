@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, CreditCard, Landmark, ShieldCheck, Sparkles, Wallet } from "lucide-react";
 import toast from "react-hot-toast";
 import Navbar from "@/app/components/Navbar";
@@ -19,11 +19,26 @@ type PricingPlan = {
   tag?: string;
   ctaLabel?: string;
   highlighted?: boolean;
+  features?: Record<string, boolean>;
+  limits?: Record<string, number>;
+  metadata?: Record<string, string>;
+  displayFeatures?: { key: string; label: string }[];
+  displayLimits?: { key: string; label: string; value: number; displayValue: string }[];
   featureList: string[];
   isActive?: boolean;
 };
 
 type UserRole = "jobseeker" | "employer" | "admin";
+
+type Subscription = {
+  plan?: string;
+  planName?: string;
+  userType?: Audience;
+  status?: string;
+  isActive?: boolean;
+  paymentStatus?: string;
+  startDate?: string;
+};
 
 type RazorpaySuccessPayload = {
   razorpay_payment_id: string;
@@ -48,6 +63,21 @@ type CreateCheckoutResponse = {
       email?: string;
       contact?: string;
     };
+    subscription?: Subscription;
+  };
+};
+
+type MySubscriptionResponse = {
+  data?: {
+    audience?: Audience;
+    subscription?: Subscription | null;
+  };
+};
+
+type VerifyCheckoutResponse = {
+  message?: string;
+  data?: {
+    subscription?: Subscription;
   };
 };
 
@@ -65,6 +95,14 @@ const audienceLabel: Record<Audience, string> = {
   jobseeker: "Job Seeker",
 };
 
+const getPlanCapabilityLines = (plan: PricingPlan) => {
+  const limits = (plan.displayLimits || []).map((limit) => limit.displayValue || limit.label);
+  const features = (plan.displayFeatures || []).map((feature) => feature.label);
+  const structuredLines = [...limits, ...features].filter(Boolean);
+  if (structuredLines.length > 0) return [...new Set(structuredLines)];
+  return [...new Set((plan.featureList || []).filter(Boolean))];
+};
+
 export default function PricingPage() {
   const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,20 +112,28 @@ export default function PricingPage() {
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [method, setMethod] = useState<PaymentMethod>("card");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [paymentMessage, setPaymentMessage] = useState("");
 
-  useEffect(() => {
-    const user = authStorage.getUser<{ role?: UserRole }>();
-    let roleAudience: Audience | null = null;
-    if (user?.role === "jobseeker") roleAudience = "jobseeker";
-    if (user?.role === "employer") roleAudience = "employer";
-    if (roleAudience) {
-      setAudience(roleAudience);
-      setLockedAudience(roleAudience);
+  const fetchMySubscription = useCallback(async () => {
+    const token = authStorage.getAccessToken();
+    if (!token) return;
+
+    try {
+      const data = await apiFetch<MySubscriptionResponse>(`/api/pricing/my-subscription?t=${Date.now()}`, {
+        cache: "no-store",
+      });
+      const current = data.data?.subscription || null;
+      setSubscription(current);
+      if (current?.status === "Active" && current.plan) {
+        setSelectedPlanId(current.plan);
+      }
+    } catch {
+      setSubscription(null);
     }
-    fetchPlans(roleAudience || undefined);
   }, []);
 
-  const fetchPlans = async (preferredAudience?: Audience) => {
+  const fetchPlans = useCallback(async (preferredAudience?: Audience) => {
     try {
       setLoading(true);
       const audienceParam = preferredAudience || lockedAudience;
@@ -115,7 +161,20 @@ export default function PricingPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [audience, lockedAudience]);
+
+  useEffect(() => {
+    const user = authStorage.getUser<{ role?: UserRole }>();
+    let roleAudience: Audience | null = null;
+    if (user?.role === "jobseeker") roleAudience = "jobseeker";
+    if (user?.role === "employer") roleAudience = "employer";
+    if (roleAudience) {
+      setAudience(roleAudience);
+      setLockedAudience(roleAudience);
+    }
+    fetchPlans(roleAudience || undefined);
+    fetchMySubscription();
+  }, [fetchMySubscription, fetchPlans]);
 
   const filteredPlans = useMemo(
     () => plans.filter((plan) => plan.audience === audience),
@@ -133,6 +192,14 @@ export default function PricingPage() {
     () => filteredPlans.find((plan) => plan.id === selectedPlanId) || filteredPlans[0],
     [filteredPlans, selectedPlanId]
   );
+
+  const activeSubscription = useMemo(() => {
+    if (!subscription || subscription.status !== "Active" || subscription.isActive === false) return null;
+    return subscription;
+  }, [subscription]);
+
+  const isPlanCurrentlyActive = (plan: PricingPlan) =>
+    Boolean(activeSubscription?.plan === plan.id && (!activeSubscription.userType || activeSubscription.userType === plan.audience));
 
   useEffect(() => {
     const token = authStorage.getAccessToken();
@@ -181,12 +248,13 @@ export default function PricingPage() {
       return;
     }
 
-    if (selectedPlan.audience !== "employer") {
-      toast.error("Paid subscription is currently available for employer plans only.");
+    if (isPlanCurrentlyActive(selectedPlan)) {
+      toast.success("This plan is already active on your account.");
       return;
     }
 
     setCheckoutLoading(true);
+    setPaymentMessage("");
     try {
       const scriptReady = await loadRazorpayScript();
       if (!scriptReady || !window.Razorpay) {
@@ -206,7 +274,11 @@ export default function PricingPage() {
       }
 
       if (!checkoutData.data.paymentRequired) {
+        if (checkoutData.data.subscription) setSubscription(checkoutData.data.subscription);
+        await fetchMySubscription();
+        setPaymentMessage("Your plan is active.");
         toast.success("Plan activated successfully.");
+        setCheckoutLoading(false);
         return;
       }
 
@@ -224,12 +296,17 @@ export default function PricingPage() {
           planId: selectedPlan.id,
           audience: selectedPlan.audience,
         },
+        modal: {
+          ondismiss: () => {
+            setCheckoutLoading(false);
+          },
+        },
         theme: {
           color: "#155DFC",
         },
         handler: async (response: RazorpaySuccessPayload) => {
           try {
-            const verifyData = await apiFetch<{ message?: string }>("/api/pricing/checkout-verify", {
+            const verifyData = await apiFetch<VerifyCheckoutResponse>("/api/pricing/checkout-verify", {
               method: "POST",
               body: JSON.stringify({
                 planId: selectedPlan.id,
@@ -237,25 +314,37 @@ export default function PricingPage() {
               }),
             });
             if (!verifyData) throw new Error("Payment verification failed");
-            toast.success("Payment captured. Subscription activation is being confirmed.");
+            if (verifyData.data?.subscription) {
+              setSubscription(verifyData.data.subscription);
+            } else {
+              await fetchMySubscription();
+            }
+            setPaymentMessage("Payment verified. Your subscription is active.");
+            toast.success("Payment verified. Your subscription is active.");
           } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Payment verification failed";
+            setPaymentMessage(message);
             toast.error(message);
+          } finally {
+            setCheckoutLoading(false);
           }
         },
       });
 
       rzp.on("payment.failed", (response: unknown) => {
         const details = response as { error?: { description?: string } };
-        toast.error(details?.error?.description || "Payment failed. Please retry.");
+        const message = details?.error?.description || "Payment failed. Please retry.";
+        setPaymentMessage(message);
+        setCheckoutLoading(false);
+        toast.error(message);
       });
 
       rzp.open();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unable to start checkout";
-      toast.error(message);
-    } finally {
+      setPaymentMessage(message);
       setCheckoutLoading(false);
+      toast.error(message);
     }
     if (token) {
       createPricingNotificationEvent({
@@ -278,7 +367,7 @@ export default function PricingPage() {
             </p>
             <h1 className="mt-6 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
               Choose a Plan Built for
-              <span className="bg-gradient-to-r from-[#155DFC] to-[#00B8DB] bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-[#155DFC] to-[#00B8DB] bg-clip-text text-transparent">
                 {" "}{audienceLabel[audience]}
               </span>
             </h1>
@@ -309,6 +398,13 @@ export default function PricingPage() {
             </p>
           )}
 
+          {activeSubscription && (
+            <div className="mx-auto mt-6 flex max-w-xl items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+              <Check className="h-4 w-4" />
+              Active plan: {activeSubscription.planName || activeSubscription.plan}
+            </div>
+          )}
+
           {loading ? (
             <div className="mt-16 text-center text-gray-500">Loading pricing plans...</div>
           ) : (
@@ -316,6 +412,10 @@ export default function PricingPage() {
               <div className="mt-14 grid gap-6 lg:grid-cols-3">
                 {filteredPlans.map((plan) => {
                   const active = selectedPlanId === plan.id;
+                  const planAlreadyActive = isPlanCurrentlyActive(plan);
+                  const capabilityLines = getPlanCapabilityLines(plan);
+                  const badgeText = plan.metadata?.badgeText || (plan.highlighted ? "Popular" : plan.tag);
+                  const planLabel = plan.metadata?.planLabel || plan.tag || "";
                   return (
                     <article
                       key={plan.id}
@@ -327,10 +427,15 @@ export default function PricingPage() {
                     >
                       {plan.highlighted && (
                         <span className="absolute -top-3 right-5 rounded-full bg-gradient-to-r from-[#155DFC] to-[#00B8DB] px-3 py-1 text-xs font-semibold text-white">
-                          Popular
+                          {badgeText || "Popular"}
                         </span>
                       )}
-                      <p className="text-sm font-semibold text-blue-700">{plan.tag || ""}</p>
+                      {planAlreadyActive && (
+                        <span className="absolute -top-3 left-5 rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white">
+                          Active
+                        </span>
+                      )}
+                      <p className="text-sm font-semibold text-blue-700">{planLabel}</p>
                       <h2 className="mt-2 text-2xl font-bold text-gray-900">{plan.displayName}</h2>
                       <div className="mt-4 flex items-end gap-1">
                         <span className="text-4xl font-extrabold text-gray-900">₹{plan.price}</span>
@@ -339,7 +444,7 @@ export default function PricingPage() {
                       <p className="mt-3 text-sm leading-6 text-gray-600">{plan.description}</p>
 
                       <ul className="mt-6 space-y-3">
-                        {plan.featureList.map((feature) => (
+                        {capabilityLines.map((feature) => (
                           <li key={feature} className="flex items-start gap-3 text-sm text-gray-700">
                             <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
                             <span>{feature}</span>
@@ -349,14 +454,19 @@ export default function PricingPage() {
 
                       <button
                         type="button"
-                        onClick={() => handlePlanSelect(plan)}
+                        onClick={() => {
+                          if (!planAlreadyActive) handlePlanSelect(plan);
+                        }}
+                        disabled={planAlreadyActive || checkoutLoading}
                         className={`mt-7 w-full rounded-xl px-4 py-3 text-sm font-semibold transition ${
-                          active
+                          planAlreadyActive
+                            ? "cursor-not-allowed bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                            : active
                             ? "bg-gray-900 text-white"
                             : "bg-gradient-to-r from-[#155DFC] to-[#00B8DB] text-white hover:opacity-95"
                         }`}
                       >
-                        {active ? "Selected" : plan.ctaLabel || "Choose Plan"}
+                        {planAlreadyActive ? "Active Plan" : active ? "Selected" : plan.ctaLabel || "Choose Plan"}
                       </button>
                     </article>
                   );
@@ -373,7 +483,7 @@ export default function PricingPage() {
                   <div className="rounded-3xl border border-gray-200 bg-white p-7 shadow-sm">
                     <h3 className="text-xl font-bold text-gray-900">Payment Method</h3>
                     <p className="mt-2 text-sm text-gray-600">
-                      Checkout integration placeholder is active.
+                      Payments are processed by Razorpay and verified securely before activation.
                     </p>
 
                     <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -458,6 +568,12 @@ export default function PricingPage() {
                         <span>Payment method</span>
                         <span className="capitalize">{method}</span>
                       </div>
+                      {activeSubscription && (
+                        <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-emerald-700">
+                          <span>Current plan</span>
+                          <span className="font-semibold">{activeSubscription.planName || activeSubscription.plan}</span>
+                        </div>
+                      )}
                       <div className="border-t border-gray-200 pt-4">
                         <div className="flex items-center justify-between text-base font-bold text-gray-900">
                           <span>Total payable</span>
@@ -469,11 +585,22 @@ export default function PricingPage() {
                     <button
                       type="button"
                       onClick={handleCheckout}
-                      disabled={checkoutLoading}
-                      className="mt-8 w-full rounded-xl bg-gradient-to-r from-[#155DFC] to-[#00B8DB] px-4 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-95"
+                      disabled={checkoutLoading || isPlanCurrentlyActive(selectedPlan)}
+                      className={`mt-8 w-full rounded-xl px-4 py-3 text-sm font-semibold shadow-md transition ${
+                        isPlanCurrentlyActive(selectedPlan)
+                          ? "cursor-not-allowed bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                          : "bg-gradient-to-r from-[#155DFC] to-[#00B8DB] text-white hover:opacity-95"
+                      }`}
                     >
-                      {checkoutLoading ? "Processing..." : "Proceed to Secure Checkout"}
+                      {isPlanCurrentlyActive(selectedPlan)
+                        ? "Current Plan Active"
+                        : checkoutLoading
+                          ? "Processing..."
+                          : "Proceed to Secure Checkout"}
                     </button>
+                    {paymentMessage && (
+                      <p className="mt-4 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-700">{paymentMessage}</p>
+                    )}
                   </aside>
                 </section>
               )}

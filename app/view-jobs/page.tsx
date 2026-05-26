@@ -25,14 +25,13 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { motion } from "framer-motion";
 import { apiFetch } from "@/lib/api-client";
+import {
+  JOB_SPECIALIZATION_ENUM,
+  TITLE_FIELD_OPTIONS,
+  type HealthcareTitle,
+} from "@/lib/healthcare-taxonomy";
 
-const SPECIALIZATIONS = [
-  "General Medicine", "Cardiology", "Neurology", "Orthopedics", "Pediatrics",
-  "Gynecology", "Dermatology", "Psychiatry", "Radiology", "Anesthesiology",
-  "Emergency Medicine", "Surgery", "Oncology", "Pathology", "Ophthalmology",
-  "ENT", "Urology", "Gastroenterology", "Pulmonology", "Endocrinology",
-  "Rheumatology", "Nephrology", "Hematology", "Infectious Disease",
-];
+const BASE_SPECIALIZATIONS = JOB_SPECIALIZATION_ENUM.filter((item) => item !== "Other");
 
 const LOCATIONS = [
   "Mumbai", "Delhi NCR", "Bangalore", "Pune", "Hyderabad",
@@ -41,15 +40,37 @@ const LOCATIONS = [
 
 const WORK_MODES = ["On-site", "Remote", "Full-time"];
 
+const flattenFields = (title: HealthcareTitle) =>
+  Array.from(
+    new Set(Object.values(TITLE_FIELD_OPTIONS[title] || {}).flat().filter((item) => item !== "Other"))
+  );
+
+const doctorSpecialties = flattenFields("Doctor");
+const technicianSpecialties = flattenFields("Technician");
+const supportSpecialties = flattenFields("Support");
+
 const CATEGORY_TO_SPECIALTIES: Record<string, string[]> = {
-  "Doctors & Physicians": ["General Medicine", "Surgery", "Pediatrics", "Internal Medicine"],
-  "Nursing Staff": ["Nursing"],
-  Technicians: ["Medical Technology", "Radiology", "Pathology"],
-  "Admin & Support": ["Other"],
-  Diagnostics: ["Pathology", "Radiology"],
-  Therapists: ["Physical Therapy", "Occupational Therapy", "Speech Therapy"],
-  "Dental & Optometry": ["Ophthalmology", "Other"],
-  "Research & Development": ["Pathology", "Other"],
+  "Doctors & Physicians": doctorSpecialties,
+  "Nursing Staff": flattenFields("Nurse"),
+  Technicians: technicianSpecialties,
+  "Admin & Support": [...flattenFields("Admin"), ...supportSpecialties],
+  Diagnostics: doctorSpecialties.filter((item) =>
+    /(pathology|radiology|laboratory|microbiology|biochemistry|nuclear medicine|diagnostic)/i.test(item)
+  ),
+  Therapists: [...technicianSpecialties, ...supportSpecialties].filter((item) =>
+    /(therapy|therapist|physio|rehabilitation|audiologist|nutrition|counsellor|psychologist)/i.test(item)
+  ),
+  "Dental & Optometry": [...doctorSpecialties, ...technicianSpecialties].filter((item) =>
+    /(dental|dentistry|oral|maxillofacial|orthodontics|prosthodontics|periodontics|endodontics|ophthalmology|optometry|optometrist|ophthalmic)/i.test(item)
+  ),
+  "Research & Development": [
+    "Clinical Research Medical Officer",
+    "Medical Genetics",
+    "Molecular Genetic Pathology",
+    "Pharmacovigilance",
+    "Medical Affairs",
+    "Laboratory Medicine",
+  ],
 };
 
 function JobSeekerJobsContent() {
@@ -248,7 +269,16 @@ function JobSeekerJobsContent() {
     return jobs.filter(j => j.specialization?.toLowerCase() === specialty.toLowerCase()).length;
   };
 
-  const displayedSpecialties = showAllSpecialties ? SPECIALIZATIONS : SPECIALIZATIONS.slice(0, 4);
+  const specialtyOptions = Array.from(
+    new Set([
+      ...BASE_SPECIALIZATIONS,
+      ...jobs
+        .map((job) => job.specialization?.trim())
+        .filter((item): item is string => Boolean(item)),
+    ])
+  ).sort((a, b) => getSpecialtyCount(b) - getSpecialtyCount(a) || a.localeCompare(b));
+
+  const displayedSpecialties = showAllSpecialties ? specialtyOptions : specialtyOptions.slice(0, 4);
 
   return (
     <>
