@@ -3,10 +3,43 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
-import { User2, Edit, Mail, Phone, Globe, MapPin, Award, Building2, ArrowLeft, LogOut } from "lucide-react";
+import { User2, Edit, Mail, Phone, Globe, MapPin, Award, Building2, ArrowLeft, LogOut, CheckCircle, CreditCard } from "lucide-react";
 import GradientLoader from "@/app/components/GradientLoader";
 import toast from "react-hot-toast";
 import { apiFetch, authStorage, logout } from "@/lib/api-client";
+
+type PricingPlan = {
+  id: string;
+  displayName: string;
+  price: number;
+  featureList?: string[];
+  displayLimits?: { displayValue?: string; label?: string }[];
+  displayFeatures?: { label?: string }[];
+  metadata?: { planLabel?: string; badgeText?: string };
+};
+
+type SubscriptionSummary = {
+  plan?: string;
+  planName?: string;
+  status?: string;
+  isActive?: boolean;
+};
+
+const EMPLOYER_PLAN_FALLBACK: PricingPlan[] = [
+  { id: "Basic", displayName: "Basic", price: 300, featureList: ["5 active job posts", "Up to 100 applications"] },
+  { id: "Premium", displayName: "Premium", price: 900, featureList: ["25 active job posts", "Priority support"] },
+  { id: "Enterprise", displayName: "Enterprise", price: 1800, featureList: ["High-volume hiring", "Dedicated account support"] },
+];
+
+const formatPlanPrice = (price?: number) =>
+  typeof price === "number" ? `₹${price.toLocaleString("en-IN")} / month` : "Pricing available on checkout";
+
+const getPlanLines = (plan: PricingPlan) => {
+  const limits = (plan.displayLimits || []).map((item) => item.displayValue || item.label).filter(Boolean);
+  const features = (plan.displayFeatures || []).map((item) => item.label).filter(Boolean);
+  const lines = [...limits, ...features, ...(plan.featureList || [])].filter(Boolean) as string[];
+  return [...new Set(lines)].slice(0, 3);
+};
 
 export default function ViewEmployerProfile() {
   const router = useRouter();
@@ -14,6 +47,8 @@ export default function ViewEmployerProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
+  const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([]);
+  const [subscription, setSubscription] = useState<SubscriptionSummary | null>(null);
   const MANDATORY_CERTIFICATE_NAMES = new Set([
     "Bombay Nursing Certificate",
     "Hospital Registration Certificate",
@@ -40,14 +75,36 @@ export default function ViewEmployerProfile() {
       return;
     }
 
-    apiFetch<{ data?: { employer?: any } }>("/api/employer/profile")
-      .then((data) => {
-        if (data?.data?.employer) setProfile(data.data.employer);
-        else setError("Profile not found");
+    Promise.allSettled([
+      apiFetch<{ data?: { employer?: any } }>("/api/employer/profile"),
+      apiFetch<{ data?: { plans?: PricingPlan[] } }>("/api/pricing/plans?audience=employer"),
+      apiFetch<{ data?: { subscription?: SubscriptionSummary | null } }>("/api/pricing/my-subscription"),
+    ])
+      .then(([profileResult, plansResult, subscriptionResult]) => {
+        if (profileResult.status === "fulfilled" && profileResult.value?.data?.employer) {
+          setProfile(profileResult.value.data.employer);
+        } else {
+          setError("Profile not found");
+        }
+
+        if (plansResult.status === "fulfilled") {
+          setPricingPlans((plansResult.value.data?.plans || []).filter((plan) => plan.price > 0));
+        }
+
+        if (subscriptionResult.status === "fulfilled") {
+          setSubscription(subscriptionResult.value.data?.subscription || null);
+        }
       })
       .catch(() => setError("Failed to load profile"))
       .finally(() => setLoading(false));
   }, [router]);
+
+  const activeSubscription =
+    subscription?.status === "Active" && subscription.isActive !== false ? subscription : null;
+  const profilePlans = pricingPlans.length > 0 ? pricingPlans : EMPLOYER_PLAN_FALLBACK;
+  const currentPlan = activeSubscription?.plan
+    ? profilePlans.find((plan) => plan.id === activeSubscription.plan)
+    : undefined;
 
   if (loading)
     return (
@@ -172,6 +229,28 @@ export default function ViewEmployerProfile() {
                 </div>
               )}
 
+              <div className="mx-4 mb-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">
+                  Current Plan
+                </p>
+                <p className="mt-2 text-base font-bold text-gray-900">
+                  {activeSubscription
+                    ? activeSubscription.planName || currentPlan?.displayName || activeSubscription.plan
+                    : "Free"}
+                </p>
+                <p className="mt-1 text-xs text-gray-600">
+                  {activeSubscription ? formatPlanPrice(currentPlan?.price) : "No active paid subscription"}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => router.push("/pricing")}
+                  className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:underline"
+                >
+                  <CreditCard className="h-4 w-4" />
+                  Manage pricing
+                </button>
+              </div>
+
               {/* Contact Information */}
               <div className="space-y-4 p-4">
                 <h3 className="text-sm font-semibold text-gray-900 mb-4">
@@ -233,6 +312,50 @@ export default function ViewEmployerProfile() {
 
           {/* ===== RIGHT COLUMN - MAIN CONTENT ===== */}
           <div className="lg:col-span-3 space-y-8">
+            <section className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Pricing Plan</h2>
+                  <p className="mt-1 text-sm text-gray-600">
+                    Your profile now reflects the same employer plans used at checkout.
+                  </p>
+                </div>
+                {activeSubscription && (
+                  <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    {activeSubscription.planName || currentPlan?.displayName || activeSubscription.plan} active
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-3">
+                {profilePlans.map((plan) => (
+                  <article
+                    key={plan.id}
+                    className={`rounded-xl border p-4 ${
+                      activeSubscription?.plan === plan.id
+                        ? "border-emerald-200 bg-emerald-50"
+                        : "border-gray-200 bg-white"
+                    }`}
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">
+                      {plan.metadata?.planLabel || plan.metadata?.badgeText || "Employer"}
+                    </p>
+                    <h3 className="mt-2 text-lg font-bold text-gray-900">{plan.displayName}</h3>
+                    <p className="mt-1 text-sm font-semibold text-blue-700">{formatPlanPrice(plan.price)}</p>
+                    <div className="mt-3 space-y-1">
+                      {getPlanLines(plan).map((line) => (
+                        <p key={line} className="text-xs text-gray-600">{line}</p>
+                      ))}
+                    </div>
+                    {activeSubscription?.plan === plan.id && (
+                      <p className="mt-3 text-xs font-semibold text-emerald-700">Current plan</p>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </section>
+
             {/* About Organization */}
             {profile.description && (
               <section className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">

@@ -52,6 +52,24 @@ type ProfileHubProps = {
   initialTab?: TabId;
 };
 
+type PricingPlan = {
+  id: string;
+  displayName: string;
+  price: number;
+  featureList?: string[];
+  displayLimits?: { displayValue?: string; label?: string }[];
+  displayFeatures?: { label?: string }[];
+  metadata?: { planLabel?: string; badgeText?: string };
+};
+
+type SubscriptionSummary = {
+  plan?: string;
+  planName?: string;
+  status?: string;
+  isActive?: boolean;
+  userType?: "jobseeker" | "employer";
+};
+
 type DriveDocument = {
   url?: string;
   filename?: string;
@@ -223,10 +241,10 @@ const toDateInputValue = (value?: string) => {
   return date.toISOString().split("T")[0];
 };
 
-const PLAN_SUMMARY = [
-  { name: "Starter Care", price: 300, seats: "1 recruiter" },
-  { name: "Growth Care", price: 600, seats: "3 recruiters" },
-  { name: "Pro Care", price: 900, seats: "Unlimited" },
+const PLAN_SUMMARY_FALLBACK: PricingPlan[] = [
+  { id: "Basic", displayName: "Basic", price: 99, featureList: ["Standard profile", "Basic applications"] },
+  { id: "Growth", displayName: "Growth", price: 199, featureList: ["Priority visibility", "Resume improvement hints"] },
+  { id: "Pro", displayName: "Pro", price: 399, featureList: ["Top visibility boost", "Mock interview support"] },
 ];
 const MAX_PREFERRED_LOCATIONS = 10;
 
@@ -260,6 +278,16 @@ const normalizeProfileData = (profile: JobSeekerProfile | null): JobSeekerProfil
   };
 };
 
+const formatPlanPrice = (price?: number) =>
+  typeof price === "number" ? `₹${price.toLocaleString("en-IN")} / month` : "Pricing available on checkout";
+
+const getPlanLines = (plan: PricingPlan) => {
+  const limits = (plan.displayLimits || []).map((item) => item.displayValue || item.label).filter(Boolean);
+  const features = (plan.displayFeatures || []).map((item) => item.label).filter(Boolean);
+  const lines = [...limits, ...features, ...(plan.featureList || [])].filter(Boolean) as string[];
+  return [...new Set(lines)].slice(0, 3);
+};
+
 export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps) {
   const router = useRouter();
 
@@ -274,6 +302,8 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
   const [aadhaarFrontFile, setAadhaarFrontFile] = useState<File | null>(null);
   const [aadhaarBackFile, setAadhaarBackFile] = useState<File | null>(null);
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([]);
+  const [subscription, setSubscription] = useState<SubscriptionSummary | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -304,6 +334,31 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
   }, []);
 
   useEffect(() => {
+    let mounted = true;
+
+    const loadPricing = async () => {
+      const [plansResult, subscriptionResult] = await Promise.allSettled([
+        apiFetch<{ data?: { plans?: PricingPlan[] } }>("/api/pricing/plans?audience=jobseeker"),
+        apiFetch<{ data?: { subscription?: SubscriptionSummary | null } }>("/api/pricing/my-subscription"),
+      ]);
+
+      if (!mounted) return;
+      if (plansResult.status === "fulfilled") {
+        setPricingPlans((plansResult.value.data?.plans || []).filter((plan) => plan.price > 0));
+      }
+      if (subscriptionResult.status === "fulfilled") {
+        setSubscription(subscriptionResult.value.data?.subscription || null);
+      }
+    };
+
+    loadPricing().catch(() => {});
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!profile) return;
     if ((profile.jobPreferences?.preferredLocations || []).length > 0) return;
     setProfile((prev) => {
@@ -320,8 +375,15 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
     });
   }, [profile]);
 
-  const user = profile?.user || (authStorage.getUser<JobSeekerProfile["user"]>() ?? {});
+  const storedUser = useMemo(() => authStorage.getUser<JobSeekerProfile["user"]>() ?? {}, []);
+  const user = profile?.user || storedUser;
   const profileImageUrl = normalizeDriveImageUrl(user?.profileImage, user?.profileImageDriveFileId);
+  const activeSubscription =
+    subscription?.status === "Active" && subscription.isActive !== false ? subscription : null;
+  const profilePlans = pricingPlans.length > 0 ? pricingPlans : PLAN_SUMMARY_FALLBACK;
+  const currentPlan = activeSubscription?.plan
+    ? profilePlans.find((plan) => plan.id === activeSubscription.plan)
+    : undefined;
 
   const completion = useMemo(() => {
     if (!profile) return 0;
@@ -890,7 +952,11 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
 
             <div className="mt-6 rounded-2xl border border-gray-200 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Current Pricing</p>
-              <p className="mt-2 text-lg font-bold text-gray-900">Growth Care · Rs 600 / month</p>
+              <p className="mt-2 text-lg font-bold text-gray-900">
+                {activeSubscription
+                  ? `${activeSubscription.planName || currentPlan?.displayName || activeSubscription.plan} · ${formatPlanPrice(currentPlan?.price)}`
+                  : "No active paid plan"}
+              </p>
               <Link href="/pricing" className="mt-2 inline-block text-sm font-semibold text-blue-700 hover:underline">
                 Compare and upgrade plans
               </Link>
@@ -2585,11 +2651,25 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                 <div className="space-y-4">
                   <p className="text-sm text-gray-600">Choose a plan tailored for your hiring visibility and premium access.</p>
                   <div className="grid gap-3 sm:grid-cols-3">
-                    {PLAN_SUMMARY.map((plan) => (
-                      <article key={plan.name} className="rounded-2xl border border-gray-200 p-4">
-                        <h3 className="font-semibold text-gray-900">{plan.name}</h3>
-                        <p className="mt-1 text-lg font-bold text-blue-700">Rs {plan.price}/month</p>
-                        <p className="mt-1 text-xs text-gray-500">{plan.seats}</p>
+                    {profilePlans.map((plan) => (
+                      <article
+                        key={plan.id}
+                        className={`rounded-2xl border p-4 ${
+                          activeSubscription?.plan === plan.id
+                            ? "border-emerald-200 bg-emerald-50"
+                            : "border-gray-200"
+                        }`}
+                      >
+                        <h3 className="font-semibold text-gray-900">{plan.displayName}</h3>
+                        <p className="mt-1 text-lg font-bold text-blue-700">{formatPlanPrice(plan.price)}</p>
+                        <div className="mt-2 space-y-1">
+                          {getPlanLines(plan).map((line) => (
+                            <p key={line} className="text-xs text-gray-500">{line}</p>
+                          ))}
+                        </div>
+                        {activeSubscription?.plan === plan.id && (
+                          <p className="mt-3 text-xs font-semibold text-emerald-700">Current plan</p>
+                        )}
                       </article>
                     ))}
                   </div>
