@@ -13,7 +13,7 @@ const OPPORTUNITY_CARDS = [
   {
     title: "Doctors & Physicians",
     subtitle: "General, Surgery, Pediatrics",
-    positions: "1,247",
+    positions: "157",
     image: "/man.png",
     iconBg: "bg-orange-100",
     accent: "text-[#2B7FFF]",
@@ -23,7 +23,7 @@ const OPPORTUNITY_CARDS = [
   {
     title: "Nursing Staff",
     subtitle: "RNs, LPNs, CNAs, Nurse Practitioners",
-    positions: "2,183",
+    positions: "162",
     image: "/woman.png",
     iconBg: "bg-red-100",
     accent: "text-[#F6339A]",
@@ -33,7 +33,7 @@ const OPPORTUNITY_CARDS = [
   {
     title: "Technicians",
     subtitle: "Lab Techs, X-Ray, MRI, Ultrasound",
-    positions: "1,640",
+    positions: "125",
     image: "/micro.png",
     iconBg: "bg-yellow-100",
     accent: "text-[#00C950]",
@@ -43,7 +43,7 @@ const OPPORTUNITY_CARDS = [
   {
     title: "Admin & Support",
     subtitle: "Medical Billing, Reception, Management",
-    positions: "3,920",
+    positions: "67",
     image: "/pad.png",
     iconBg: "bg-purple-100",
     accent: "text-[#AD46FF]",
@@ -53,7 +53,7 @@ const OPPORTUNITY_CARDS = [
   {
     title: "Diagnostics",
     subtitle: "Pathology, Radiology, Laboratory",
-    positions: "2,890",
+    positions: "146",
     image: "/scope.png",
     iconBg: "bg-blue-100",
     accent: "text-[#00B8DB]",
@@ -63,7 +63,7 @@ const OPPORTUNITY_CARDS = [
   {
     title: "Therapists",
     subtitle: "Physical, Occupational, Speech",
-    positions: "4,455",
+    positions: "98",
     image: "/pill.png",
     iconBg: "bg-gray-100",
     accent: "text-[#FF6900]",
@@ -73,7 +73,7 @@ const OPPORTUNITY_CARDS = [
   {
     title: "Dental & Optometry",
     subtitle: "Dentists, Hygienists, Optometrists",
-    positions: "2,175",
+    positions: "112",
     image: "/teeth.png",
     iconBg: "bg-indigo-100",
     accent: "text-[#615FFF]",
@@ -83,7 +83,7 @@ const OPPORTUNITY_CARDS = [
   {
     title: "Research & Development",
     subtitle: "Clinical Research, Medical Writing",
-    positions: "1,567",
+    positions: "26",
     image: "/graph.png",
     iconBg: "bg-teal-100",
     accent: "text-[#00BBA7]",
@@ -235,14 +235,14 @@ export default function CareerMedLanding() {
                         <div className="text-center">
                             <div className="flex items-center justify-center mb-2">
                                 <Users className="w-6 h-6 text-blue-500 mr-2" />
-                                <div className="text-4xl font-bold text-gray-900">50K+</div>
+                                <div className="text-4xl font-bold text-gray-900">100+</div>
                             </div>
                             <div className="text-gray-600 text-sm">Healthcare Professionals</div>
                         </div>
                         <div className="text-center">
                             <div className="flex items-center justify-center mb-2">
                                 <Building className="w-6 h-6 text-blue-500 mr-2" />
-                                <div className="text-4xl font-bold text-gray-900">5.2K+</div>
+                                <div className="text-4xl font-bold text-gray-900">200+</div>
                             </div>
                             <div className="text-gray-600 text-sm">Active Job Openings</div>
                         </div>
@@ -401,7 +401,7 @@ export default function CareerMedLanding() {
 
                     <div className="grid md:grid-cols-4 gap-8">
                         <div className="bg-gray-800 rounded-xl p-8 text-center border border-gray-700">
-                            <div className="text-4xl font-bold text-blue-400 mb-2">50,000+</div>
+                            <div className="text-4xl font-bold text-blue-400 mb-2">100+</div>
                             <div className="text-gray-400 mb-4">Healthcare Professionals</div>
                             <div className="inline-block bg-green-500/10 text-green-400 px-3 py-1 rounded-full text-sm">
                                 +12% this month
@@ -409,7 +409,7 @@ export default function CareerMedLanding() {
                         </div>
 
                         <div className="bg-gray-800 rounded-xl p-8 text-center border border-gray-700">
-                            <div className="text-4xl font-bold text-blue-400 mb-2">5,200+</div>
+                            <div className="text-4xl font-bold text-blue-400 mb-2">150+</div>
                             <div className="text-gray-400 mb-4">Verified Healthcare Employers</div>
                             <div className="inline-block bg-green-500/10 text-green-400 px-3 py-1 rounded-full text-sm">
                                 +8% this month
@@ -417,7 +417,7 @@ export default function CareerMedLanding() {
                         </div>
 
                         <div className="bg-gray-800 rounded-xl p-8 text-center border border-gray-700">
-                            <div className="text-4xl font-bold text-blue-400 mb-2">2,500+</div>
+                            <div className="text-4xl font-bold text-blue-400 mb-2">50+</div>
                             <div className="text-gray-400 mb-4">Success Stories from Top Partners</div>
                             <div className="inline-block bg-green-500/10 text-green-400 px-3 py-1 rounded-full text-sm">
                                 +15% this month
@@ -425,7 +425,7 @@ export default function CareerMedLanding() {
                         </div>
 
                         <div className="bg-gray-800 rounded-xl p-8 text-center border border-gray-700">
-                            <div className="text-4xl font-bold text-blue-400 mb-2">45,000+</div>
+                            <div className="text-4xl font-bold text-blue-400 mb-2">200+</div>
                             <div className="text-gray-400 mb-4">Successful Job Placements</div>
                             <div className="inline-block bg-green-500/10 text-green-400 px-3 py-1 rounded-full text-sm">
                                 +20% this month
@@ -484,15 +484,15 @@ export default function CareerMedLanding() {
                             <div className="flex items-center">
                                 <div className="w-12 h-12 bg-blue-200 rounded-full mr-3"></div>
                                 <div>
-                                    <div className="font-bold text-gray-900">Dr. Priya Sharma</div>
-                                    <div className="text-sm text-gray-500">Senior Physician</div>
+                                    <div className="font-bold text-gray-900">Dr. Youraj Saste</div>
+                                    <div className="text-sm text-gray-500">BHMS</div>
                                 </div>
                             </div>
                         </div>
 
                         <div className="bg-gray-50 rounded-2xl p-8 border border-gray-200">
                             <div className="flex mb-4">
-                                {[...Array(5)].map((_, i) => (
+                                {[...Array(4)].map((_, i) => (
                                     <span key={i} className="text-yellow-400">★</span>
                                 ))}
                             </div>
@@ -502,7 +502,7 @@ export default function CareerMedLanding() {
                             <div className="flex items-center">
                                 <div className="w-12 h-12 bg-purple-200 rounded-full mr-3"></div>
                                 <div>
-                                    <div className="font-bold text-gray-900">Rahul Kumar</div>
+                                    <div className="font-bold text-gray-900">Ms. Swati Jadhav</div>
                                     <div className="text-sm text-gray-500">Registered Nurse</div>
                                 </div>
                             </div>
@@ -520,7 +520,7 @@ export default function CareerMedLanding() {
                             <div className="flex items-center">
                                 <div className="w-12 h-12 bg-green-200 rounded-full mr-3"></div>
                                 <div>
-                                    <div className="font-bold text-gray-900">Sneha Patel</div>
+                                    <div className="font-bold text-gray-900">Ms. Mangal Lavare</div>
                                     <div className="text-sm text-gray-500">Lab Technician</div>
                                 </div>
                             </div>
