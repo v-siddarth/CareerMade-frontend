@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'CareerMade',
   webDir: 'dist',
   server: {
-    url: 'https://career-made-frontend-tawny.vercel.app',
+    url: 'https://www.careermed.in',
     cleartext: true
   }
 };
