@@ -9,8 +9,17 @@ const Footer = () => {
   const [role, setRole] = useState<UserRole>(null);
   const [hasAccessToken, setHasAccessToken] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [isNativeApp, setIsNativeApp] = useState(false);
 
   useEffect(() => {
+    import("@capacitor/core")
+      .then(({ Capacitor }) => {
+        setIsNativeApp(Capacitor.isNativePlatform());
+      })
+      .catch(() => {
+        // Ignore if capacitor core is missing
+      });
+
     const syncAuth = () => {
       try {
         const token = localStorage.getItem("accessToken");
@@ -46,6 +55,10 @@ const Footer = () => {
   const isAuthenticated = hydrated && hasAccessToken && Boolean(role);
   const showJobSeekerSection = isAuthenticated ? role === "jobseeker" : true;
   const showEmployerSection = isAuthenticated ? role === "employer" : true;
+
+  if (hydrated && isNativeApp) {
+    return null;
+  }
 
   return (
     <footer className="bg-gray-900 py-12 text-gray-400">

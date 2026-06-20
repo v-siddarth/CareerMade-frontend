@@ -147,7 +147,7 @@ const Register = () => {
                 });
                 setOtpSent(true);
                 setMessage("✅ " + sendOtpResponse.message);
-                toast.success("OTP sent to your email");
+                toast.success(sendOtpResponse.message);
             } else {
                 const data = await apiFetch<{
                     message: string;
