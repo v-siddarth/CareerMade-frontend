@@ -136,6 +136,7 @@ export default function JobViewPage() {
                         min: salary?.min ?? salary?.amountMin ?? salary?.minimum ?? null,
                         max: salary?.max ?? salary?.amountMax ?? salary?.maximum ?? null,
                         currency: salary?.currency ?? salary?.currencyCode ?? salary?.curr,
+                        period: salary?.period ?? "Annual",
                     },
                     experienceRequired: {
                         minYears: exp?.minYears ?? exp?.min ?? exp?.minimum ?? null,
