@@ -233,10 +233,10 @@ export default function JobViewPage() {
     const formatAmt = (value?: number | string | null) => {
       const numericValue = typeof value === "string" ? Number(value.replace(/,/g, "").trim()) : value;
       if (typeof numericValue !== "number" || !Number.isFinite(numericValue) || numericValue <= 0) return "";
-      
-      if (period === "Monthly") return `₹${numericValue.toLocaleString('en-IN')}/mo`;
-      if (period === "Hourly") return `₹${numericValue.toLocaleString('en-IN')}/hr`;
-      if (period === "Daily") return `₹${numericValue.toLocaleString('en-IN')}/day`;
+      const p = (period || "").trim().toLowerCase();
+      if (p === "monthly") return `₹${numericValue.toLocaleString('en-IN')}/mo`;
+      if (p === "hourly") return `₹${numericValue.toLocaleString('en-IN')}/hr`;
+      if (p === "daily") return `₹${numericValue.toLocaleString('en-IN')}/day`;
       if (numericValue < 1000) return `₹${numericValue} LPA`;
       return `₹${(numericValue / 100000).toFixed(1)} LPA`;
     };

@@ -1477,7 +1477,13 @@ export default function CreateJobPage() {
                       {/* Salary Range */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-3">
-                          Annual Salary Range (in Lakhs){" "}
+                          {formData.salary.period === "Monthly"
+                            ? "Monthly Salary Range (in ₹)"
+                            : formData.salary.period === "Hourly"
+                            ? "Hourly Salary Range (in ₹)"
+                            : formData.salary.period === "Daily"
+                            ? "Daily Salary Range (in ₹)"
+                            : "Annual Salary Range (in Lakhs)"}{" "}
                           <span className="text-red-500">*</span>
                         </label>
 

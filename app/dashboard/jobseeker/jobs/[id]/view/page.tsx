@@ -441,9 +441,10 @@ export default function JobViewPage() {
         if (!isMinValid && !isMaxValid) return "Not specified";
     
         const formatAmt = (amt: number) => {
-            if (period === "Monthly") return `₹${amt.toLocaleString('en-IN')}/mo`;
-            if (period === "Hourly") return `₹${amt.toLocaleString('en-IN')}/hr`;
-            if (period === "Daily") return `₹${amt.toLocaleString('en-IN')}/day`;
+            const p = (period || "").trim().toLowerCase();
+            if (p === "monthly") return `₹${amt.toLocaleString('en-IN')}/mo`;
+            if (p === "hourly") return `₹${amt.toLocaleString('en-IN')}/hr`;
+            if (p === "daily") return `₹${amt.toLocaleString('en-IN')}/day`;
             if (amt < 1000) return `₹${amt} LPA`;
             return `₹${(amt / 100000).toFixed(1)} LPA`;
         };
