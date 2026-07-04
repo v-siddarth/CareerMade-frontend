@@ -170,24 +170,29 @@ export default function SavedJobs() {
     );
 
 
-  const formatSalary = (salaryObj?: { min?: number; max?: number; period?: string; currency?: string }) => {
+  const formatSalary = (salaryObj?: any) => {
     if (!salaryObj) return "Not specified";
-    const { min, max, period } = salaryObj;
+    let { min, max, period } = salaryObj;
     
-    if (!min && !max) return "Not specified";
+    min = typeof min === "string" ? Number(min.replace(/,/g, "").trim()) : min;
+    max = typeof max === "string" ? Number(max.replace(/,/g, "").trim()) : max;
 
-    const formatAmt = (amt?: number) => {
-      if (!amt) return "";
+    const isMinValid = typeof min === "number" && Number.isFinite(min) && min > 0;
+    const isMaxValid = typeof max === "number" && Number.isFinite(max) && max > 0;
+
+    if (!isMinValid && !isMaxValid) return "Not specified";
+
+    const formatAmt = (amt: number) => {
       if (period === "Monthly") return `₹${amt.toLocaleString('en-IN')}/mo`;
       if (period === "Hourly") return `₹${amt.toLocaleString('en-IN')}/hr`;
       if (period === "Daily") return `₹${amt.toLocaleString('en-IN')}/day`;
       return `₹${(amt / 100000).toFixed(1)} LPA`;
     };
 
-    const minStr = formatAmt(min);
-    const maxStr = formatAmt(max);
+    const minStr = isMinValid ? formatAmt(min as number) : "";
+    const maxStr = isMaxValid ? formatAmt(max as number) : "";
 
-    if (min && max) {
+    if (isMinValid && isMaxValid) {
       if (min === max) return minStr;
       return `${minStr} - ${maxStr}`;
     }
