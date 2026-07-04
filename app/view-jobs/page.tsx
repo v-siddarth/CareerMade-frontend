@@ -264,6 +264,7 @@ function JobSeekerJobsContent() {
       if (period === "Monthly") return `₹${amt.toLocaleString('en-IN')}/mo`;
       if (period === "Hourly") return `₹${amt.toLocaleString('en-IN')}/hr`;
       if (period === "Daily") return `₹${amt.toLocaleString('en-IN')}/day`;
+      if (amt < 1000) return `₹${amt} LPA`;
       return `₹${(amt / 100000).toFixed(1)} LPA`;
     };
 

@@ -237,6 +237,7 @@ export default function JobViewPage() {
       if (period === "Monthly") return `₹${numericValue.toLocaleString('en-IN')}/mo`;
       if (period === "Hourly") return `₹${numericValue.toLocaleString('en-IN')}/hr`;
       if (period === "Daily") return `₹${numericValue.toLocaleString('en-IN')}/day`;
+      if (numericValue < 1000) return `₹${numericValue} LPA`;
       return `₹${(numericValue / 100000).toFixed(1)} LPA`;
     };
 
