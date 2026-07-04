@@ -290,9 +290,28 @@ export default function JobSeekerJobs() {
   const start = (currentPage - 1) * jobsPerPage;
   const currentJobs = filteredJobs.slice(start, start + jobsPerPage);
 
-  const formatSalary = (amt?: number) => {
-    if (!amt) return "—";
-    return `₹${(amt / 100000).toFixed(1)} LPA`;
+  const formatSalary = (salaryObj?: { min?: number; max?: number; period?: string; currency?: string }) => {
+    if (!salaryObj) return "Not specified";
+    const { min, max, period } = salaryObj;
+    
+    if (!min && !max) return "Not specified";
+
+    const formatAmt = (amt?: number) => {
+      if (!amt) return "";
+      if (period === "Monthly") return `₹${amt.toLocaleString('en-IN')}/mo`;
+      if (period === "Hourly") return `₹${amt.toLocaleString('en-IN')}/hr`;
+      if (period === "Daily") return `₹${amt.toLocaleString('en-IN')}/day`;
+      return `₹${(amt / 100000).toFixed(1)} LPA`;
+    };
+
+    const minStr = formatAmt(min);
+    const maxStr = formatAmt(max);
+
+    if (min && max) {
+      if (min === max) return minStr;
+      return `${minStr} - ${maxStr}`;
+    }
+    return minStr || maxStr || "Not specified";
   };
 
   const getTimeAgo = (date: string) => {
@@ -844,7 +863,7 @@ export default function JobSeekerJobs() {
                           <div className="flex items-center gap-1.5">
                             <IndianRupee className="w-4 h-4 text-gray-500" />
                             <span className="font-semibold text-gray-900">
-                              {formatSalary(job.salary?.min)} – {formatSalary(job.salary?.max)}
+                              {formatSalary(job.salary)}
                             </span>
                           </div>
                         </div>

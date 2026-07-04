@@ -428,36 +428,30 @@ export default function JobViewPage() {
     
     const hasMoreDescription = job?.description && job.description.length > 300;
 
-    const formatSalaryAmount = (value?: number | string | null) => {
-        const numericValue = typeof value === "string"
-            ? Number(value.replace(/,/g, "").trim())
-            : value;
-        if (
-            typeof numericValue !== "number" ||
-            !Number.isFinite(numericValue) ||
-            numericValue <= 0
-        ) {
-            return null;
-        }
-        return new Intl.NumberFormat("en-IN", {
-            maximumFractionDigits: 0,
-        }).format(numericValue);
-    };
-
     const formatSalary = () => {
-        const minFormatted = formatSalaryAmount(job?.salary?.min);
-        const maxFormatted = formatSalaryAmount(job?.salary?.max);
-
-        if (minFormatted && maxFormatted) {
-            return `₹${minFormatted} - ₹${maxFormatted} LPA`;
+        if (!job?.salary) return "Not specified";
+        const { min, max, period } = job.salary;
+        
+        if (!min && !max) return "Not specified";
+    
+        const formatAmt = (value?: number | string | null) => {
+            const numericValue = typeof value === "string" ? Number(value.replace(/,/g, "").trim()) : value;
+            if (typeof numericValue !== "number" || !Number.isFinite(numericValue) || numericValue <= 0) return "";
+            
+            if (period === "Monthly") return `₹${numericValue.toLocaleString('en-IN')}/mo`;
+            if (period === "Hourly") return `₹${numericValue.toLocaleString('en-IN')}/hr`;
+            if (period === "Daily") return `₹${numericValue.toLocaleString('en-IN')}/day`;
+            return `₹${(numericValue / 100000).toFixed(1)} LPA`;
+        };
+    
+        const minStr = formatAmt(min);
+        const maxStr = formatAmt(max);
+    
+        if (min && max) {
+          if (min === max) return minStr;
+          return `${minStr} - ${maxStr}`;
         }
-        if (minFormatted) {
-            return `₹${minFormatted} LPA`;
-        }
-        if (maxFormatted) {
-            return `₹${maxFormatted} LPA`;
-        }
-        return "Not specified";
+        return minStr || maxStr || "Not specified";
     };
     
       const formatExperience = () => {

@@ -230,35 +230,35 @@ export default function CareerMedLanding() {
                         </div>
                     </div>
 
-                    {/* Stats */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16">
-                        <div className="text-center">
-                            <div className="flex items-center justify-center mb-2">
-                                <Users className="w-6 h-6 text-blue-500 mr-2" />
-                                <div className="text-4xl font-bold text-gray-900">100+</div>
+                    {/* Key Highlights */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16 px-4 md:px-0">
+                        <div className="flex flex-col items-center justify-center p-6 bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-blue-50/50 hover:shadow-md hover:border-blue-100 hover:-translate-y-1 transition-all duration-300">
+                            <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-3 text-blue-600">
+                                <Users className="w-6 h-6" />
                             </div>
-                            <div className="text-gray-600 text-sm">Healthcare Professionals</div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-1 text-center">Top Talent</h3>
+                            <p className="text-gray-500 text-xs text-center uppercase tracking-wider font-semibold">Elite Professionals</p>
                         </div>
-                        <div className="text-center">
-                            <div className="flex items-center justify-center mb-2">
-                                <Building className="w-6 h-6 text-blue-500 mr-2" />
-                                <div className="text-4xl font-bold text-gray-900">200+</div>
+                        <div className="flex flex-col items-center justify-center p-6 bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-blue-50/50 hover:shadow-md hover:border-blue-100 hover:-translate-y-1 transition-all duration-300">
+                            <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-3 text-blue-600">
+                                <Building className="w-6 h-6" />
                             </div>
-                            <div className="text-gray-600 text-sm">Active Job Openings</div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-1 text-center">Premium Clinics</h3>
+                            <p className="text-gray-500 text-xs text-center uppercase tracking-wider font-semibold">Verified Facilities</p>
                         </div>
-                        <div className="text-center">
-                            <div className="flex items-center justify-center mb-2">
-                                <Briefcase className="w-6 h-6 text-blue-500 mr-2" />
-                                <div className="text-4xl font-bold text-gray-900">2.5K+</div>
+                        <div className="flex flex-col items-center justify-center p-6 bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-blue-50/50 hover:shadow-md hover:border-blue-100 hover:-translate-y-1 transition-all duration-300">
+                            <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-3 text-blue-600">
+                                <Briefcase className="w-6 h-6" />
                             </div>
-                            <div className="text-gray-600 text-sm">Healthcare Facilities</div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-1 text-center">Diverse Roles</h3>
+                            <p className="text-gray-500 text-xs text-center uppercase tracking-wider font-semibold">Abundant Opportunities</p>
                         </div>
-                        <div className="text-center">
-                            <div className="flex items-center justify-center mb-2">
-                                <TrendingUp className="w-6 h-6 text-blue-500 mr-2" />
-                                <div className="text-4xl font-bold text-gray-900">98%</div>
+                        <div className="flex flex-col items-center justify-center p-6 bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-blue-50/50 hover:shadow-md hover:border-blue-100 hover:-translate-y-1 transition-all duration-300">
+                            <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-3 text-blue-600">
+                                <TrendingUp className="w-6 h-6" />
                             </div>
-                            <div className="text-gray-600 text-sm">Success Rate</div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-1 text-center">High Success</h3>
+                            <p className="text-gray-500 text-xs text-center uppercase tracking-wider font-semibold">Proven Placement</p>
                         </div>
                     </div>
                 </div>
@@ -366,16 +366,22 @@ export default function CareerMedLanding() {
                                 key={card.title}
                                 type="button"
                                 onClick={() => openJobsByCategory(card)}
-                                className="bg-white rounded-xl p-6 hover:shadow-lg transition border border-gray-100 text-left"
+                                className="group bg-white rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 text-left flex flex-col h-full"
                             >
-                                <div className={`w-10 h-10 ${card.iconBg} rounded-lg flex items-center justify-center mb-4`}>
-                                    <Image src={card.image} alt={card.title} width={20} height={20} />
+                                <div className={`w-12 h-12 ${card.iconBg} rounded-xl flex items-center justify-center mb-5`}>
+                                    <Image src={card.image} alt={card.title} width={24} height={24} />
                                 </div>
-                                <h3 className="font-bold text-gray-900 mb-2">{card.title}</h3>
-                                <p className="text-sm text-gray-600 mb-4">{card.subtitle}</p>
-                                <p className={`text-2xl font-bold ${card.accent} mb-1`}>{card.positions}</p>
-                                <p className="text-sm text-gray-500 mb-4">positions available</p>
-                                <span className="text-gray-700 font-semibold hover:text-gray-800">View jobs →</span>
+                                <h3 className="font-bold text-gray-900 text-lg mb-2">{card.title}</h3>
+                                <p className="text-sm text-gray-500 mb-6 flex-grow">{card.subtitle}</p>
+                                
+                                <div className="w-full pt-4 border-t border-gray-50 flex items-center justify-between mt-auto">
+                                    <span className={`text-sm font-semibold ${card.accent}`}>Explore roles</span>
+                                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-50 group-hover:bg-gray-100 transition-colors">
+                                        <svg className={`w-4 h-4 ${card.accent} group-hover:translate-x-0.5 transition-transform`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </div>
+                                </div>
                             </button>
                         ))}
                     </div>
@@ -385,51 +391,62 @@ export default function CareerMedLanding() {
             </section>
 
             {/* Trust Section */}
-            <section className="py-20 bg-gray-900 text-white">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <section className="py-24 bg-gray-900 text-white relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10">
+                    <img src="/bg.svg" alt="" className="w-full h-full object-cover" />
+                </div>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="text-center mb-16">
-                        <h2 className="text-4xl font-bold mb-4">
+                        <h2 className="text-4xl md:text-5xl font-bold mb-6">
                             Trusted by{" "}
                             <span className="bg-gradient-to-r from-[#155DFC] to-[#00B8DB] bg-clip-text text-transparent">
-                                thousands
+                                Leading Institutions
                             </span>
                         </h2>
-                        <p className="text-xl text-gray-400">
-                            Join the fastest-growing healthcare job platform in India
+                        <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+                            Join the fastest-growing healthcare job platform in India and connect with top-tier talent and premier facilities.
                         </p>
                     </div>
 
                     <div className="grid md:grid-cols-4 gap-8">
-                        <div className="bg-gray-800 rounded-xl p-8 text-center border border-gray-700">
-                            <div className="text-4xl font-bold text-blue-400 mb-2">100+</div>
-                            <div className="text-gray-400 mb-4">Healthcare Professionals</div>
-                            <div className="inline-block bg-green-500/10 text-green-400 px-3 py-1 rounded-full text-sm">
-                                +12% this month
+                        <div className="bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 text-center border border-gray-700/50 hover:bg-gray-800 hover:-translate-y-1 transition-all duration-300 shadow-xl">
+                            <div className="w-16 h-16 bg-blue-900/40 rounded-2xl flex items-center justify-center mx-auto mb-6 ring-1 ring-blue-500/30">
+                                <Users className="w-8 h-8 text-blue-400" />
                             </div>
+                            <h3 className="text-xl font-bold text-white mb-3">Expert Network</h3>
+                            <p className="text-gray-400 text-sm leading-relaxed">
+                                Connect with highly qualified healthcare professionals dedicated to excellence in patient care.
+                            </p>
                         </div>
 
-                        <div className="bg-gray-800 rounded-xl p-8 text-center border border-gray-700">
-                            <div className="text-4xl font-bold text-blue-400 mb-2">150+</div>
-                            <div className="text-gray-400 mb-4">Verified Healthcare Employers</div>
-                            <div className="inline-block bg-green-500/10 text-green-400 px-3 py-1 rounded-full text-sm">
-                                +8% this month
+                        <div className="bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 text-center border border-gray-700/50 hover:bg-gray-800 hover:-translate-y-1 transition-all duration-300 shadow-xl">
+                            <div className="w-16 h-16 bg-cyan-900/40 rounded-2xl flex items-center justify-center mx-auto mb-6 ring-1 ring-cyan-500/30">
+                                <Building className="w-8 h-8 text-cyan-400" />
                             </div>
+                            <h3 className="text-xl font-bold text-white mb-3">Verified Partners</h3>
+                            <p className="text-gray-400 text-sm leading-relaxed">
+                                Partner with certified hospitals, clinics, and research facilities across the nation.
+                            </p>
                         </div>
 
-                        <div className="bg-gray-800 rounded-xl p-8 text-center border border-gray-700">
-                            <div className="text-4xl font-bold text-blue-400 mb-2">50+</div>
-                            <div className="text-gray-400 mb-4">Success Stories from Top Partners</div>
-                            <div className="inline-block bg-green-500/10 text-green-400 px-3 py-1 rounded-full text-sm">
-                                +15% this month
+                        <div className="bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 text-center border border-gray-700/50 hover:bg-gray-800 hover:-translate-y-1 transition-all duration-300 shadow-xl">
+                            <div className="w-16 h-16 bg-purple-900/40 rounded-2xl flex items-center justify-center mx-auto mb-6 ring-1 ring-purple-500/30">
+                                <Award className="w-8 h-8 text-purple-400" />
                             </div>
+                            <h3 className="text-xl font-bold text-white mb-3">Quality Matches</h3>
+                            <p className="text-gray-400 text-sm leading-relaxed">
+                                Advanced algorithms ensuring the perfect fit between talent expertise and facility requirements.
+                            </p>
                         </div>
 
-                        <div className="bg-gray-800 rounded-xl p-8 text-center border border-gray-700">
-                            <div className="text-4xl font-bold text-blue-400 mb-2">200+</div>
-                            <div className="text-gray-400 mb-4">Successful Job Placements</div>
-                            <div className="inline-block bg-green-500/10 text-green-400 px-3 py-1 rounded-full text-sm">
-                                +20% this month
+                        <div className="bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 text-center border border-gray-700/50 hover:bg-gray-800 hover:-translate-y-1 transition-all duration-300 shadow-xl">
+                            <div className="w-16 h-16 bg-green-900/40 rounded-2xl flex items-center justify-center mx-auto mb-6 ring-1 ring-green-500/30">
+                                <TrendingUp className="w-8 h-8 text-green-400" />
                             </div>
+                            <h3 className="text-xl font-bold text-white mb-3">Career Growth</h3>
+                            <p className="text-gray-400 text-sm leading-relaxed">
+                                Empowering professionals with continuous opportunities for advancement and skill development.
+                            </p>
                         </div>
                     </div>
 

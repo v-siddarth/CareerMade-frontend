@@ -52,6 +52,30 @@ export default function EmployeeDashboardPage() {
       .catch(() => setSubscription(null));
   }, []);
 
+  const formatSalary = (salaryObj?: { min?: number; max?: number; period?: string; currency?: string }) => {
+    if (!salaryObj) return "15-25 LPA";
+    const { min, max, period } = salaryObj;
+    
+    if (!min && !max) return "15-25 LPA";
+
+    const formatAmt = (amt?: number) => {
+      if (!amt) return "";
+      if (period === "Monthly") return `₹${amt.toLocaleString('en-IN')}/mo`;
+      if (period === "Hourly") return `₹${amt.toLocaleString('en-IN')}/hr`;
+      if (period === "Daily") return `₹${amt.toLocaleString('en-IN')}/day`;
+      return `₹${(amt / 100000).toFixed(1)} LPA`;
+    };
+
+    const minStr = formatAmt(min);
+    const maxStr = formatAmt(max);
+
+    if (min && max) {
+      if (min === max) return minStr;
+      return `${minStr} - ${maxStr}`;
+    }
+    return minStr || maxStr || "15-25 LPA";
+  };
+
   const colors = ["bg-blue-500", "bg-purple-600", "bg-green-500", "bg-gray-800"];
   const activeSubscription =
     subscription?.status === "Active" && subscription.isActive !== false ? subscription : null;
@@ -173,7 +197,7 @@ export default function EmployeeDashboardPage() {
                       <p className="flex items-center gap-1">
                         <Clock size={14} /> {job.experience || "5-8 years"}
                       </p>
-                      <p>{job.salary ? `${job.salary} LPA` : "15-25 LPA"}</p>
+                      <p>{formatSalary(job.salary)}</p>
                     </div>
 
                     {/* Tags */}
