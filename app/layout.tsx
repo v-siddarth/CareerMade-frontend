@@ -126,8 +126,6 @@ export const metadata: Metadata = {
   },
 };
 
-import ConsentWrapper from "./components/ConsentWrapper";
-
 export default function RootLayout({
   children,
 }: Readonly<{
