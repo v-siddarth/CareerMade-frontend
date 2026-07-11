@@ -75,54 +75,57 @@ export default function ConsentModal({ isOpen, onAccept }: ConsentModalProps) {
                   </p>
                 </div>
 
-                {/* Terms Content - Will be replaced by user's actual documents */}
+                {/* Terms Content - 19 Legal Documents */}
                 <div className="space-y-8 text-gray-600 text-sm leading-relaxed">
                   
                   <section>
-                    <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                       <span className="bg-gray-100 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
-                      General Terms & Conditions
+                      Platform Legal Documents
                     </h3>
-                    <div className="space-y-4 pl-8">
-                      <p>
-                        Welcome to CareerMed. By accessing or using our platform, you agree to comply with and be bound by these terms. If you do not agree with any part of these terms, you must not use our services.
+                    <div className="pl-8">
+                      <p className="mb-4">
+                        Please click on each document to read our full policies, terms, and agreements:
                       </p>
-                      <p>
-                        <strong>[USER DOCUMENT 1 GOES HERE]</strong> 
-                        <br/><br/>
-                        <em>Please paste the full text of your first document here. This section is designed to hold lengthy legal text, user consent forms, or general platform rules.</em>
-                      </p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {[
+                          "Candidate Agreement.pdf",
+                          "Candidate Declaration.pdf",
+                          "Corporate Hospital Annual Subscription Agreement.pdf",
+                          "Credential Verification Consent.pdf",
+                          "Doctor and Nurse Verification.pdf",
+                          "Employer Agreement.pdf",
+                          "Employer Registration Form.pdf",
+                          "Employer Service Level Policy.pdf",
+                          "Employer Subscription Agreement.pdf",
+                          "Grievance Redressal Policy.pdf",
+                          "Healthcare Recruitment Portal Disclaimer.pdf",
+                          "Job Posting Declaration.pdf",
+                          "Medical Registration Disclaimer.pdf",
+                          "Privacy Policy.pdf",
+                          "Recruitment Assignment Request.pdf",
+                          "Recruitment Services Agreement.pdf",
+                          "Resume Database Access Agreement.pdf",
+                          "SUCCESS FEE AGREEMENT.pdf",
+                          "Terms and Conditions.pdf"
+                        ].map((doc, index) => (
+                          <a 
+                            key={index} 
+                            href={`/documents/${doc}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-100 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors"
+                          >
+                            <FileText className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                            <span className="font-medium text-gray-800 line-clamp-1" title={doc.replace(".pdf", "")}>
+                              {doc.replace(".pdf", "")}
+                            </span>
+                          </a>
+                        ))}
+                      </div>
                     </div>
                   </section>
-
-                  <section>
-                    <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                      <span className="bg-gray-100 w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
-                      User Consent & Data Processing
-                    </h3>
-                    <div className="space-y-4 pl-8">
-                      <p>
-                        <strong>[USER DOCUMENT 2 GOES HERE]</strong>
-                        <br/><br/>
-                        <em>Paste the content of your user consent form here. This can include details on how data is handled, profile visibility, and matching algorithms.</em>
-                      </p>
-                    </div>
-                  </section>
-
-                  <section>
-                    <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                      <span className="bg-gray-100 w-6 h-6 rounded-full flex items-center justify-center text-sm">3</span>
-                      Additional Policies
-                    </h3>
-                    <div className="space-y-4 pl-8">
-                      <p>
-                        <strong>[USER DOCUMENT 3 GOES HERE]</strong>
-                        <br/><br/>
-                        <em>Any additional documents, refund policies, or specific employer/jobseeker guidelines can be inserted into these sections.</em>
-                      </p>
-                    </div>
-                  </section>
-
                 </div>
               </div>
             </div>

@@ -62,21 +62,46 @@ export default function TermsOfServicePage() {
 
             <h3 className="mt-8 text-xl font-semibold text-gray-900">7. Additional Policies & User Consent</h3>
             <div className="space-y-4">
-              <p>
-                <strong>[USER DOCUMENT 1 GOES HERE]</strong>
-                <br />
-                <em>Please paste the full text of your first document here. This section is designed to hold lengthy legal text, user consent forms, or general platform rules.</em>
+              <p className="mb-4">
+                Please click on each document below to read our full policies, terms, and agreements:
               </p>
-              <p>
-                <strong>[USER DOCUMENT 2 GOES HERE]</strong>
-                <br />
-                <em>Paste the content of your user consent form here. This can include details on how data is handled, profile visibility, and matching algorithms.</em>
-              </p>
-              <p>
-                <strong>[USER DOCUMENT 3 GOES HERE]</strong>
-                <br />
-                <em>Any additional documents, refund policies, or specific employer/jobseeker guidelines can be inserted into these sections.</em>
-              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                {[
+                  "Candidate Agreement.pdf",
+                  "Candidate Declaration.pdf",
+                  "Corporate Hospital Annual Subscription Agreement.pdf",
+                  "Credential Verification Consent.pdf",
+                  "Doctor and Nurse Verification.pdf",
+                  "Employer Agreement.pdf",
+                  "Employer Registration Form.pdf",
+                  "Employer Service Level Policy.pdf",
+                  "Employer Subscription Agreement.pdf",
+                  "Grievance Redressal Policy.pdf",
+                  "Healthcare Recruitment Portal Disclaimer.pdf",
+                  "Job Posting Declaration.pdf",
+                  "Medical Registration Disclaimer.pdf",
+                  "Privacy Policy.pdf",
+                  "Recruitment Assignment Request.pdf",
+                  "Recruitment Services Agreement.pdf",
+                  "Resume Database Access Agreement.pdf",
+                  "SUCCESS FEE AGREEMENT.pdf",
+                  "Terms and Conditions.pdf"
+                ].map((doc, index) => (
+                  <a 
+                    key={index} 
+                    href={`/documents/${doc}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors no-underline"
+                  >
+                    <svg className="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span className="font-medium text-gray-800 line-clamp-1" title={doc.replace(".pdf", "")}>
+                      {doc.replace(".pdf", "")}
+                    </span>
+                  </a>
+                ))}
+              </div>
             </div>
 
             <h3 className="mt-8 text-xl font-semibold text-gray-900">8. Contact Us</h3>
