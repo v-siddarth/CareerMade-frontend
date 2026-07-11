@@ -60,7 +60,26 @@ export default function TermsOfServicePage() {
               These Terms shall be governed and construed in accordance with the laws of India, without regard to its conflict of law provisions. Our failure to enforce any right or provision of these Terms will not be considered a waiver of those rights.
             </p>
 
-            <h3 className="mt-8 text-xl font-semibold text-gray-900">7. Contact Us</h3>
+            <h3 className="mt-8 text-xl font-semibold text-gray-900">7. Additional Policies & User Consent</h3>
+            <div className="space-y-4">
+              <p>
+                <strong>[USER DOCUMENT 1 GOES HERE]</strong>
+                <br />
+                <em>Please paste the full text of your first document here. This section is designed to hold lengthy legal text, user consent forms, or general platform rules.</em>
+              </p>
+              <p>
+                <strong>[USER DOCUMENT 2 GOES HERE]</strong>
+                <br />
+                <em>Paste the content of your user consent form here. This can include details on how data is handled, profile visibility, and matching algorithms.</em>
+              </p>
+              <p>
+                <strong>[USER DOCUMENT 3 GOES HERE]</strong>
+                <br />
+                <em>Any additional documents, refund policies, or specific employer/jobseeker guidelines can be inserted into these sections.</em>
+              </p>
+            </div>
+
+            <h3 className="mt-8 text-xl font-semibold text-gray-900">8. Contact Us</h3>
             <p>If you have any questions about these Terms, please contact us at <strong>support@careermed.in</strong>.</p>
           </div>
         </section>

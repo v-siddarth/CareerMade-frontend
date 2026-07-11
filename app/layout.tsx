@@ -126,6 +126,8 @@ export const metadata: Metadata = {
   },
 };
 
+import ConsentWrapper from "./components/ConsentWrapper";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -191,7 +193,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <ConsentWrapper>
+          {children}
+        </ConsentWrapper>
         <Toaster position="top-right" />
         <Footer />
       </body>
