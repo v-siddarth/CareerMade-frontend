@@ -193,9 +193,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ConsentWrapper>
-          {children}
-        </ConsentWrapper>
+        {children}
         <Toaster position="top-right" />
         <Footer />
       </body>

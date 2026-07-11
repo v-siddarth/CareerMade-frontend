@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { apiFetch, authStorage, getApiBaseUrl } from "@/lib/api-client";
 import PasswordChecklist from "@/app/components/PasswordChecklist";
 import { isPasswordValid } from "@/lib/password-rules";
+import ConsentModal from "@/app/components/ConsentModal";
 
 const resolveRolePath = (role?: string) => {
     if (role === "jobseeker") return "/dashboard/jobseeker";
@@ -25,6 +26,7 @@ const Register = () => {
     const [message, setMessage] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [showConsentModal, setShowConsentModal] = useState(false);
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -161,21 +163,9 @@ const Register = () => {
                 authStorage.setAccessToken(data.data.accessToken);
                 authStorage.setUser(data.data.user);
                 toast.success("Registration successful!");
-                router.push(data.data.nextPath || (formData.role === "employer"
-                    ? "/dashboard/employee/profile/create"
-                    : "/dashboard/jobseeker"));
-
-                setFormData({
-                    firstName: "",
-                    lastName: "",
-                    email: "",
-                    password: "",
-                    phone: "",
-                    role: "jobseeker",
-                });
-                setConfirmPassword("");
-                setOtp("");
-                setOtpSent(false);
+                
+                // Show the consent modal instead of redirecting immediately
+                setShowConsentModal(true);
             }
         } catch (err) {
             const message = err instanceof Error ? err.message : "Server error. Please try again later.";
@@ -447,6 +437,16 @@ const Register = () => {
                     className="w-3/4 h-auto mb-10 md:mb-20 hover:scale-105 transition-transform duration-500"
                 />
             </motion.div>
+
+            <ConsentModal 
+                isOpen={showConsentModal} 
+                onAccept={() => {
+                    setShowConsentModal(false);
+                    router.push(formData.role === "employer"
+                        ? "/dashboard/employee/profile/create"
+                        : "/dashboard/jobseeker");
+                }} 
+            />
         </div>
     );
 };
