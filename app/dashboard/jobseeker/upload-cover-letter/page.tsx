@@ -20,6 +20,10 @@ export default function UploadCoverLetter() {
     e.preventDefault();
     const fileInput = (e.currentTarget.elements.namedItem("coverLetter") as HTMLInputElement);
     if (!fileInput.files?.length) return toast.success("Please select a file.");
+    
+    if (fileInput.files[0].size > 3 * 1024 * 1024) {
+      return toast.error("File size must be less than 3 MB");
+    }
 
     const formData = new FormData();
     formData.append("coverLetter", fileInput.files[0]);
@@ -69,7 +73,7 @@ export default function UploadCoverLetter() {
         </div>
       ) : (
         <form onSubmit={handleUpload} className="space-y-4">
-          <input type="file" name="coverLetter" accept=".pdf,.doc,.docx" className="border p-2 w-full rounded" />
+          <input type="file" name="coverLetter" accept=".pdf,.png,.jpg,.jpeg" className="border p-2 w-full rounded" />
           <button disabled={loading} type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
             {loading ? "Uploading..." : "Upload"}
           </button>

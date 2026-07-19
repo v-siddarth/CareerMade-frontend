@@ -147,6 +147,7 @@ type JobSeekerProfile = {
   jobPreferences?: {
     preferredLocations?: { city?: string; state?: string; country?: string }[];
     preferredJobTypes?: string[];
+    preferredShifts?: string[];
     expectedSalary?: {
       min?: number;
       max?: number;
@@ -168,6 +169,7 @@ type JobSeekerProfile = {
     showCurrentSalary?: boolean;
     showProfileToEmployers?: boolean;
     allowDirectMessages?: boolean;
+    showCertificates?: boolean;
   };
   user?: {
     firstName?: string;
@@ -214,7 +216,8 @@ const SPEC_OPTIONS = TITLE_SPECIALIZATION_OPTIONS as Record<string, string[]>;
 const DOCTOR_FIELD_OPTIONS = TITLE_FIELD_OPTIONS.Doctor as Record<string, string[]>;
 const DEGREE_OPTIONS = TITLE_DEGREE_OPTIONS as Record<string, string[]>;
 
-const PREFERRED_JOB_TYPES = ["Full-time", "Part-time", "Contract", "Freelance", "Internship", "Volunteer"];
+const PREFERRED_JOB_TYPES = ["Full-time", "Part-time", "Contract", "Freelance", "Internship", "Locum"];
+const PREFERRED_SHIFTS = ["Fixed Shift", "Rotational Shift", "Night Shift"];
 
 const BENEFITS_OPTIONS = [
   "Health Insurance",
@@ -604,7 +607,16 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
     }
   };
 
+  const validateFileSize = (file: File | null) => {
+    if (file && file.size > 3 * 1024 * 1024) {
+      toast.error("File size must be less than 3 MB");
+      return false;
+    }
+    return true;
+  };
+
   const uploadDocument = async (field: "resume" | "coverLetter", file: File) => {
+    if (!validateFileSize(file)) return;
     const endpoint = field === "resume" ? "/api/jobseeker/resume" : "/api/jobseeker/cover-letter";
     const formData = new FormData();
     formData.append(field, file);
@@ -644,6 +656,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
   };
 
   const uploadCouncilRegistrationCertificate = async (file: File) => {
+    if (!validateFileSize(file)) return;
     const formData = new FormData();
     formData.append("councilRegistrationCertificate", file);
     setUploadingDoc("councilRegistrationCertificate");
@@ -692,6 +705,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
   };
 
   const saveEducationThenUploadCertificate = async (educationIndex: number, file: File) => {
+    if (!validateFileSize(file)) return;
     setUploadingDoc(`education:pending:${educationIndex}`);
     try {
       const saveResponse = await apiFetch<ApiResponse>("/api/jobseeker/profile", {
@@ -720,6 +734,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
   };
 
   const uploadEducationCertificate = async (educationId: string, file: File) => {
+    if (!validateFileSize(file)) return;
     const formData = new FormData();
     formData.append("educationCertificate", file);
     setUploadingDoc(`education:${educationId}`);
@@ -766,6 +781,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
   };
 
   const uploadWorkExperienceDocument = async (experienceId: string, file: File) => {
+    if (!validateFileSize(file)) return;
     const formData = new FormData();
     formData.append("experienceDocument", file);
     setUploadingDoc(`experience:${experienceId}`);
@@ -793,6 +809,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
   };
 
   const saveWorkExperienceThenUploadDocument = async (experienceIndex: number, file: File) => {
+    if (!validateFileSize(file)) return;
     setUploadingDoc(`experience:pending:${experienceIndex}`);
     try {
       const saveResponse = await apiFetch<ApiResponse>("/api/jobseeker/profile", {
@@ -1154,8 +1171,12 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                       Profile Photo
                       <input
                         type="file"
-                        accept="image/*"
-                        onChange={(e) => setProfilePhotoFile(e.target.files?.[0] || null)}
+                        accept=".png,.jpg,.jpeg"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file && !validateFileSize(file)) return;
+                          setProfilePhotoFile(file || null);
+                        }}
                         className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
                       />
                       {profilePhotoFile ? (
@@ -1564,7 +1585,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                               {uploadingDoc === "councilRegistrationCertificate" ? "Uploading..." : "Upload Council Registration Certificate"}
                               <input
                                 type="file"
-                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+                                accept=".pdf,.png,.jpg,.jpeg"
                                 className="hidden"
                                 onChange={(e) => {
                                   const file = e.target.files?.[0];
@@ -1767,7 +1788,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                                 {uploadingDoc === `education:${edu._id}` ? "Uploading..." : "Upload Education Certificate"}
                                 <input
                                   type="file"
-                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+                                  accept=".pdf,.png,.jpg,.jpeg"
                                   className="hidden"
                                   onChange={(e) => {
                                     const file = e.target.files?.[0];
@@ -1782,7 +1803,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                                   : "Upload Education Certificate"}
                                 <input
                                   type="file"
-                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+                                  accept=".pdf,.png,.jpg,.jpeg"
                                   className="hidden"
                                   onChange={(e) => {
                                     const file = e.target.files?.[0];
@@ -1996,7 +2017,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                                 {uploadingDoc === `experience:${exp._id}` ? "Uploading..." : "Upload Work Experience Document"}
                                 <input
                                   type="file"
-                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+                                  accept=".pdf,.png,.jpg,.jpeg"
                                   className="hidden"
                                   onChange={(e) => {
                                     const file = e.target.files?.[0];
@@ -2011,7 +2032,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                                   : "Upload Work Experience Document"}
                                 <input
                                   type="file"
-                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+                                  accept=".pdf,.png,.jpg,.jpeg"
                                   className="hidden"
                                   onChange={(e) => {
                                     const file = e.target.files?.[0];
@@ -2314,6 +2335,44 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                     </div>
                   </div>
 
+                  <div className="rounded-2xl border border-gray-200 p-4 mt-4">
+                    <h4 className="mb-3 text-sm font-semibold text-gray-800">Preferred Shifts</h4>
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      {PREFERRED_SHIFTS.map((shiftType) => {
+                        const selected = profile.jobPreferences?.preferredShifts || [];
+                        const checked = selected.includes(shiftType);
+                        return (
+                          <label
+                            key={shiftType}
+                            className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
+                              checked ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() =>
+                                updateProfile((prev) => {
+                                  const current = prev.jobPreferences?.preferredShifts || [];
+                                  return {
+                                    ...prev,
+                                    jobPreferences: {
+                                      ...(prev.jobPreferences || {}),
+                                      preferredShifts: checked
+                                        ? current.filter((x) => x !== shiftType)
+                                        : [...current, shiftType],
+                                    },
+                                  };
+                                })
+                              }
+                            />
+                            <span>{shiftType}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <button
                     type="submit"
                     disabled={saving}
@@ -2516,7 +2575,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                           Upload Resume
                           <input
                             type="file"
-                            accept=".pdf,.doc,.docx"
+                            accept=".pdf,.png,.jpg,.jpeg"
                             className="hidden"
                             onChange={(e) => {
                               const file = e.target.files?.[0];
@@ -2554,7 +2613,7 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                           Upload Cover Letter
                           <input
                             type="file"
-                            accept=".pdf,.doc,.docx"
+                            accept=".pdf,.png,.jpg,.jpeg"
                             className="hidden"
                             onChange={(e) => {
                               const file = e.target.files?.[0];
@@ -2608,7 +2667,11 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                     <div className="grid gap-4 sm:grid-cols-3">
                       <label className="rounded-xl border border-dashed border-blue-300 bg-blue-50 p-3 text-xs font-medium text-blue-700">
                         PAN Card Image
-                        <input type="file" accept="image/*" className="mt-2 block w-full text-xs" onChange={(e) => setPanCardFile(e.target.files?.[0] || null)} />
+                        <input type="file" accept=".png,.jpg,.jpeg" className="mt-2 block w-full text-xs" onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file && !validateFileSize(file)) return;
+                          setPanCardFile(file || null);
+                        }} />
                         {profile.documents?.panCardImage?.url && (
                           <a className="mt-2 block underline" href={profile.documents.panCardImage.url} target="_blank" rel="noreferrer">
                             Current PAN image
@@ -2617,7 +2680,11 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                       </label>
                       <label className="rounded-xl border border-dashed border-blue-300 bg-blue-50 p-3 text-xs font-medium text-blue-700">
                         Aadhaar Front Image
-                        <input type="file" accept="image/*" className="mt-2 block w-full text-xs" onChange={(e) => setAadhaarFrontFile(e.target.files?.[0] || null)} />
+                        <input type="file" accept=".png,.jpg,.jpeg" className="mt-2 block w-full text-xs" onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file && !validateFileSize(file)) return;
+                          setAadhaarFrontFile(file || null);
+                        }} />
                         {(profile.documents?.aadhaarCardFrontImage?.url || profile.documents?.aadhaarCardImage?.url) && (
                           <a className="mt-2 block underline" href={profile.documents?.aadhaarCardFrontImage?.url || profile.documents?.aadhaarCardImage?.url} target="_blank" rel="noreferrer">
                             Current Aadhaar front
@@ -2626,7 +2693,11 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                       </label>
                       <label className="rounded-xl border border-dashed border-blue-300 bg-blue-50 p-3 text-xs font-medium text-blue-700">
                         Aadhaar Back Image
-                        <input type="file" accept="image/*" className="mt-2 block w-full text-xs" onChange={(e) => setAadhaarBackFile(e.target.files?.[0] || null)} />
+                        <input type="file" accept=".png,.jpg,.jpeg" className="mt-2 block w-full text-xs" onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file && !validateFileSize(file)) return;
+                          setAadhaarBackFile(file || null);
+                        }} />
                         {profile.documents?.aadhaarCardBackImage?.url && (
                           <a className="mt-2 block underline" href={profile.documents.aadhaarCardBackImage.url} target="_blank" rel="noreferrer">
                             Current Aadhaar back
@@ -2699,6 +2770,22 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                               privacySettings: {
                                 ...prev.privacySettings,
                                 showContactInfo: e.target.checked,
+                              },
+                            }))
+                          }
+                        />
+                      </label>
+                      <label className="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2 text-sm">
+                        <span>Show certificates to employers</span>
+                        <input
+                          type="checkbox"
+                          checked={profile.privacySettings?.showCertificates ?? true}
+                          onChange={(e) =>
+                            updateProfile((prev) => ({
+                              ...prev,
+                              privacySettings: {
+                                ...prev.privacySettings,
+                                showCertificates: e.target.checked,
                               },
                             }))
                           }

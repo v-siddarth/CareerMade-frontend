@@ -7,6 +7,7 @@ export const HEALTHCARE_TITLES = [
   "Admin",
   "Insurance",
   "Marketing",
+  "Locam",
   "Other",
 ] as const;
 
@@ -102,6 +103,11 @@ export const TITLE_SPECIALIZATION_OPTIONS: Record<HealthcareTitle, string[]> = {
     "Doctor relations",
     "Patient acquisition",
     "Corporate partnerships",
+  ]),
+  Locam: withOther([
+    "Locam Doctor",
+    "Locam Nurse",
+    "Locam Technician",
   ]),
   Other: ["Other"],
 };
@@ -469,6 +475,12 @@ export const TITLE_FIELD_OPTIONS: Record<HealthcareTitle, Record<string, string[
     "Corporate partnerships": withOther(["Corporate Relations Manager", "B2B Healthcare Sales", "Partnerships Executive"]),
     Other: ["Other"],
   },
+  Locam: {
+    "Locam Doctor": withOther(["General Physician (Locam)", "Specialist (Locam)"]),
+    "Locam Nurse": withOther(["Staff Nurse (Locam)", "ICU Nurse (Locam)"]),
+    "Locam Technician": withOther(["Lab Technician (Locam)", "Radiology Technician (Locam)"]),
+    Other: ["Other"],
+  },
   Other: {
     Other: ["Other"],
   },
@@ -517,6 +529,7 @@ export const TITLE_DEGREE_OPTIONS: Record<HealthcareTitle, string[]> = {
   Admin: ["BBA", "MBA", "MHA", "PG Diploma", "BCom", "Other"],
   Insurance: ["BCom", "BBA", "MBA", "PG Diploma", "IRDA Certification", "Other"],
   Marketing: ["BBA", "MBA", "PG Diploma", "Other"],
+  Locam: ["MBBS", "MD", "BSc Nursing", "GNM", "DMLT", "Other"],
   Other: ["Certificate", "Diploma", "BSc", "MSc", "PhD", "BPT", "MPT", "Other"],
 };
 
@@ -617,6 +630,10 @@ export const SCREENING_QUESTIONS_BY_TITLE: Record<HealthcareTitle, string[]> = {
     "Have you handled doctor outreach or referral programs?",
     "Can you manage digital campaigns and lead tracking?",
   ],
+  Locam: [
+    "Are you available for short-term/temporary assignments?",
+    "Do you have valid registration for locam practice?",
+  ],
   Other: ["Do you have relevant experience for this role?"],
 };
 
@@ -651,6 +668,7 @@ export const inferHealthcareTitle = (job: { title?: string; specialization?: str
   if (/(admin|administrator|hr|human resources|operations|finance|billing|front office|records|quality|compliance|procurement|it support|emr)/.test(text)) return "Admin";
   if (/(insurance|claims|tpa|underwriting|pre-auth|preauthorization|medical coding|revenue cycle)/.test(text)) return "Insurance";
   if (/(marketing|sales|business development|brand|outreach|doctor relations|patient acquisition)/.test(text)) return "Marketing";
+  if (/(locam|locum)/.test(text)) return "Locam";
 
   return "Other";
 };

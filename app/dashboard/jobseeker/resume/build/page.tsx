@@ -8,28 +8,36 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { apiFetch, authStorage } from '@/lib/api-client';
 
+const HEALTHCARE_PROFESSIONS = [
+  'Doctor',
+  'Dentist',
+  'AYUSH Practitioner',
+  'Nurse',
+  'Allied Health Professional',
+  'Pharmacist',
+  'Technician',
+  'Hospital Administrator',
+  'HR & Recruitment',
+  'Insurance/TPA Professional',
+  'Biomedical Engineer',
+  'Front Office & Support Staff',
+  'Student/Intern/Fresher'
+];
+
 export default function BuildResumePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [jobSeekerData, setJobSeekerData] = useState<any>(null);
   const [creating, setCreating] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<any>({
     title: 'My Resume',
     autoPopulate: true,
+    profession: '',
     personalInfo: {
       fullName: '',
       email: '',
       phone: '',
-      linkedIn: '',
-      address: {
-        street: '',
-        city: '',
-        state: '',
-        country: '',
-        zipCode: '',
-      },
     },
-    summary: '',
     styling: {
       fontFamily: 'Arial',
       fontSize: 11,
@@ -38,6 +46,7 @@ export default function BuildResumePage() {
       spacing: 'normal',
     },
   });
+
   useEffect(() => {
     const token = authStorage.getAccessToken();
     const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
@@ -64,30 +73,19 @@ export default function BuildResumePage() {
       setLoading(true);
       const response = await apiFetch<any>('/api/jobseeker/profile');
       const jobSeeker = response?.data?.jobSeeker;
-      if (!jobSeeker) {
-        throw new Error('Failed to load your profile');
-      }
+      if (!jobSeeker) throw new Error('Failed to load your profile');
       setJobSeekerData(jobSeeker);
 
-      // Pre-populate form with job seeker data
-      setFormData(prev => ({
+      setFormData((prev: any) => ({
         ...prev,
+        profession: jobSeeker.professionalInfo?.category || 'Doctor',
         personalInfo: {
+          ...prev.personalInfo,
           fullName: jobSeeker.user?.firstName && jobSeeker.user?.lastName
             ? `${jobSeeker.user.firstName} ${jobSeeker.user.lastName}`
             : '',
           email: jobSeeker.user?.email || '',
-          phone: jobSeeker.phone || '',
-          linkedIn: jobSeeker.linkedIn || '',
-          address: {
-            street: jobSeeker.address?.street || '',
-            city: jobSeeker.address?.city || '',
-            state: jobSeeker.address?.state || '',
-            country: jobSeeker.address?.country || '',
-            zipCode: jobSeeker.address?.zipCode || '',
-          },
-        },
-        summary: jobSeeker.summary || '',
+        }
       }));
     } catch (err: any) {
       toast.error(err?.message || 'Failed to load your profile');
@@ -98,61 +96,86 @@ export default function BuildResumePage() {
 
   const handleInputChange = (e: any) => {
     const { name, value, type, checked } = e.target;
-    if (type === 'checkbox') {
-      setFormData(prev => ({ ...prev, [name]: checked }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const handlePersonalInfoChange = (e: any) => {
-    const { name, value } = e.target;
-    if (name.includes('address.')) {
-      const addressField = name.split('.')[1];
-      setFormData(prev => ({
-        ...prev,
-        personalInfo: {
-          ...prev.personalInfo,
-          address: {
-            ...prev.personalInfo.address,
-            [addressField]: value,
-          },
-        },
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        personalInfo: {
-          ...prev.personalInfo,
-          [name]: value,
-        },
-      }));
-    }
-  };
-
-  const handleStylingChange = (e: any) => {
-    const { name, value, type } = e.target;
-    setFormData(prev => ({
+    setFormData((prev: any) => ({
       ...prev,
-      styling: {
-        ...prev.styling,
-        [name]: type === 'number' ? parseInt(value) : value,
-      },
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    if (!formData.profession) {
+      return toast.error("Please select a profession");
+    }
+
     try {
       setCreating(true);
+      
+      // If auto-populate is checked, build the full payload
+      let submitData = { ...formData };
+      
+      if (formData.autoPopulate && jobSeekerData) {
+        submitData = {
+          ...submitData,
+          personalInfo: {
+            fullName: formData.personalInfo.fullName,
+            email: formData.personalInfo.email,
+            phone: jobSeekerData.user?.phone || jobSeekerData.personalInfo?.alternatePhone || '',
+            gender: jobSeekerData.personalInfo?.gender || '',
+            dateOfBirth: jobSeekerData.personalInfo?.dateOfBirth || null,
+            maritalStatus: jobSeekerData.personalInfo?.maritalStatus || '',
+            whatsappNumber: jobSeekerData.personalInfo?.alternatePhone || '',
+            linkedIn: jobSeekerData.linkedIn || '',
+            careerMedProfileUrl: `${window.location.origin}/profile/${jobSeekerData.user?._id}`,
+            address: {
+              street: jobSeekerData.personalInfo?.address?.line1 || '',
+              city: jobSeekerData.personalInfo?.address?.city || '',
+              state: jobSeekerData.personalInfo?.address?.state || '',
+              country: jobSeekerData.personalInfo?.address?.country || '',
+              zipCode: jobSeekerData.personalInfo?.address?.pincode || '',
+            }
+          },
+          summary: jobSeekerData.bio || '',
+          professionalDetails: {
+            department: jobSeekerData.professionalInfo?.doctorSpecialization || jobSeekerData.professionalInfo?.specifications?.[0] || '',
+            totalExperience: jobSeekerData.experience?.totalYears || 0,
+            employmentTypePreferred: jobSeekerData.jobPreferences?.preferredJobTypes || [],
+            preferredShifts: jobSeekerData.jobPreferences?.preferredShifts || [],
+          },
+          education: (jobSeekerData.education || []).map((ed: any) => ({
+            degree: ed.degree,
+            field: ed.field,
+            institution: ed.institution,
+            yearOfCompletion: ed.yearOfCompletion,
+            grade: ed.grade,
+            isVisible: true
+          })),
+          registrationDetails: jobSeekerData.professionalInfo?.councilNo ? [{
+            registrationNumber: jobSeekerData.professionalInfo.councilNo,
+            validTill: jobSeekerData.professionalInfo.registrationExpiryDate,
+            isVisible: true
+          }] : [],
+          workExperience: (jobSeekerData.workExperience || []).map((exp: any) => ({
+            position: exp.position,
+            company: exp.company || exp.organization,
+            location: exp.location,
+            startDate: exp.startDate,
+            endDate: exp.endDate,
+            isCurrent: exp.isCurrent,
+            description: exp.description,
+            isVisible: true
+          })),
+          skills: (jobSeekerData.skills || []).map((s: any) => ({ name: s.name, isVisible: true })),
+        };
+      }
+
       const response = await apiFetch<any>('/api/resume/build', {
         method: 'POST',
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submitData),
       });
       const resumeId = response?.data?.resume?._id;
-      if (!resumeId) {
-        throw new Error('Resume created but identifier is missing');
-      }
+      if (!resumeId) throw new Error('Resume created but identifier is missing');
+      
       router.push(`/dashboard/jobseeker/resume/edit/${resumeId}`);
     } catch (err: any) {
       toast.error(err?.message || 'Failed to create resume');
@@ -175,295 +198,77 @@ export default function BuildResumePage() {
       <Navbar />
       <ToastContainer position="top-right" autoClose={3000} theme="colored" />
 
-      <div className="p-8 max-w-4xl mx-auto">
-        <div className="flex justify-start items-start mb-3">
-          <button
-            onClick={() => router.push('/dashboard/jobseeker/resume')}
-            className="text-blue-600 hover:text-blue-800 font-medium"
-          >
-            ← Back
-          </button>
-        </div>
-        <h1 className="text-3xl font-bold mb-2">Build Your Resume</h1>
-        <p className="text-gray-600 mb-6">
-          {formData.autoPopulate
-            ? '✓ Your profile data has been pre-filled below'
-            : 'Enter your resume details manually'}
-        </p>
+      <div className="p-8 max-w-2xl mx-auto">
+        <button
+          onClick={() => router.push('/dashboard/jobseeker/resume')}
+          className="text-blue-600 hover:text-blue-800 font-medium mb-6 flex items-center gap-2"
+        >
+          ← Back
+        </button>
+        
+        <div className="bg-white p-8 rounded-xl border shadow-sm">
+          <h1 className="text-3xl font-bold mb-2">Create New Resume</h1>
+          <p className="text-gray-600 mb-8">
+            Select your profession to generate a customized universal healthcare template.
+          </p>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Basic Info */}
-          <div className="bg-white p-6 rounded-lg border shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Resume Basics</h2>
-            <div className="grid gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Resume Title</label>
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., My Resume, Software Engineer Resume"
-                />
-                <p className="text-xs text-gray-500 mt-1">Give your resume a descriptive title</p>
-              </div>
-              <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
-                <input
-                  type="checkbox"
-                  id="autoPopulate"
-                  name="autoPopulate"
-                  checked={formData.autoPopulate}
-                  onChange={handleInputChange}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                />
-                <label htmlFor="autoPopulate" className="text-sm cursor-pointer flex-1">
-                  <span className="font-medium">Auto-populated from profile</span>
-                  <p className="text-xs text-gray-600">Data from your job seeker profile is already filled in</p>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Personal Information */}
-          <div className="bg-white p-6 rounded-lg border shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
-            <div className="grid gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Full Name</label>
-                <input
-                  type="text"
-                  name="fullName"
-                  value={formData.personalInfo.fullName}
-                  onChange={handlePersonalInfoChange}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Your full name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.personalInfo.email}
-                  onChange={handlePersonalInfoChange}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="your.email@example.com"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Phone</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.personalInfo.phone}
-                    onChange={handlePersonalInfoChange}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Your Mobile Number"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">LinkedIn URL</label>
-                  <input
-                    type="url"
-                    name="linkedIn"
-                    value={formData.personalInfo.linkedIn}
-                    onChange={handlePersonalInfoChange}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="https://linkedin.com/in/yourprofile"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Address Section */}
-          <div className="bg-white p-6 rounded-lg border shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Address</h2>
-            <div className="grid gap-3">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">Resume Title <span className="text-red-500">*</span></label>
               <input
                 type="text"
-                name="address.street"
-                placeholder="Street Address"
-                value={formData.personalInfo.address.street}
-                onChange={handlePersonalInfoChange}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                name="title"
+                required
+                value={formData.title}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                placeholder="e.g., Senior Resident Resume"
               />
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  name="address.city"
-                  placeholder="City"
-                  value={formData.personalInfo.address.city}
-                  onChange={handlePersonalInfoChange}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <input
-                  type="text"
-                  name="address.state"
-                  placeholder="State/Province"
-                  value={formData.personalInfo.address.state}
-                  onChange={handlePersonalInfoChange}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  name="address.country"
-                  placeholder="Country"
-                  value={formData.personalInfo.address.country}
-                  onChange={handlePersonalInfoChange}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <input
-                  type="text"
-                  name="address.zipCode"
-                  placeholder="Zip/Postal Code"
-                  value={formData.personalInfo.address.zipCode}
-                  onChange={handlePersonalInfoChange}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
             </div>
-          </div>
 
-          {/* Professional Summary */}
-          <div className="bg-white p-6 rounded-lg border shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Professional Summary</h2>
-            <textarea
-              name="summary"
-              value={formData.summary}
-              onChange={handleInputChange}
-              placeholder="Write a brief summary about yourself. Highlight your key strengths, experience, and career goals. (max 1000 characters)"
-              rows={5}
-              maxLength={1000}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <div className="flex justify-between items-center mt-2">
-              <p className="text-xs text-gray-500">Tip: Keep it concise and impactful</p>
-              <p className="text-sm text-gray-600">{formData.summary.length}/1000</p>
+            <div>
+              <label className="block text-sm font-medium mb-2">Select Profession <span className="text-red-500">*</span></label>
+              <select
+                name="profession"
+                required
+                value={formData.profession}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
+              >
+                <option value="" disabled>Select your profession...</option>
+                {HEALTHCARE_PROFESSIONS.map(p => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
             </div>
-          </div>
 
-          {/* Styling Options */}
-          <div className="bg-white p-6 rounded-lg border shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Resume Styling</h2>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Font Family</label>
-                  <select
-                    name="fontFamily"
-                    value={formData.styling.fontFamily}
-                    onChange={handleStylingChange}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="Arial">Arial</option>
-                    <option value="Times New Roman">Times New Roman</option>
-                    <option value="Calibri">Calibri</option>
-                    <option value="Georgia">Georgia</option>
-                    <option value="Helvetica">Helvetica</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Font Size</label>
-                  <input
-                    type="number"
-                    name="fontSize"
-                    min="10"
-                    max="14"
-                    value={formData.styling.fontSize}
-                    onChange={handleStylingChange}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Primary Color</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      name="primaryColor"
-                      value={formData.styling.primaryColor}
-                      onChange={handleStylingChange}
-                      className="w-12 h-10 border rounded-lg cursor-pointer"
-                    />
-                    <span className="text-sm text-gray-600">{formData.styling.primaryColor}</span>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Accent Color</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      name="accentColor"
-                      value={formData.styling.accentColor}
-                      onChange={handleStylingChange}
-                      className="w-12 h-10 border rounded-lg cursor-pointer"
-                    />
-                    <span className="text-sm text-gray-600">{formData.styling.accentColor}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Line Spacing</label>
-                <select
-                  name="spacing"
-                  value={formData.styling.spacing}
-                  onChange={handleStylingChange}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="compact">Compact (More content per page)</option>
-                  <option value="normal">Normal (Balanced)</option>
-                  <option value="relaxed">Relaxed (More breathing room)</option>
-                </select>
-              </div>
+            <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-100 rounded-lg mt-6">
+              <input
+                type="checkbox"
+                id="autoPopulate"
+                name="autoPopulate"
+                checked={formData.autoPopulate}
+                onChange={handleInputChange}
+                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+              />
+              <label htmlFor="autoPopulate" className="text-sm cursor-pointer flex-1">
+                <span className="font-semibold text-blue-900 block text-base">Auto-fill from Profile</span>
+                <span className="text-blue-700">Import your education, experience, and skills directly from your CareerMed profile.</span>
+              </label>
             </div>
-          </div>
 
-          {/* Preview Section */}
-          {/* <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
-            <h3 className="font-semibold text-blue-900 mb-2">Preview</h3>
-            <div
-              className="bg-white p-4 rounded border text-sm"
-              style={{
-                fontFamily: formData.styling.fontFamily,
-                fontSize: `${formData.styling.fontSize}pt`,
-                color: formData.styling.primaryColor,
-              }}
-            >
-              <p className="font-bold mb-1">{formData.personalInfo.fullName || 'Your Name'}</p>
-              <p className="text-xs text-gray-600">
-                {formData.personalInfo.email && `${formData.personalInfo.email} • `}
-                {formData.personalInfo.phone && `${formData.personalInfo.phone}`}
-              </p>
+            <div className="pt-6">
+              <button
+                type="submit"
+                disabled={creating}
+                className="w-full bg-blue-600 text-white py-3.5 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-semibold text-lg transition shadow-md"
+              >
+                {creating ? 'Initializing Template...' : 'Continue to Builder →'}
+              </button>
             </div>
-          </div> */}
-
-          {/* Actions */}
-          <div className="flex gap-4 sticky bottom-0 bg-white p-4 rounded-lg border shadow-lg">
-            <button
-              type="submit"
-              disabled={creating || !formData.personalInfo.fullName || !formData.personalInfo.email}
-              className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-medium transition"
-            >
-              {creating ? 'Creating Resume...' : 'Create Resume'}
-            </button>
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="flex-1 border-2 border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 font-medium transition"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </>
   );

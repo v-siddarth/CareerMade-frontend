@@ -51,14 +51,14 @@ const OPPORTUNITY_CARDS = [
     titleFilter: "Admin",
   },
   {
-    title: "Diagnostics",
-    subtitle: "Pathology, Radiology, Laboratory",
+    title: "Locam",
+    subtitle: "Short-term & Temporary Assignments",
     positions: "146",
     image: "/scope.png",
     iconBg: "bg-blue-100",
     accent: "text-[#00B8DB]",
-    specialties: ["Pathology", "Radiology"],
-    titleFilter: "Technician",
+    specialties: ["Locam Doctor", "Locam Nurse", "Locam Technician"],
+    titleFilter: "Locam",
   },
   {
     title: "Therapists",

@@ -73,7 +73,7 @@ const JOB_TYPES = [
   { value: "Contract", label: "Contract", desc: "Fixed term contract" },
   { value: "Freelance", label: "Freelance", desc: "Project-based" },
   { value: "Internship", label: "Internship", desc: "Learning opportunity" },
-  { value: "Volunteer", label: "Volunteer", desc: "Unpaid position" },
+  { value: "Locum", label: "Locum", desc: "Temporary substitute" },
 ];
 
 const SHIFTS = [

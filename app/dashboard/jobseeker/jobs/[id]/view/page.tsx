@@ -995,9 +995,12 @@ export default function JobViewPage() {
                                         {uploadingResume ? "Uploading..." : "Upload Resume"}
                                         <input
                                             type="file"
-                                            accept=".pdf,.doc,.docx,.txt,.rtf"
+                                            accept=".pdf,.png,.jpg,.jpeg"
                                             onChange={(e) => {
                                                 const f = e.target.files?.[0];
+                                                if (f && f.size > 3 * 1024 * 1024) {
+                                                    return toast.error("File size must be less than 3 MB");
+                                                }
                                                 if (f) handleUploadResume(f);
                                             }}
                                             disabled={uploadingResume}
@@ -1042,9 +1045,12 @@ export default function JobViewPage() {
                                         {uploadingCover ? "Uploading..." : "Upload Cover Letter"}
                                         <input
                                             type="file"
-                                            accept=".pdf,.doc,.docx,.txt,.rtf"
+                                            accept=".pdf,.png,.jpg,.jpeg"
                                             onChange={(e) => {
                                                 const f = e.target.files?.[0];
+                                                if (f && f.size > 3 * 1024 * 1024) {
+                                                    return toast.error("File size must be less than 3 MB");
+                                                }
                                                 if (f) handleUploadCover(f);
                                             }}
                                             disabled={uploadingCover}

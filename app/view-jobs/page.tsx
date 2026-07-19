@@ -54,9 +54,7 @@ const CATEGORY_TO_SPECIALTIES: Record<string, string[]> = {
   "Nursing Staff": flattenFields("Nurse"),
   Technicians: technicianSpecialties,
   "Admin & Support": [...flattenFields("Admin"), ...supportSpecialties],
-  Diagnostics: doctorSpecialties.filter((item) =>
-    /(pathology|radiology|laboratory|microbiology|biochemistry|nuclear medicine|diagnostic)/i.test(item)
-  ),
+  Locam: flattenFields("Locam"),
   Therapists: [...technicianSpecialties, ...supportSpecialties].filter((item) =>
     /(therapy|therapist|physio|rehabilitation|audiologist|nutrition|counsellor|psychologist)/i.test(item)
   ),

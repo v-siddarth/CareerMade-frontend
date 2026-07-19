@@ -51,7 +51,7 @@ interface Job {
   location?: Location;
   experienceRequired?: Experience;
   salary?: Salary;
-  jobType?: "Full-time" | "Part-time" | "Contract" | "Freelance" | "Internship" | "Volunteer";
+  jobType?: "Full-time" | "Part-time" | "Contract" | "Freelance" | "Internship" | "Locum";
   status?: "Active" | "Pending" | "Flagged" | "Archived" | "Closed";
   description?: string;
   createdAt?: string;
@@ -75,7 +75,7 @@ const JOB_TYPES = [
   "Contract",
   "Freelance",
   "Internship",
-  "Volunteer",
+  "Locum",
 ];
 
 export default function JobListing() {

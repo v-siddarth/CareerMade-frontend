@@ -920,9 +920,12 @@ export default function EmployerProfileCreatePage() {
                       Upload Document
                       <input
                         type="file"
-                        accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp"
+                        accept=".pdf,.png,.jpg,.jpeg"
                         onChange={(e) => {
                           const file = e.target.files?.[0];
+                          if (file && file.size > 3 * 1024 * 1024) {
+                            return toast.error("File size must be less than 3 MB");
+                          }
                           setEmployerCertificateFile(cert.localId, file);
                         }}
                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg bg-white"
@@ -1103,9 +1106,12 @@ export default function EmployerProfileCreatePage() {
                         Upload Document
                         <input
                           type="file"
-                          accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp"
+                          accept=".pdf,.png,.jpg,.jpeg"
                           onChange={(e) => {
                             const file = e.target.files?.[0];
+                            if (file && file.size > 3 * 1024 * 1024) {
+                              return toast.error("File size must be less than 3 MB");
+                            }
                             setEmployerCertificateFile(cert.localId, file);
                           }}
                           className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg bg-white"

@@ -183,6 +183,7 @@ export default function ApplicationDetailPage() {
 
   const u: User = app?.jobSeeker?.user || {};
   const js = app?.jobSeeker || {};
+  const showCertificates = js?.privacySettings?.showCertificates !== false;
   const fullName =
     [u.firstName, u.lastName].filter(Boolean).join(" ") || js.fullName || "Applicant";
   const title =
@@ -411,6 +412,23 @@ export default function ApplicationDetailPage() {
                     </p>
                   </div>
                 </div>
+                {showCertificates && doctorProfessionalInfo.councilRegistrationCertificate && (
+                  <div className="mt-4">
+                    <a
+                      href={
+                        typeof doctorProfessionalInfo.councilRegistrationCertificate === "string"
+                          ? doctorProfessionalInfo.councilRegistrationCertificate
+                          : doctorProfessionalInfo.councilRegistrationCertificate?.url
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center text-sm font-medium text-[#155DFC] hover:underline"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      View Registration Certificate
+                    </a>
+                  </div>
+                )}
               </div>
             )}
 
@@ -455,6 +473,41 @@ export default function ApplicationDetailPage() {
                 </div>
               )}
 
+            {/* Job Preferences */}
+            {(js?.jobPreferences?.preferredJobTypes?.length > 0 || js?.jobPreferences?.preferredShifts?.length > 0) && (
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-base font-semibold text-gray-900 mb-4">
+                  Job Preferences
+                </h3>
+                
+                {js?.jobPreferences?.preferredJobTypes?.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Preferred Job Types</p>
+                    <div className="flex flex-wrap gap-2">
+                      {js.jobPreferences.preferredJobTypes.map((type: string, idx: number) => (
+                        <span key={`type-${idx}`} className="px-3 py-1 text-xs bg-blue-50 text-blue-700 border border-blue-100 rounded-full">
+                          {type}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {js?.jobPreferences?.preferredShifts?.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Preferred Shifts</p>
+                    <div className="flex flex-wrap gap-2">
+                      {js.jobPreferences.preferredShifts.map((shift: string, idx: number) => (
+                        <span key={`shift-${idx}`} className="px-3 py-1 text-xs bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full">
+                          {shift}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Work experience */}
             {(app.workExperience || js?.workExperience) && (
               <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -487,6 +540,23 @@ export default function ApplicationDetailPage() {
                             {we.description}
                           </p>
                         )}
+                        {showCertificates && we.experienceDocument && (
+                          <div className="mt-2">
+                            <a
+                              href={
+                                typeof we.experienceDocument === "string"
+                                  ? we.experienceDocument
+                                  : we.experienceDocument?.url
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center text-sm font-medium text-[#155DFC] hover:underline"
+                            >
+                              <FileText className="w-4 h-4 mr-1" />
+                              View Experience Document
+                            </a>
+                          </div>
+                        )}
                       </div>
                     )
                   )}
@@ -512,6 +582,23 @@ export default function ApplicationDetailPage() {
                         </p>
                         {ed.description && (
                           <p className="text-sm text-gray-700">{ed.description}</p>
+                        )}
+                        {showCertificates && ed.educationCertificate && (
+                          <div className="mt-2">
+                            <a
+                              href={
+                                typeof ed.educationCertificate === "string"
+                                  ? ed.educationCertificate
+                                  : ed.educationCertificate?.url
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center text-sm font-medium text-[#155DFC] hover:underline"
+                            >
+                              <FileText className="w-4 h-4 mr-1" />
+                              View Education Certificate
+                            </a>
+                          </div>
                         )}
                       </div>
                     )
