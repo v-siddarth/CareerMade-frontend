@@ -659,16 +659,32 @@ function JobSeekerJobsContent() {
                         </div>
 
                         {/* Tags Row */}
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2 mb-3">
                           <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-md">
                             {job.specialization || "General"}
                           </span>
                           <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-md">
-                            Full-time
+                            {job.jobType || "Full-time"}
                           </span>
                           <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-md">
-                            On-site
+                            {job.isRemote ? "Remote" : "On-site"}
                           </span>
+                        </div>
+
+                        {/* Metrics Row */}
+                        <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-100">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-medium text-gray-500">👥 Vacancies:</span>
+                            <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-bold rounded border border-blue-100">{job.vacancies || 1}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-medium text-gray-500">👁️ Views:</span>
+                            <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-xs font-bold rounded border border-purple-100">{job.stats?.views || 0}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-medium text-gray-500">📝 Applied:</span>
+                            <span className="px-2 py-0.5 bg-green-50 text-green-700 text-xs font-bold rounded border border-green-100">{job.stats?.applications || 0}</span>
+                          </div>
 
                           {/* Time Posted */}
                           <span className="ml-auto text-xs text-gray-500">

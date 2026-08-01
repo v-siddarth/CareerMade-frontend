@@ -55,6 +55,11 @@ interface Job {
   status?: "Active" | "Pending" | "Flagged" | "Archived" | "Closed";
   description?: string;
   createdAt?: string;
+  vacancies?: number;
+  stats?: {
+    views?: number;
+    applications?: number;
+  };
 }
 
 interface EmployerProfile {

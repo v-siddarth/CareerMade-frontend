@@ -627,19 +627,38 @@ export default function JobViewPage() {
                                     </div>
                                 </div>
 
-                                {/* Tags */}
-                                <div className="flex flex-wrap items-center gap-2 mt-6 pt-6 border-t border-gray-200">
-                                    {job.specialization && (
-                                        <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold border border-blue-200">
-                                            {job.specialization}
+                                {/* Tags & Metrics */}
+                                <div className="flex flex-col gap-4 mt-6 pt-6 border-t border-gray-200">
+                                    {/* Tags */}
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        {job.specialization && (
+                                            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold border border-blue-200">
+                                                {job.specialization}
+                                            </span>
+                                        )}
+                                        <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold border border-gray-200">
+                                            {job.jobType}
                                         </span>
-                                    )}
-                                    <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold border border-gray-200">
-                                        {job.jobType}
-                                    </span>
-                                    <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold border border-gray-200">
-                                        {job.isRemote ? "Remote" : "On-site"}
-                                    </span>
+                                        <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold border border-gray-200">
+                                            {job.isRemote ? "Remote" : "On-site"}
+                                        </span>
+                                    </div>
+                                    
+                                    {/* Metrics */}
+                                    <div className="flex flex-wrap items-center gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-medium text-gray-500">👥 Vacancies:</span>
+                                            <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-sm font-bold rounded-lg border border-blue-100">{job.vacancies || 1}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-medium text-gray-500">👁️ Views:</span>
+                                            <span className="px-2.5 py-1 bg-purple-50 text-purple-700 text-sm font-bold rounded-lg border border-purple-100">{job.stats?.views || 0}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-medium text-gray-500">📝 Applied:</span>
+                                            <span className="px-2.5 py-1 bg-green-50 text-green-700 text-sm font-bold rounded-lg border border-green-100">{job.stats?.applications || 0}</span>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Meta Info */}
