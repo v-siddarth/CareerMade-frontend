@@ -10,86 +10,86 @@ import { apiFetch } from "@/lib/api-client";
 type UserRole = "jobseeker" | "employer" | "admin" | null;
 
 const OPPORTUNITY_CARDS = [
-  {
-    title: "Doctors & Physicians",
-    subtitle: "General, Surgery, Pediatrics",
-    positions: "157",
-    image: "/man.png",
-    iconBg: "bg-orange-100",
-    accent: "text-[#2B7FFF]",
-    specialties: ["General Medicine", "General Surgery", "Pediatrics", "Internal Medicine"],
-    titleFilter: "Doctor",
-  },
-  {
-    title: "Nursing Staff",
-    subtitle: "RNs, LPNs, CNAs, Nurse Practitioners",
-    positions: "162",
-    image: "/woman.png",
-    iconBg: "bg-red-100",
-    accent: "text-[#F6339A]",
-    specialties: ["Nursing", "Staff Nurse", "ICU Nurse"],
-    titleFilter: "Nurse",
-  },
-  {
-    title: "Technicians",
-    subtitle: "Lab Techs, X-Ray, MRI, Ultrasound",
-    positions: "125",
-    image: "/micro.png",
-    iconBg: "bg-yellow-100",
-    accent: "text-[#00C950]",
-    specialties: ["Medical Laboratory Technician", "Radiology Technician", "Pathology"],
-    titleFilter: "Technician",
-  },
-  {
-    title: "Admin & Support",
-    subtitle: "Medical Billing, Reception, Management",
-    positions: "67",
-    image: "/pad.png",
-    iconBg: "bg-purple-100",
-    accent: "text-[#AD46FF]",
-    specialties: ["Hospital Administrator", "Medical Billing Officer", "Patient Care Assistant"],
-    titleFilter: "Admin",
-  },
-  {
-    title: "Locam",
-    subtitle: "Short-term & Temporary Assignments",
-    positions: "146",
-    image: "/scope.png",
-    iconBg: "bg-blue-100",
-    accent: "text-[#00B8DB]",
-    specialties: ["Locam Doctor", "Locam Nurse", "Locam Technician"],
-    titleFilter: "Locam",
-  },
-  {
-    title: "Therapists",
-    subtitle: "Physical, Occupational, Speech",
-    positions: "98",
-    image: "/pill.png",
-    iconBg: "bg-gray-100",
-    accent: "text-[#FF6900]",
-    specialties: ["Physical Therapy", "Occupational Therapy", "Speech Therapy"],
-    titleFilter: "Other",
-  },
-  {
-    title: "Dental & Optometry",
-    subtitle: "Dentists, Hygienists, Optometrists",
-    positions: "112",
-    image: "/teeth.png",
-    iconBg: "bg-indigo-100",
-    accent: "text-[#615FFF]",
-    specialties: ["General Dentistry", "Optometrist", "Dental Hygienist"],
-    titleFilter: "Doctor",
-  },
-  {
-    title: "Research & Development",
-    subtitle: "Clinical Research, Medical Writing",
-    positions: "26",
-    image: "/graph.png",
-    iconBg: "bg-teal-100",
-    accent: "text-[#00BBA7]",
-    specialties: ["Clinical Research Medical Officer", "Medical Affairs", "Molecular Diagnostics Technician"],
-    titleFilter: "Other",
-  },
+    {
+        title: "Doctors & Physicians",
+        subtitle: "General, Surgery, Pediatrics",
+        positions: "157",
+        image: "/man.png",
+        iconBg: "bg-orange-100",
+        accent: "text-[#2B7FFF]",
+        specialties: ["General Medicine", "General Surgery", "Pediatrics", "Internal Medicine"],
+        titleFilter: "Doctor",
+    },
+    {
+        title: "Nursing Staff",
+        subtitle: "RNs, LPNs, CNAs, Nurse Practitioners",
+        positions: "162",
+        image: "/woman.png",
+        iconBg: "bg-red-100",
+        accent: "text-[#F6339A]",
+        specialties: ["Nursing", "Staff Nurse", "ICU Nurse"],
+        titleFilter: "Nurse",
+    },
+    {
+        title: "Technicians",
+        subtitle: "Lab Techs, X-Ray, MRI, Ultrasound",
+        positions: "125",
+        image: "/micro.png",
+        iconBg: "bg-yellow-100",
+        accent: "text-[#00C950]",
+        specialties: ["Medical Laboratory Technician", "Radiology Technician", "Pathology"],
+        titleFilter: "Technician",
+    },
+    {
+        title: "Admin & Support",
+        subtitle: "Medical Billing, Reception, Management",
+        positions: "67",
+        image: "/pad.png",
+        iconBg: "bg-purple-100",
+        accent: "text-[#AD46FF]",
+        specialties: ["Hospital Administrator", "Medical Billing Officer", "Patient Care Assistant"],
+        titleFilter: "Admin",
+    },
+    {
+        title: "Physiotherapist",
+        subtitle: "General, Sports, Neurological",
+        positions: "800+",
+        image: "/scope.png",
+        iconBg: "bg-blue-100",
+        accent: "text-[#00B8DB]",
+        specialties: ["General Physiotherapy", "Sports Physiotherapy", "Neurological Physiotherapy"],
+        titleFilter: "Physiotherapist",
+    },
+    {
+        title: "Therapists",
+        subtitle: "Physical, Occupational, Speech",
+        positions: "98",
+        image: "/pill.png",
+        iconBg: "bg-gray-100",
+        accent: "text-[#FF6900]",
+        specialties: ["Physical Therapy", "Occupational Therapy", "Speech Therapy"],
+        titleFilter: "Other",
+    },
+    {
+        title: "Dental & Optometry",
+        subtitle: "Dentists, Hygienists, Optometrists",
+        positions: "112",
+        image: "/teeth.png",
+        iconBg: "bg-indigo-100",
+        accent: "text-[#615FFF]",
+        specialties: ["General Dentistry", "Optometrist", "Dental Hygienist"],
+        titleFilter: "Doctor",
+    },
+    {
+        title: "Research & Development",
+        subtitle: "Clinical Research, Medical Writing",
+        positions: "26",
+        image: "/graph.png",
+        iconBg: "bg-teal-100",
+        accent: "text-[#00BBA7]",
+        specialties: ["Clinical Research Medical Officer", "Medical Affairs", "Molecular Diagnostics Technician"],
+        titleFilter: "Other",
+    },
 ];
 
 export default function CareerMedLanding() {
@@ -160,7 +160,7 @@ export default function CareerMedLanding() {
                     <div className="text-center mb-12">
                         <img src="/img.png" alt="Healthcare Professionals" className="mx-auto mb-8 mt-5 max-w-2xl w-full" />
 
-                        <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+                        <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4">
                             Find Your Dream{" "}
                             <span className="bg-gradient-to-r from-[#155DFC] to-[#00B8DB] bg-clip-text text-transparent">
                                 Healthcare
@@ -170,9 +170,17 @@ export default function CareerMedLanding() {
                                 Career
                             </span>
                         </h1>
+
+                        <p className="text-xl md:text-2xl text-gray-700 mb-2 font-medium max-w-3xl mx-auto">
+                            India's Healthcare Career & Recruitment Platform
+                        </p>
+                        <p className="text-base md:text-lg text-gray-500 mb-8 max-w-3xl mx-auto">
+                            CareerMed is built by healthcare professionals, for healthcare professionals.
+                        </p>
+
                         <div className="mt-6 mb-5">
                             <Link href="/view-jobs">
-                                <button className="bg-blue-600 text-white px-8 py-3 rounded-full hover:bg-blue-700 transition font-semibold">
+                                <button className="bg-blue-600 text-white px-8 py-3 rounded-full hover:bg-blue-700 transition font-semibold shadow-md hover:shadow-lg">
                                     Explore All Jobs
                                 </button>
                             </Link>
@@ -373,7 +381,7 @@ export default function CareerMedLanding() {
                                 </div>
                                 <h3 className="font-bold text-gray-900 text-lg mb-2">{card.title}</h3>
                                 <p className="text-sm text-gray-500 mb-6 flex-grow">{card.subtitle}</p>
-                                
+
                                 <div className="w-full pt-4 border-t border-gray-50 flex items-center justify-between mt-auto">
                                     <span className={`text-sm font-semibold ${card.accent}`}>Explore roles</span>
                                     <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-50 group-hover:bg-gray-100 transition-colors">
@@ -386,7 +394,7 @@ export default function CareerMedLanding() {
                         ))}
                     </div>
 
-                    
+
                 </div>
             </section>
 
@@ -544,7 +552,7 @@ export default function CareerMedLanding() {
                         </div>
                     </div>
 
-                    
+
                 </div>
             </section>
 

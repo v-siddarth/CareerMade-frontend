@@ -114,6 +114,25 @@ export default function PricingPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [paymentMessage, setPaymentMessage] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  const [couponDiscount, setCouponDiscount] = useState<number>(0);
+
+  const validateCoupon = async () => {
+    if (!couponCode) return;
+    try {
+      const res = await apiFetch<{ data: { coupon: { discountPercentage: number } } }>("/api/coupons/validate", {
+        method: "POST",
+        body: JSON.stringify({ code: couponCode, planId: selectedPlanId })
+      });
+      if (res.data?.coupon) {
+        setCouponDiscount(res.data.coupon.discountPercentage);
+        toast.success(`Coupon applied! ${res.data.coupon.discountPercentage}% off.`);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Invalid coupon code");
+      setCouponDiscount(0);
+    }
+  };
 
   const fetchMySubscription = useCallback(async () => {
     const token = authStorage.getAccessToken();
@@ -266,6 +285,7 @@ export default function PricingPage() {
         body: JSON.stringify({
           planId: selectedPlan.id,
           preferredMethod: method,
+          couponCode: couponDiscount === 100 ? couponCode : undefined,
         }),
       });
 
@@ -574,10 +594,30 @@ export default function PricingPage() {
                           <span className="font-semibold">{activeSubscription.planName || activeSubscription.plan}</span>
                         </div>
                       )}
-                      <div className="border-t border-gray-200 pt-4">
+                      <div className="border-t border-gray-200 pt-4 space-y-4">
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="Have a coupon code?"
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase"
+                            disabled={checkoutLoading || isPlanCurrentlyActive(selectedPlan)}
+                          />
+                          <button
+                            type="button"
+                            onClick={validateCoupon}
+                            disabled={!couponCode || checkoutLoading || isPlanCurrentlyActive(selectedPlan)}
+                            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 transition"
+                          >
+                            Apply
+                          </button>
+                        </div>
                         <div className="flex items-center justify-between text-base font-bold text-gray-900">
                           <span>Total payable</span>
-                          <span>₹{selectedPlan.price}</span>
+                          <span>
+                            {couponDiscount === 100 ? "₹0 (Free)" : `₹${selectedPlan.price}`}
+                          </span>
                         </div>
                       </div>
                     </div>

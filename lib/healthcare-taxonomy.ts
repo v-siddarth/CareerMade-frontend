@@ -7,7 +7,7 @@ export const HEALTHCARE_TITLES = [
   "Admin",
   "Insurance",
   "Marketing",
-  "Locam",
+  "Physiotherapist",
   "Other",
 ] as const;
 
@@ -19,11 +19,11 @@ export const TITLE_SPECIALIZATION_OPTIONS: Record<HealthcareTitle, string[]> = {
   Doctor: withOther([
     "Primary care",
     "Specialist",
-    "Super specialist",
-    "Surgical specialist",
+    "Super specialist-Medical",
+    "Super specialist - Surgical",
     "Dental specialist",
     "AYUSH practitioner",
-    "Medicine officer",
+    "Medical Officer",
     "RMO",
   ]),
   Nurse: withOther([
@@ -104,10 +104,19 @@ export const TITLE_SPECIALIZATION_OPTIONS: Record<HealthcareTitle, string[]> = {
     "Patient acquisition",
     "Corporate partnerships",
   ]),
-  Locam: withOther([
-    "Locam Doctor",
-    "Locam Nurse",
-    "Locam Technician",
+  Physiotherapist: withOther([
+    "General Physiotherapy",
+    "Musculoskeletal (Orthopaedic)",
+    "Sports Physiotherapy",
+    "Neurological Physiotherapy",
+    "Cardiorespiratory Physiotherapy",
+    "ICU/Critical Care Physiotherapy",
+    "Paediatric Physiotherapy",
+    "Geriatric Physiotherapy",
+    "Women's Health / Pelvic Floor Physiotherapy",
+    "Community Physiotherapy",
+    "Home Care Physiotherapy",
+    "Rehabilitation",
   ]),
   Other: ["Other"],
 };
@@ -167,7 +176,7 @@ export const TITLE_FIELD_OPTIONS: Record<HealthcareTitle, Record<string, string[
       "Pain Medicine",
       "Sleep Medicine",
     ]),
-    "Super specialist": withOther([
+    "Super specialist-Medical": withOther([
       "Adult Congenital Heart Disease",
       "Advanced Heart Failure and Transplant Cardiology",
       "Cardiology",
@@ -222,7 +231,7 @@ export const TITLE_FIELD_OPTIONS: Record<HealthcareTitle, Record<string, string[
       "Geriatric Psychiatry",
       "Vascular Neurology",
     ]),
-    "Surgical specialist": withOther([
+    "Super specialist - Surgical": withOther([
       "General Surgery",
       "Surgery",
       "Cardiothoracic Surgery",
@@ -475,10 +484,19 @@ export const TITLE_FIELD_OPTIONS: Record<HealthcareTitle, Record<string, string[
     "Corporate partnerships": withOther(["Corporate Relations Manager", "B2B Healthcare Sales", "Partnerships Executive"]),
     Other: ["Other"],
   },
-  Locam: {
-    "Locam Doctor": withOther(["General Physician (Locam)", "Specialist (Locam)"]),
-    "Locam Nurse": withOther(["Staff Nurse (Locam)", "ICU Nurse (Locam)"]),
-    "Locam Technician": withOther(["Lab Technician (Locam)", "Radiology Technician (Locam)"]),
+  Physiotherapist: {
+    "General Physiotherapy": ["Other"],
+    "Musculoskeletal (Orthopaedic)": ["Other"],
+    "Sports Physiotherapy": ["Other"],
+    "Neurological Physiotherapy": ["Other"],
+    "Cardiorespiratory Physiotherapy": ["Other"],
+    "ICU/Critical Care Physiotherapy": ["Other"],
+    "Paediatric Physiotherapy": ["Other"],
+    "Geriatric Physiotherapy": ["Other"],
+    "Women's Health / Pelvic Floor Physiotherapy": ["Other"],
+    "Community Physiotherapy": ["Other"],
+    "Home Care Physiotherapy": ["Other"],
+    "Rehabilitation": ["Other"],
     Other: ["Other"],
   },
   Other: {
@@ -505,7 +523,10 @@ export const TITLE_DEGREE_OPTIONS: Record<HealthcareTitle, string[]> = {
     "Fellowship",
     "FRCS",
     "MRCS",
-    "MRCP",
+    "DA",
+    "DCH",
+    "DGO",
+    "DCP",
     "Diploma",
     "Certificate",
     "Other",
@@ -514,8 +535,6 @@ export const TITLE_DEGREE_OPTIONS: Record<HealthcareTitle, string[]> = {
   Technician: [
     "DMLT",
     "BMLT",
-    "BPT",
-    "MPT",
     "Diploma in OT Technician",
     "Diploma in Radiology Imaging",
     "Diploma in Dialysis Technician",
@@ -525,12 +544,12 @@ export const TITLE_DEGREE_OPTIONS: Record<HealthcareTitle, string[]> = {
     "Other",
   ],
   Pharmacy: ["D.Pharm", "B.Pharm", "M.Pharm", "Pharm.D", "Diploma", "Certificate", "Other"],
-  Support: ["Certificate", "Diploma", "BSc", "BPT", "Other"],
-  Admin: ["BBA", "MBA", "MHA", "PG Diploma", "BCom", "Other"],
-  Insurance: ["BCom", "BBA", "MBA", "PG Diploma", "IRDA Certification", "Other"],
-  Marketing: ["BBA", "MBA", "PG Diploma", "Other"],
-  Locam: ["MBBS", "MD", "BSc Nursing", "GNM", "DMLT", "Other"],
-  Other: ["Certificate", "Diploma", "BSc", "MSc", "PhD", "BPT", "MPT", "Other"],
+  Support: ["BA", "MA", "BCom", "MCom", "BSc", "MSc", "MSW", "Certificate", "Diploma", "Other"],
+  Admin: ["BBA", "MBA", "MHA", "PG Diploma", "BCom", "MCom", "BA", "MA", "Other"],
+  Insurance: ["BCom", "MCom", "BBA", "MBA", "PG Diploma", "IRDA Certification", "BA", "MA", "BSc", "Other"],
+  Marketing: ["BBA", "MBA", "PG Diploma", "BA", "MA", "BCom", "MCom", "BSc", "Other"],
+  Physiotherapist: ["BPT", "MPT", "PhD", "Diploma in Physiotherapy", "Other"],
+  Other: ["BA", "MA", "BCom", "MCom", "BSc", "MSc", "PhD", "Diploma", "Certificate", "Other"],
 };
 
 export const ALL_JOBSEEKER_DEGREES = [
@@ -549,7 +568,10 @@ export const ALL_JOBSEEKER_DEGREES = [
   "Fellowship",
   "FRCS",
   "MRCS",
-  "MRCP",
+  "DA",
+  "DCH",
+  "DGO",
+  "DCP",
   "BPT",
   "MPT",
   "ANM",
@@ -571,7 +593,11 @@ export const ALL_JOBSEEKER_DEGREES = [
   "MHA",
   "MPH",
   "PG Diploma",
+  "BA",
+  "MA",
   "BCom",
+  "MCom",
+  "MSW",
   "IRDA Certification",
   "BSc",
   "MSc",
@@ -630,9 +656,9 @@ export const SCREENING_QUESTIONS_BY_TITLE: Record<HealthcareTitle, string[]> = {
     "Have you handled doctor outreach or referral programs?",
     "Can you manage digital campaigns and lead tracking?",
   ],
-  Locam: [
-    "Are you available for short-term/temporary assignments?",
-    "Do you have valid registration for locam practice?",
+  Physiotherapist: [
+    "Are you registered with the Physiotherapy Council?",
+    "Do you have experience in specialized rehabilitation?",
   ],
   Other: ["Do you have relevant experience for this role?"],
 };
@@ -668,7 +694,7 @@ export const inferHealthcareTitle = (job: { title?: string; specialization?: str
   if (/(admin|administrator|hr|human resources|operations|finance|billing|front office|records|quality|compliance|procurement|it support|emr)/.test(text)) return "Admin";
   if (/(insurance|claims|tpa|underwriting|pre-auth|preauthorization|medical coding|revenue cycle)/.test(text)) return "Insurance";
   if (/(marketing|sales|business development|brand|outreach|doctor relations|patient acquisition)/.test(text)) return "Marketing";
-  if (/(locam|locum)/.test(text)) return "Locam";
+  if (/(physio|physiotherapist|rehabilitation|physical therapy)/.test(text)) return "Physiotherapist";
 
   return "Other";
 };

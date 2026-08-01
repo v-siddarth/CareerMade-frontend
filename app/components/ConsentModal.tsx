@@ -9,9 +9,20 @@ import { apiFetch, authStorage } from "@/lib/api-client";
 interface ConsentModalProps {
   isOpen: boolean;
   onAccept: () => void;
+  role: string;
 }
 
-export default function ConsentModal({ isOpen, onAccept }: ConsentModalProps) {
+const jobseekerConsentText = `[JOB SEEKER CONSENT TEXT]
+Please paste the full text of the Job Seeker Consent Form, Terms of Service, and agreements here.
+This text will be displayed to all registering job seekers.
+`;
+
+const employerConsentText = `[EMPLOYER CONSENT TEXT]
+Please paste the full text of the Employer Consent Form, Terms of Service, and agreements here.
+This text will be displayed to all registering employers.
+`;
+
+export default function ConsentModal({ isOpen, onAccept, role }: ConsentModalProps) {
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -20,18 +31,18 @@ export default function ConsentModal({ isOpen, onAccept }: ConsentModalProps) {
       toast.error("Please read and accept the terms and conditions to continue.");
       return;
     }
-    
+
     setLoading(true);
     try {
       const res = await apiFetch<{ data: { user: any } }>("/api/auth/accept-terms", {
         method: "POST"
       });
-      
+
       const updatedUser = res.data?.user;
       if (updatedUser) {
         authStorage.setUser(updatedUser);
       }
-      
+
       toast.success("Terms accepted successfully!");
       onAccept();
     } catch (error) {
@@ -75,57 +86,9 @@ export default function ConsentModal({ isOpen, onAccept }: ConsentModalProps) {
                   </p>
                 </div>
 
-                {/* Terms Content - 19 Legal Documents */}
-                <div className="space-y-8 text-gray-600 text-sm leading-relaxed">
-                  
-                  <section>
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <span className="bg-gray-100 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
-                      Platform Legal Documents
-                    </h3>
-                    <div className="pl-8">
-                      <p className="mb-4">
-                        Please click on each document to read our full policies, terms, and agreements:
-                      </p>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {[
-                          "Candidate Agreement.pdf",
-                          "Candidate Declaration.pdf",
-                          "Corporate Hospital Annual Subscription Agreement.pdf",
-                          "Credential Verification Consent.pdf",
-                          "Doctor and Nurse Verification.pdf",
-                          "Employer Agreement.pdf",
-                          "Employer Registration Form.pdf",
-                          "Employer Service Level Policy.pdf",
-                          "Employer Subscription Agreement.pdf",
-                          "Grievance Redressal Policy.pdf",
-                          "Healthcare Recruitment Portal Disclaimer.pdf",
-                          "Job Posting Declaration.pdf",
-                          "Medical Registration Disclaimer.pdf",
-                          "Privacy Policy.pdf",
-                          "Recruitment Assignment Request.pdf",
-                          "Recruitment Services Agreement.pdf",
-                          "Resume Database Access Agreement.pdf",
-                          "SUCCESS FEE AGREEMENT.pdf",
-                          "Terms and Conditions.pdf"
-                        ].map((doc, index) => (
-                          <a 
-                            key={index} 
-                            href={`/documents/${doc}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-100 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors"
-                          >
-                            <FileText className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                            <span className="font-medium text-gray-800 line-clamp-1" title={doc.replace(".pdf", "")}>
-                              {doc.replace(".pdf", "")}
-                            </span>
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  </section>
+                {/* Terms Content - Inline Document */}
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 max-h-80 overflow-y-auto font-mono text-sm whitespace-pre-wrap text-gray-700 shadow-inner">
+                  {role === "employer" ? employerConsentText : jobseekerConsentText}
                 </div>
               </div>
             </div>

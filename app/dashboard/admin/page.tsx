@@ -284,7 +284,7 @@ export default function AdminDashboard() {
             <Activity className="w-6 h-6 text-[#007BFF]" /> Quick Actions
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {[{label:"Manage Users",icon:<Users className="w-5 h-5 text-[#007BFF]"/>,path:"/dashboard/admin/users"},{label:"Manage Employers",icon:<Building2 className="w-5 h-5 text-[#007BFF]"/>,path:"/dashboard/admin/employers"},{label:"Moderate Jobs",icon:<Briefcase className="w-5 h-5 text-[#007BFF]"/>,path:"/dashboard/admin/jobs"},{label:"Pricing Admin",icon:<CreditCard className="w-5 h-5 text-[#007BFF]"/>,path:"/dashboard/admin/pricing"}].map((action)=> (
+            {[{label:"Manage Users",icon:<Users className="w-5 h-5 text-[#007BFF]"/>,path:"/dashboard/admin/users"},{label:"Manage Employers",icon:<Building2 className="w-5 h-5 text-[#007BFF]"/>,path:"/dashboard/admin/employers"},{label:"Moderate Jobs",icon:<Briefcase className="w-5 h-5 text-[#007BFF]"/>,path:"/dashboard/admin/jobs"},{label:"Pricing Admin",icon:<CreditCard className="w-5 h-5 text-[#007BFF]"/>,path:"/dashboard/admin/pricing"},{label:"Manage Coupons",icon:<CreditCard className="w-5 h-5 text-[#007BFF]"/>,path:"/dashboard/admin/coupons"}].map((action)=> (
               <button key={action.path} onClick={() => router.push(action.path)} className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-[#007BFF] hover:bg-blue-50 transition-all group">
                 <div className="flex items-center gap-3">{action.icon}<span className="font-medium text-gray-900">{action.label}</span></div>
                 <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-[#007BFF]" />

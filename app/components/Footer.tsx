@@ -138,7 +138,7 @@ const Footer = () => {
               support@careermed.in
             </a>{" "}
             <span className="mx-2 hidden sm:inline">|</span>
-            <span className="block sm:inline">Contact: +91 98765 43210</span>
+            <span className="block sm:inline">Contact: +918806506455</span>
           </p>
           <p>© 2026 CareerMed. All rights reserved.</p>
           <p className="mt-2">

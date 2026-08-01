@@ -440,6 +440,7 @@ const Register = () => {
 
             <ConsentModal 
                 isOpen={showConsentModal} 
+                role={formData.role}
                 onAccept={() => {
                     setShowConsentModal(false);
                     router.push(formData.role === "employer"

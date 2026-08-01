@@ -148,6 +148,7 @@ type JobSeekerProfile = {
     preferredLocations?: { city?: string; state?: string; country?: string }[];
     preferredJobTypes?: string[];
     preferredShifts?: string[];
+    fixedShiftTime?: string;
     expectedSalary?: {
       min?: number;
       max?: number;
@@ -259,12 +260,16 @@ const getNextFlowTab = (tab: TabId): TabId | null => {
 
 const normalizeDriveImageUrl = (url?: string, driveFileId?: string) => {
   if (driveFileId) {
-    return `https://drive.google.com/uc?export=view&id=${driveFileId}`;
+    return `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w1000`;
   }
   if (!url) return "";
-  if (url.includes("drive.google.com/uc?")) return url;
+  if (url.includes("drive.google.com/uc?")) {
+    const ucId = url.match(/[?&]id=([^&]+)/);
+    if (ucId?.[1]) return `https://drive.google.com/thumbnail?id=${ucId[1]}&sz=w1000`;
+    return url;
+  }
   const idMatch = url.match(/\/file\/d\/([^/]+)/);
-  if (idMatch?.[1]) return `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
+  if (idMatch?.[1]) return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w1000`;
   return url;
 };
 
@@ -1146,6 +1151,20 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                           }))
                         }
                         className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
+                      />
+                    </label>
+                    <label className="text-sm font-medium text-gray-700">
+                      Age
+                      <input
+                        type="text"
+                        disabled
+                        value={
+                          profile.personalInfo?.dateOfBirth
+                            ? Math.floor((Date.now() - new Date(profile.personalInfo.dateOfBirth).getTime()) / (1000 * 60 * 60 * 24 * 365.25))
+                            : ""
+                        }
+                        className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-gray-500 cursor-not-allowed"
+                        placeholder="Auto-calculated"
                       />
                     </label>
                     <label className="text-sm font-medium text-gray-700">
@@ -2213,27 +2232,21 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                         return (
                         <div key={index} className="grid gap-3 sm:grid-cols-4">
                           <select
-                            value={location.city || ""}
+                            value={location.country || "India"}
                             onChange={(e) =>
                               updateProfile((prev) => ({
                                 ...prev,
                                 jobPreferences: {
                                   ...(prev.jobPreferences || {}),
                                   preferredLocations: (prev.jobPreferences?.preferredLocations || []).map((x, i) =>
-                                    i === index ? { ...x, city: e.target.value } : x
+                                    i === index ? { ...x, country: e.target.value } : x
                                   ),
                                 },
                               }))
                             }
-                            disabled={!selectedState}
                             className="rounded-xl border border-gray-300 px-3 py-2"
                           >
-                            <option value="">Select City</option>
-                            {cityOptions.map((city) => (
-                              <option key={city} value={city}>
-                                {city}
-                              </option>
-                            ))}
+                            <option value="India">India</option>
                           </select>
                           <select
                             value={selectedState}
@@ -2260,21 +2273,27 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                             ))}
                           </select>
                           <select
-                            value={location.country || "India"}
+                            value={location.city || ""}
                             onChange={(e) =>
                               updateProfile((prev) => ({
                                 ...prev,
                                 jobPreferences: {
                                   ...(prev.jobPreferences || {}),
                                   preferredLocations: (prev.jobPreferences?.preferredLocations || []).map((x, i) =>
-                                    i === index ? { ...x, country: e.target.value } : x
+                                    i === index ? { ...x, city: e.target.value } : x
                                   ),
                                 },
                               }))
                             }
+                            disabled={!selectedState}
                             className="rounded-xl border border-gray-300 px-3 py-2"
                           >
-                            <option value="India">India</option>
+                            <option value="">Select City</option>
+                            {cityOptions.map((city) => (
+                              <option key={city} value={city}>
+                                {city}
+                              </option>
+                            ))}
                           </select>
                           <button
                             type="button"
@@ -2371,6 +2390,26 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                         );
                       })}
                     </div>
+                    {profile.jobPreferences?.preferredShifts?.includes("Fixed Shift") && (
+                      <div className="mt-4 flex flex-col gap-2 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+                        <label className="text-sm font-medium text-gray-700">Fixed Shift Timings</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 09:00 AM to 05:00 PM"
+                          value={profile.jobPreferences?.fixedShiftTime || ""}
+                          onChange={(e) =>
+                            updateProfile((prev) => ({
+                              ...prev,
+                              jobPreferences: {
+                                ...(prev.jobPreferences || {}),
+                                fixedShiftTime: e.target.value,
+                              },
+                            }))
+                          }
+                          className="w-full sm:w-1/2 rounded-xl border border-gray-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <button
