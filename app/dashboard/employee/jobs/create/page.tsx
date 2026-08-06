@@ -9,6 +9,7 @@ import { ChevronRight, CheckCircle, X } from "lucide-react";
 import { apiFetch, authStorage } from "@/lib/api-client";
 import {
   ALL_JOBSEEKER_DEGREES,
+  BENEFITS_OPTIONS,
   HEALTHCARE_TITLES,
   type HealthcareTitle,
   getDegreeOptions,
@@ -88,24 +89,6 @@ const WORK_MODES = [
   { value: "on-site", label: "On-site", desc: "Work from hospital" },
   { value: "hybrid", label: "Hybrid", desc: "Mix of on-site and remote" },
   { value: "remote", label: "Remote", desc: "Telemedicine/Consultation" },
-];
-
-const BENEFITS_OPTIONS = [
-  "Health Insurance",
-  "Life Insurance",
-  "Retirement/Pension Plan",
-  "CME Allowance",
-  "Professional Development",
-  "Housing Assistance",
-  "Relocation Assistance",
-  "Paid Time Off",
-  "Sick Leave",
-  "Maternity/Paternity Leave",
-  "Meal Allowance",
-  "Transportation",
-  "Conference Attendance",
-  "Research Opportunities",
-  "Indemnity Insurance",
 ];
 
 export default function CreateJobPage() {
@@ -875,6 +858,33 @@ export default function CreateJobPage() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
+                            State <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            name="location.state"
+                            value={formData.location.state}
+                            onChange={handleInputChange}
+                            className={`w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${errors["location.state"]
+                                ? "border-red-500"
+                                : "border-gray-300"
+                              }`}
+                          >
+                            <option value="">Select state</option>
+                            {LOCATION_STATE_OPTIONS.map((state) => (
+                              <option key={state} value={state}>
+                                {state}
+                              </option>
+                            ))}
+                          </select>
+                          {errors["location.state"] && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {errors["location.state"]}
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
                             City <span className="text-red-500">*</span>
                           </label>
                           <select
@@ -897,33 +907,6 @@ export default function CreateJobPage() {
                           {errors["location.city"] && (
                             <p className="mt-1 text-sm text-red-600">
                               {errors["location.city"]}
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            State <span className="text-red-500">*</span>
-                          </label>
-                          <select
-                            name="location.state"
-                            value={formData.location.state}
-                            onChange={handleInputChange}
-                            className={`w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${errors["location.state"]
-                                ? "border-red-500"
-                                : "border-gray-300"
-                              }`}
-                          >
-                            <option value="">Select state</option>
-                            {LOCATION_STATE_OPTIONS.map((state) => (
-                              <option key={state} value={state}>
-                                {state}
-                              </option>
-                            ))}
-                          </select>
-                          {errors["location.state"] && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {errors["location.state"]}
                             </p>
                           )}
                         </div>

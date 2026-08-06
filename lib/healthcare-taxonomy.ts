@@ -7,7 +7,7 @@ export const HEALTHCARE_TITLES = [
   "Admin",
   "Insurance",
   "Marketing",
-  "Physiotherapist",
+  "Physiotherapy",
   "Other",
 ] as const;
 
@@ -15,12 +15,30 @@ export type HealthcareTitle = (typeof HEALTHCARE_TITLES)[number];
 
 const withOther = (items: string[]) => Array.from(new Set([...items, "Other"]));
 
-export const TITLE_SPECIALIZATION_OPTIONS: Record<HealthcareTitle, string[]> = {
+export const BENEFITS_OPTIONS = [
+  "Health Insurance",
+  "Life Insurance",
+  "Retirement/Pension Plan",
+  "CME Allowance",
+  "Professional Development",
+  "Housing Assistance",
+  "Relocation Assistance",
+  "Paid Time Off",
+  "Sick Leave",
+  "Maternity/Paternity Leave",
+  "Meal Allowance",
+  "Transportation",
+  "Conference Attendance",
+  "Research Opportunities",
+  "Indemnity Insurance",
+] as const;
+
+export const TITLE_SPECIALIZATION_OPTIONS: Record<HealthcareTitle, string[]> & Record<string, string[]> = {
   Doctor: withOther([
     "Primary care",
     "Specialist",
-    "Super specialist-Medical",
-    "Super specialist - Surgical",
+    "Superspecialist Medicine",
+    "Superspecialist Surgery",
     "Dental specialist",
     "AYUSH practitioner",
     "Medical Officer",
@@ -104,6 +122,20 @@ export const TITLE_SPECIALIZATION_OPTIONS: Record<HealthcareTitle, string[]> = {
     "Patient acquisition",
     "Corporate partnerships",
   ]),
+  Physiotherapy: withOther([
+    "General Physiotherapy",
+    "Musculoskeletal (Orthopaedic)",
+    "Sports Physiotherapy",
+    "Neurological Physiotherapy",
+    "Cardiorespiratory Physiotherapy",
+    "ICU/Critical Care Physiotherapy",
+    "Paediatric Physiotherapy",
+    "Geriatric Physiotherapy",
+    "Women's Health / Pelvic Floor Physiotherapy",
+    "Community Physiotherapy",
+    "Home Care Physiotherapy",
+    "Rehabilitation",
+  ]),
   Physiotherapist: withOther([
     "General Physiotherapy",
     "Musculoskeletal (Orthopaedic)",
@@ -121,7 +153,7 @@ export const TITLE_SPECIALIZATION_OPTIONS: Record<HealthcareTitle, string[]> = {
   Other: ["Other"],
 };
 
-export const TITLE_FIELD_OPTIONS: Record<HealthcareTitle, Record<string, string[]>> = {
+export const TITLE_FIELD_OPTIONS: Record<HealthcareTitle, Record<string, string[]>> & Record<string, Record<string, string[]>> = {
   Doctor: {
     "Primary care": withOther([
       "General Physician",
@@ -175,6 +207,61 @@ export const TITLE_FIELD_OPTIONS: Record<HealthcareTitle, Record<string, string[
       "Palliative Medicine",
       "Pain Medicine",
       "Sleep Medicine",
+    ]),
+    "Superspecialist Medicine": withOther([
+      "Adult Congenital Heart Disease",
+      "Advanced Heart Failure and Transplant Cardiology",
+      "Cardiology",
+      "Cardiovascular Disease",
+      "Clinical Cardiac Electrophysiology",
+      "Interventional Cardiology",
+      "Critical Care Medicine",
+      "Endocrinology",
+      "Endocrinology, Diabetes and Metabolism",
+      "Gastroenterology",
+      "Hepatology",
+      "Hematology",
+      "Clinical Hematology",
+      "Medical Oncology",
+      "Nephrology",
+      "Neurology",
+      "Neurocritical Care",
+      "Pulmonary Critical Care",
+      "Rheumatology",
+      "Infectious Disease",
+      "Infectious Diseases",
+      "Medical Genetics",
+      "Clinical Genetics and Genomics",
+      "Neonatology",
+      "Neonatal-Perinatal Medicine",
+      "Pediatric Cardiology",
+      "Pediatric Critical Care Medicine",
+      "Pediatric Endocrinology",
+      "Pediatric Gastroenterology",
+      "Pediatric Hematology-Oncology",
+      "Pediatric Hospital Medicine",
+      "Pediatric Infectious Diseases",
+      "Pediatric Nephrology",
+      "Pediatric Neurology",
+      "Pediatric Pulmonology",
+      "Pediatric Rheumatology",
+      "Maternal-Fetal Medicine",
+      "Reproductive Endocrinology and Infertility",
+      "Gynecologic Oncology",
+      "Urogynecology",
+      "Dermatopathology",
+      "Pediatric Dermatology",
+      "Hematopathology",
+      "Molecular Genetic Pathology",
+      "Transplant Hepatology",
+      "Addiction Medicine",
+      "Addiction Psychiatry",
+      "Child and Adolescent Psychiatry",
+      "Clinical Neurophysiology",
+      "Epilepsy",
+      "Forensic Psychiatry",
+      "Geriatric Psychiatry",
+      "Vascular Neurology",
     ]),
     "Super specialist-Medical": withOther([
       "Adult Congenital Heart Disease",
@@ -230,6 +317,38 @@ export const TITLE_FIELD_OPTIONS: Record<HealthcareTitle, Record<string, string[
       "Forensic Psychiatry",
       "Geriatric Psychiatry",
       "Vascular Neurology",
+    ]),
+    "Superspecialist Surgery": withOther([
+      "General Surgery",
+      "Surgery",
+      "Cardiothoracic Surgery",
+      "Thoracic Surgery",
+      "Thoracic and Cardiac Surgery",
+      "Cardiothoracic & Vascular Surgery",
+      "Vascular Surgery",
+      "Neurosurgery",
+      "Neurological Surgery",
+      "Urology",
+      "Pediatric Surgery",
+      "Plastic Surgery",
+      "Plastic & Reconstructive Surgery",
+      "Surgical Oncology",
+      "Complex General Surgical Oncology",
+      "Surgical Gastroenterology",
+      "Colorectal Surgery",
+      "Colon and Rectal Surgery",
+      "Endocrine Surgery",
+      "Hand Surgery",
+      "Head & Neck Surgery",
+      "Orthopedic Surgery",
+      "Orthopaedic Surgery",
+      "Spine Surgery",
+      "Trauma Surgery",
+      "Transplant Surgery",
+      "Bariatric Surgery",
+      "Breast Surgery",
+      "Congenital Cardiac Surgery",
+      "Pediatric Urology",
     ]),
     "Super specialist - Surgical": withOther([
       "General Surgery",
@@ -291,6 +410,19 @@ export const TITLE_FIELD_OPTIONS: Record<HealthcareTitle, Record<string, string[
       "Ayurvedic Surgery",
       "Ayurvedic Obstetrics & Gynecology",
       "Ayurvedic Pediatrics",
+    ]),
+    "Medical Officer": withOther([
+      "General Duty Medical Officer",
+      "Casualty Medical Officer",
+      "ICU Medical Officer",
+      "Public Health Medical Officer",
+      "Occupational Health Medical Officer",
+      "Community Health Medical Officer",
+      "Medical Officer (TB/IDSP/NHM)",
+      "Emergency Medical Officer",
+      "Insurance Medical Officer",
+      "Clinical Research Medical Officer",
+      "Telemedicine Medical Officer",
     ]),
     "Medicine officer": withOther([
       "General Duty Medical Officer",
@@ -484,6 +616,21 @@ export const TITLE_FIELD_OPTIONS: Record<HealthcareTitle, Record<string, string[
     "Corporate partnerships": withOther(["Corporate Relations Manager", "B2B Healthcare Sales", "Partnerships Executive"]),
     Other: ["Other"],
   },
+  Physiotherapy: {
+    "General Physiotherapy": ["Other"],
+    "Musculoskeletal (Orthopaedic)": ["Other"],
+    "Sports Physiotherapy": ["Other"],
+    "Neurological Physiotherapy": ["Other"],
+    "Cardiorespiratory Physiotherapy": ["Other"],
+    "ICU/Critical Care Physiotherapy": ["Other"],
+    "Paediatric Physiotherapy": ["Other"],
+    "Geriatric Physiotherapy": ["Other"],
+    "Women's Health / Pelvic Floor Physiotherapy": ["Other"],
+    "Community Physiotherapy": ["Other"],
+    "Home Care Physiotherapy": ["Other"],
+    "Rehabilitation": ["Other"],
+    Other: ["Other"],
+  },
   Physiotherapist: {
     "General Physiotherapy": ["Other"],
     "Musculoskeletal (Orthopaedic)": ["Other"],
@@ -504,7 +651,7 @@ export const TITLE_FIELD_OPTIONS: Record<HealthcareTitle, Record<string, string[
   },
 };
 
-export const TITLE_DEGREE_OPTIONS: Record<HealthcareTitle, string[]> = {
+export const TITLE_DEGREE_OPTIONS: Record<HealthcareTitle, string[]> & Record<string, string[]> = {
   Doctor: [
     "MBBS",
     "MD",
@@ -548,6 +695,7 @@ export const TITLE_DEGREE_OPTIONS: Record<HealthcareTitle, string[]> = {
   Admin: ["BBA", "MBA", "MHA", "PG Diploma", "BCom", "MCom", "BA", "MA", "Other"],
   Insurance: ["BCom", "MCom", "BBA", "MBA", "PG Diploma", "IRDA Certification", "BA", "MA", "BSc", "Other"],
   Marketing: ["BBA", "MBA", "PG Diploma", "BA", "MA", "BCom", "MCom", "BSc", "Other"],
+  Physiotherapy: ["BPT", "MPT", "PhD", "Diploma in Physiotherapy", "Other"],
   Physiotherapist: ["BPT", "MPT", "PhD", "Diploma in Physiotherapy", "Other"],
   Other: ["BA", "MA", "BCom", "MCom", "BSc", "MSc", "PhD", "Diploma", "Certificate", "Other"],
 };
@@ -615,7 +763,7 @@ export const GENERIC_SCREENING_QUESTIONS = [
   "Do you hold all required registration/licensing documents?",
 ] as const;
 
-export const SCREENING_QUESTIONS_BY_TITLE: Record<HealthcareTitle, string[]> = {
+export const SCREENING_QUESTIONS_BY_TITLE: Record<HealthcareTitle, string[]> & Record<string, string[]> = {
   Doctor: [
     "Do you have valid medical council registration?",
     "Have you handled ICU/emergency cases independently?",
@@ -656,6 +804,10 @@ export const SCREENING_QUESTIONS_BY_TITLE: Record<HealthcareTitle, string[]> = {
     "Have you handled doctor outreach or referral programs?",
     "Can you manage digital campaigns and lead tracking?",
   ],
+  Physiotherapy: [
+    "Are you registered with the Physiotherapy Council?",
+    "Do you have experience in specialized rehabilitation?",
+  ],
   Physiotherapist: [
     "Are you registered with the Physiotherapy Council?",
     "Do you have experience in specialized rehabilitation?",
@@ -670,14 +822,14 @@ export const normalizeText = (value?: string) => (value || "").toLowerCase().tri
 export const normalizeSpecializationLabel = (value?: string) =>
   (value || "").trim().replace(/\s+/g, " ").slice(0, SPECIALIZATION_MAX_LENGTH);
 
-export const inferHealthcareTitle = (job: { title?: string; specialization?: string }) => {
+export const inferHealthcareTitle = (job: { title?: string; specialization?: string }): HealthcareTitle => {
   const title = normalizeText(job.title);
   const specialization = normalizeText(job.specialization);
   const text = `${title} ${specialization}`;
 
   if (/(doctor|dr\.|consultant|surgeon|physician|medical officer|resident|registrar|rmo|dentist|dental|ayurveda|homeopathy|unani|siddha)/.test(text)) return "Doctor";
   if (/(nurse|nursing|anm|gnm)/.test(text)) return "Nurse";
-  if (/(technician|technologist|lab tech|x-ray|radiology tech|ct|mri|dialysis|cath lab|ot tech|therapist|physiotherapist|optometrist|audiologist|paramedic)/.test(text)) return "Technician";
+  if (/(technician|technologist|lab tech|x-ray|radiology tech|ct|mri|dialysis|cath lab|ot tech|therapist|optometrist|audiologist|paramedic)/.test(text)) return "Technician";
   if (/(pharmacist|pharmacy)/.test(text)) return "Pharmacy";
 
   for (const titleKey of HEALTHCARE_TITLES) {
@@ -694,7 +846,7 @@ export const inferHealthcareTitle = (job: { title?: string; specialization?: str
   if (/(admin|administrator|hr|human resources|operations|finance|billing|front office|records|quality|compliance|procurement|it support|emr)/.test(text)) return "Admin";
   if (/(insurance|claims|tpa|underwriting|pre-auth|preauthorization|medical coding|revenue cycle)/.test(text)) return "Insurance";
   if (/(marketing|sales|business development|brand|outreach|doctor relations|patient acquisition)/.test(text)) return "Marketing";
-  if (/(physio|physiotherapist|rehabilitation|physical therapy)/.test(text)) return "Physiotherapist";
+  if (/(physio|physiotherapist|physiotherapy|rehabilitation|physical therapy)/.test(text)) return "Physiotherapy";
 
   return "Other";
 };
@@ -708,6 +860,12 @@ export const inferHealthcareSpecialization = (
 
   const exact = allowed.find((item) => normalizeText(item) === specialization);
   if (exact) return exact;
+
+  if (title === "Doctor") {
+    if (/medical officer|medicine officer/.test(specialization)) return "Medical Officer";
+    if (/superspecialist medicine|super specialist-medical|super specialist medical/.test(specialization)) return "Superspecialist Medicine";
+    if (/superspecialist surgery|super specialist - surgical|super specialist surgical|surgical specialist/.test(specialization)) return "Superspecialist Surgery";
+  }
 
   const byField = Object.entries(TITLE_FIELD_OPTIONS[title] || {}).find(
     ([, fields]) => fields.some((field) => normalizeText(field) === specialization)
@@ -723,28 +881,68 @@ export const inferHealthcareField = (
   specialization: string
 ) => {
   const current = normalizeText(job.specialization);
-  const options = TITLE_FIELD_OPTIONS[title]?.[specialization] || ["Other"];
+  const options = getFieldOptions(title, specialization);
   const exact = options.find((field) => normalizeText(field) === current);
   return exact || "Other";
 };
 
-export const getSpecializationOptions = (title: HealthcareTitle | "") => {
+export const getSpecializationOptions = (title: HealthcareTitle | string | "") => {
   if (!title) return [];
-  return TITLE_SPECIALIZATION_OPTIONS[title] || [];
+  const normalizedTitle = title === "Physiotherapist" ? "Physiotherapy" : title;
+  return TITLE_SPECIALIZATION_OPTIONS[normalizedTitle as HealthcareTitle] || TITLE_SPECIALIZATION_OPTIONS[title as HealthcareTitle] || [];
 };
 
-export const getFieldOptions = (title: HealthcareTitle | "", specialization: string) => {
+export const getFieldOptions = (title: HealthcareTitle | string | "", specialization: string) => {
   if (!title || !specialization) return [];
-  return TITLE_FIELD_OPTIONS[title]?.[specialization] || ["Other"];
+  const normalizedTitle = title === "Physiotherapist" ? "Physiotherapy" : title;
+  const titleOptions =
+    TITLE_FIELD_OPTIONS[normalizedTitle as HealthcareTitle] ||
+    TITLE_FIELD_OPTIONS[title as HealthcareTitle];
+  if (!titleOptions) return ["Other"];
+
+  if (titleOptions[specialization]) return titleOptions[specialization];
+
+  if (normalizedTitle === "Doctor") {
+    if (specialization === "Medical Officer" || specialization === "Medicine officer") {
+      return titleOptions["Medical Officer"] || titleOptions["Medicine officer"] || ["Other"];
+    }
+    if (
+      specialization === "Superspecialist Medicine" ||
+      specialization === "Super specialist-Medical" ||
+      specialization === "Super specialist" ||
+      specialization === "Superspecialist"
+    ) {
+      return titleOptions["Superspecialist Medicine"] || titleOptions["Super specialist-Medical"] || ["Other"];
+    }
+    if (
+      specialization === "Superspecialist Surgery" ||
+      specialization === "Super specialist - Surgical" ||
+      specialization === "surgical specialist"
+    ) {
+      return titleOptions["Superspecialist Surgery"] || titleOptions["Super specialist - Surgical"] || ["Other"];
+    }
+  }
+
+  return ["Other"];
 };
 
-export const getDegreeOptions = (title: HealthcareTitle | "", specialization: string) => {
+export const getDegreeOptions = (title: HealthcareTitle | string | "", specialization: string) => {
   if (!title) return [];
+  const normalizedTitle = title === "Physiotherapist" ? "Physiotherapy" : title;
+  const options = new Set(
+    TITLE_DEGREE_OPTIONS[normalizedTitle as HealthcareTitle] ||
+      TITLE_DEGREE_OPTIONS[title as HealthcareTitle] ||
+      []
+  );
 
-  const options = new Set(TITLE_DEGREE_OPTIONS[title] || []);
-
-  if (title === "Doctor") {
-    if (specialization === "Super specialist") {
+  if (normalizedTitle === "Doctor") {
+    if (
+      specialization === "Superspecialist Medicine" ||
+      specialization === "Superspecialist Surgery" ||
+      specialization === "Super specialist" ||
+      specialization === "Super specialist-Medical" ||
+      specialization === "Super specialist - Surgical"
+    ) {
       options.add("DM");
       options.add("MCh");
       options.add("DNB");
@@ -755,6 +953,19 @@ export const getDegreeOptions = (title: HealthcareTitle | "", specialization: st
       options.add("MS");
       options.add("DNB");
       options.add("Diploma");
+    }
+    if (
+      specialization === "Medical Officer" ||
+      specialization === "Medicine officer" ||
+      specialization === "Primary care" ||
+      specialization === "RMO"
+    ) {
+      options.add("MBBS");
+      options.add("BAMS");
+      options.add("BHMS");
+      options.add("BUMS");
+      options.add("Unani");
+      options.add("BDS");
     }
   }
 

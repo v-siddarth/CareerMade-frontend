@@ -30,20 +30,24 @@ import {
   TITLE_FIELD_OPTIONS,
   type HealthcareTitle,
 } from "@/lib/healthcare-taxonomy";
+import { FILTER_LOCATIONS } from "@/lib/location-options";
 
 const BASE_SPECIALIZATIONS = JOB_SPECIALIZATION_ENUM.filter((item) => item !== "Other");
 
-const LOCATIONS = [
-  "Mumbai", "Delhi NCR", "Bangalore", "Pune", "Hyderabad",
-  "Chennai", "Kolkata", "Ahmedabad",
-];
+const LOCATIONS = FILTER_LOCATIONS;
 
 const WORK_MODES = ["On-site", "Remote", "Full-time"];
 
-const flattenFields = (title: HealthcareTitle) =>
-  Array.from(
-    new Set(Object.values(TITLE_FIELD_OPTIONS[title] || {}).flat().filter((item) => item !== "Other"))
+const flattenFields = (title: HealthcareTitle | string) => {
+  const normalizedTitle = title === "Physiotherapist" ? "Physiotherapy" : title;
+  const options =
+    TITLE_FIELD_OPTIONS[normalizedTitle as HealthcareTitle] ||
+    TITLE_FIELD_OPTIONS[title as HealthcareTitle] ||
+    {};
+  return Array.from(
+    new Set(Object.values(options).flat().filter((item) => item !== "Other"))
   );
+};
 
 const doctorSpecialties = flattenFields("Doctor");
 const technicianSpecialties = flattenFields("Technician");
@@ -54,7 +58,8 @@ const CATEGORY_TO_SPECIALTIES: Record<string, string[]> = {
   "Nursing Staff": flattenFields("Nurse"),
   Technicians: technicianSpecialties,
   "Admin & Support": [...flattenFields("Admin"), ...supportSpecialties],
-  Physiotherapist: flattenFields("Physiotherapist"),
+  Physiotherapy: flattenFields("Physiotherapy"),
+  Physiotherapist: flattenFields("Physiotherapy"),
   Therapists: [...technicianSpecialties, ...supportSpecialties].filter((item) =>
     /(therapy|therapist|physio|rehabilitation|audiologist|nutrition|counsellor|psychologist)/i.test(item)
   ),

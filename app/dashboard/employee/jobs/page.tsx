@@ -27,7 +27,16 @@ import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { apiFetch, authStorage } from "@/lib/api-client";
-import { getSpecialtyFilterOptions } from "@/lib/healthcare-taxonomy";
+import {
+  HEALTHCARE_TITLES,
+  TITLE_FIELD_OPTIONS,
+  TITLE_SPECIALIZATION_OPTIONS,
+  type HealthcareTitle,
+  inferHealthcareField,
+  inferHealthcareSpecialization,
+  inferHealthcareTitle,
+} from "@/lib/healthcare-taxonomy";
+import { FILTER_LOCATIONS } from "@/lib/location-options";
 
 
 interface Location {
@@ -69,10 +78,7 @@ interface EmployerProfile {
   companyName?: string;
 }
 
-const LOCATIONS = [
-  "Mumbai", "Delhi NCR", "Bangalore", "Pune", "Hyderabad",
-  "Chennai", "Kolkata", "Ahmedabad",
-];
+const LOCATIONS = FILTER_LOCATIONS;
 
 const JOB_TYPES = [
   "Full-time",
@@ -87,22 +93,21 @@ export default function JobListing() {
   const router = useRouter();
   const [jobs, setJobs] = useState<any[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
-  const [filters, setFilters] = useState({
-    specialization: "",
-    location: "",
-    salary: "",
-    years: "",
-  });
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [mobileFilters, setMobileFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showAllSpecialties, setShowAllSpecialties] = useState(false);
+  const [locationSearch, setLocationSearch] = useState("");
+  const [showAllTitles, setShowAllTitles] = useState(false);
+  const [showAllSpecializations, setShowAllSpecializations] = useState(false);
+  const [showAllFields, setShowAllFields] = useState(false);
   const [showAllLocations, setShowAllLocations] = useState(false);
 
   // Filter section expansion states
   const [expandedSections, setExpandedSections] = useState({
-    specialty: true,
+    title: true,
+    specialization: true,
+    field: true,
     location: true,
     jobType: true,
     experience: true,
@@ -110,7 +115,9 @@ export default function JobListing() {
   });
 
   // Selected filters
-  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
+  const [selectedTitle, setSelectedTitle] = useState<HealthcareTitle | "">("");
+  const [selectedSpecialization, setSelectedSpecialization] = useState<string>("");
+  const [selectedField, setSelectedField] = useState<string>("");
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>([]);
   const [experienceRange, setExperienceRange] = useState(0);
@@ -120,14 +127,6 @@ export default function JobListing() {
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
-
-  const toggleSpecialty = (specialty: string) => {
-    setSelectedSpecialties(prev =>
-      prev.includes(specialty)
-        ? prev.filter(s => s !== specialty)
-        : [...prev, specialty]
-    );
   };
 
   const toggleLocation = (location: string) => {
@@ -146,15 +145,41 @@ export default function JobListing() {
     );
   };
 
-  const getSpecialtyCount = (specialty: string) => {
-    return jobs.filter(j => j.specialization?.toLowerCase() === specialty.toLowerCase()).length;
+  const availableSpecializations = selectedTitle
+    ? TITLE_SPECIALIZATION_OPTIONS[selectedTitle] || []
+    : [];
+
+  const availableFields =
+    selectedTitle && selectedSpecialization
+      ? TITLE_FIELD_OPTIONS[selectedTitle]?.[selectedSpecialization] || []
+      : [];
+
+  const getTitleCount = (title: string) => {
+    return jobs.filter((j) => inferHealthcareTitle(j).toLowerCase() === title.toLowerCase()).length;
   };
 
-  const specialtyOptions = getSpecialtyFilterOptions(
-    jobs
-      .map((job) => job.specialization?.trim())
-      .filter((item): item is string => Boolean(item))
-  ).sort((a, b) => getSpecialtyCount(b) - getSpecialtyCount(a) || a.localeCompare(b));
+  const getSpecializationCount = (spec: string) => {
+    return jobs.filter((j) => {
+      const jobTitle = inferHealthcareTitle(j);
+      if (selectedTitle && jobTitle.toLowerCase() !== selectedTitle.toLowerCase()) return false;
+      const jobSpec = inferHealthcareSpecialization(j, jobTitle);
+      return jobSpec.toLowerCase() === spec.toLowerCase();
+    }).length;
+  };
+
+  const getFieldCount = (field: string) => {
+    return jobs.filter((j) => {
+      const jobTitle = inferHealthcareTitle(j);
+      if (selectedTitle && jobTitle.toLowerCase() !== selectedTitle.toLowerCase()) return false;
+      const jobSpec = inferHealthcareSpecialization(j, jobTitle);
+      if (selectedSpecialization && jobSpec.toLowerCase() !== selectedSpecialization.toLowerCase()) return false;
+      const jobField = inferHealthcareField(j, jobTitle, jobSpec);
+      return (
+        jobField.toLowerCase() === field.toLowerCase() ||
+        j.specialization?.toLowerCase() === field.toLowerCase()
+      );
+    }).length;
+  };
 
   const getLocationCount = (location: string) => {
     return jobs.filter(j =>
@@ -168,29 +193,34 @@ export default function JobListing() {
   };
 
   const clearAllFilters = () => {
-    setSelectedSpecialties([]);
+    setSelectedTitle("");
+    setSelectedSpecialization("");
+    setSelectedField("");
     setSelectedLocations([]);
     setSelectedJobTypes([]);
     setExperienceRange(0);
     setSalaryRange(0);
     setSearchQuery("");
-    setFilters({
-      specialization: "",
-      location: "",
-      salary: "",
-      years: "",
-    });
+    setLocationSearch("");
   };
 
   const getAppliedFiltersCount = () => {
     let count = 0;
-    if (selectedSpecialties.length > 0) count++;
+    if (selectedTitle) count++;
+    if (selectedSpecialization) count++;
+    if (selectedField) count++;
     if (selectedLocations.length > 0) count++;
     if (selectedJobTypes.length > 0) count++;
     if (experienceRange > 0) count++;
     if (salaryRange > 0) count++;
     return count;
   };
+
+  const filteredLocationOptions = locationSearch.trim()
+    ? LOCATIONS.filter((loc) =>
+        loc.toLowerCase().includes(locationSearch.toLowerCase().trim())
+      )
+    : LOCATIONS;
 
 
   const handleDelete = async (id: string): Promise<void> => {
@@ -263,13 +293,31 @@ export default function JobListing() {
       );
     }
 
-    // Specialty filter (multiple selection)
-    if (selectedSpecialties.length > 0) {
-      filtered = filtered.filter(j =>
-        selectedSpecialties.some(s =>
-          j.specialization?.toLowerCase() === s.toLowerCase()
-        )
-      );
+    // Title filter
+    if (selectedTitle) {
+      filtered = filtered.filter((j) => inferHealthcareTitle(j) === selectedTitle);
+    }
+
+    // Specialization filter
+    if (selectedSpecialization) {
+      filtered = filtered.filter((j) => {
+        const jobTitle = inferHealthcareTitle(j);
+        const jobSpec = inferHealthcareSpecialization(j, jobTitle);
+        return jobSpec.toLowerCase() === selectedSpecialization.toLowerCase();
+      });
+    }
+
+    // Field filter
+    if (selectedField) {
+      filtered = filtered.filter((j) => {
+        const jobTitle = inferHealthcareTitle(j);
+        const jobSpec = inferHealthcareSpecialization(j, jobTitle);
+        const jobField = inferHealthcareField(j, jobTitle, jobSpec);
+        return (
+          jobField.toLowerCase() === selectedField.toLowerCase() ||
+          j.specialization?.toLowerCase() === selectedField.toLowerCase()
+        );
+      });
     }
 
     // Location filter (multiple selection)
@@ -309,7 +357,17 @@ export default function JobListing() {
 
     setFilteredJobs(filtered);
     setCurrentPage(1);
-  }, [searchQuery, jobs, selectedSpecialties, selectedLocations, selectedJobTypes, experienceRange, salaryRange]);
+  }, [
+    searchQuery,
+    jobs,
+    selectedTitle,
+    selectedSpecialization,
+    selectedField,
+    selectedLocations,
+    selectedJobTypes,
+    experienceRange,
+    salaryRange,
+  ]);
 
 
   // ✅ Pagination
@@ -430,48 +488,166 @@ export default function JobListing() {
           </div>
 
           <div className="space-y-6 overflow-y-auto no-scrollbar" style={{ maxHeight: "calc(100vh - 200px)" }}>
-            {/* SPECIALTY FILTER */}
+            {/* TITLE FILTER */}
             <div className="pb-6 border-b">
               <button
-                onClick={() => toggleSection("specialty")}
+                onClick={() => toggleSection("title")}
                 className="w-full flex items-center justify-between mb-4"
               >
-                <h3 className="text-base font-bold text-gray-900">Specialty</h3>
-                {expandedSections.specialty ? (
+                <h3 className="text-base font-bold text-gray-900">Title</h3>
+                {expandedSections.title ? (
                   <ChevronUp className="w-5 h-5 text-gray-500" />
                 ) : (
                   <ChevronDown className="w-5 h-5 text-gray-500" />
                 )}
               </button>
 
-              {expandedSections.specialty && (
+              {expandedSections.title && (
                 <div className="space-y-2.5">
-                  {(showAllSpecialties ? specialtyOptions : specialtyOptions.slice(0, 5)).map((specialty) => (
+                  {(showAllTitles ? HEALTHCARE_TITLES : HEALTHCARE_TITLES.slice(0, 5)).map((title) => (
                     <label
-                      key={specialty}
+                      key={title}
                       className="flex items-center gap-2.5 cursor-pointer group"
                     >
                       <input
                         type="checkbox"
-                        checked={selectedSpecialties.includes(specialty)}
-                        onChange={() => toggleSpecialty(specialty)}
+                        checked={selectedTitle === title}
+                        onChange={() => {
+                          if (selectedTitle === title) {
+                            setSelectedTitle("");
+                            setSelectedSpecialization("");
+                            setSelectedField("");
+                          } else {
+                            setSelectedTitle(title);
+                            setSelectedSpecialization("");
+                            setSelectedField("");
+                          }
+                        }}
                         className="w-4 h-4 accent-black text-black border-gray-300 rounded"
                       />
                       <span className="text-sm text-gray-700 group-hover:text-gray-900 flex-1">
-                        {specialty}
+                        {title}
                       </span>
-                      <span className="text-xs text-gray-400">({getSpecialtyCount(specialty)})</span>
+                      <span className="text-xs text-gray-400">({getTitleCount(title)})</span>
                     </label>
                   ))}
-                  {specialtyOptions.length > 5 && (
+                  {HEALTHCARE_TITLES.length > 5 && (
                     <button
-                      onClick={() => setShowAllSpecialties(!showAllSpecialties)}
+                      onClick={() => setShowAllTitles(!showAllTitles)}
                       className="text-sm text-blue-600 hover:text-blue-700 font-medium mt-2"
                     >
-                      {showAllSpecialties ? "View Less" : "View More"}
+                      {showAllTitles ? "View Less" : "View More"}
                     </button>
                   )}
                 </div>
+              )}
+            </div>
+
+            {/* SPECIALIZATION FILTER */}
+            <div className="pb-6 border-b">
+              <button
+                onClick={() => toggleSection("specialization")}
+                className="w-full flex items-center justify-between mb-4"
+              >
+                <h3 className="text-base font-bold text-gray-900">Specialisation</h3>
+                {expandedSections.specialization ? (
+                  <ChevronUp className="w-5 h-5 text-gray-500" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-gray-500" />
+                )}
+              </button>
+
+              {expandedSections.specialization && (
+                !selectedTitle ? (
+                  <p className="text-sm text-gray-500 italic">Select a title first</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {(showAllSpecializations ? availableSpecializations : availableSpecializations.slice(0, 5)).map((spec) => (
+                      <label
+                        key={spec}
+                        className="flex items-center gap-2.5 cursor-pointer group"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedSpecialization === spec}
+                          onChange={() => {
+                            if (selectedSpecialization === spec) {
+                              setSelectedSpecialization("");
+                              setSelectedField("");
+                            } else {
+                              setSelectedSpecialization(spec);
+                              setSelectedField("");
+                            }
+                          }}
+                          className="w-4 h-4 accent-black text-black border-gray-300 rounded"
+                        />
+                        <span className="text-sm text-gray-700 group-hover:text-gray-900 flex-1">
+                          {spec}
+                        </span>
+                        <span className="text-xs text-gray-400">({getSpecializationCount(spec)})</span>
+                      </label>
+                    ))}
+                    {availableSpecializations.length > 5 && (
+                      <button
+                        onClick={() => setShowAllSpecializations(!showAllSpecializations)}
+                        className="text-sm text-blue-600 hover:text-blue-700 font-medium mt-2"
+                      >
+                        {showAllSpecializations ? "View Less" : "View More"}
+                      </button>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+
+            {/* FIELD FILTER */}
+            <div className="pb-6 border-b">
+              <button
+                onClick={() => toggleSection("field")}
+                className="w-full flex items-center justify-between mb-4"
+              >
+                <h3 className="text-base font-bold text-gray-900">Field</h3>
+                {expandedSections.field ? (
+                  <ChevronUp className="w-5 h-5 text-gray-500" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-gray-500" />
+                )}
+              </button>
+
+              {expandedSections.field && (
+                !selectedTitle || !selectedSpecialization ? (
+                  <p className="text-sm text-gray-500 italic">Select title and specialisation first</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {(showAllFields ? availableFields : availableFields.slice(0, 5)).map((field) => (
+                      <label
+                        key={field}
+                        className="flex items-center gap-2.5 cursor-pointer group"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedField === field}
+                          onChange={() => {
+                            setSelectedField(selectedField === field ? "" : field);
+                          }}
+                          className="w-4 h-4 accent-black text-black border-gray-300 rounded"
+                        />
+                        <span className="text-sm text-gray-700 group-hover:text-gray-900 flex-1">
+                          {field}
+                        </span>
+                        <span className="text-xs text-gray-400">({getFieldCount(field)})</span>
+                      </label>
+                    ))}
+                    {availableFields.length > 5 && (
+                      <button
+                        onClick={() => setShowAllFields(!showAllFields)}
+                        className="text-sm text-blue-600 hover:text-blue-700 font-medium mt-2"
+                      >
+                        {showAllFields ? "View Less" : "View More"}
+                      </button>
+                    )}
+                  </div>
+                )
               )}
             </div>
 
@@ -491,7 +667,14 @@ export default function JobListing() {
 
               {expandedSections.location && (
                 <div className="space-y-2.5">
-                  {(showAllLocations ? LOCATIONS : LOCATIONS.slice(0, 5)).map((location) => (
+                  <input
+                    type="text"
+                    placeholder="Search town/city..."
+                    value={locationSearch}
+                    onChange={(e) => setLocationSearch(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-lg mb-2 focus:ring-1 focus:ring-blue-500 outline-none"
+                  />
+                  {(showAllLocations || locationSearch ? filteredLocationOptions : filteredLocationOptions.slice(0, 5)).map((location) => (
                     <label
                       key={location}
                       className="flex items-center gap-2.5 cursor-pointer group"
@@ -508,13 +691,16 @@ export default function JobListing() {
                       <span className="text-xs text-gray-400">({getLocationCount(location)})</span>
                     </label>
                   ))}
-                  {LOCATIONS.length > 5 && (
+                  {!locationSearch && filteredLocationOptions.length > 5 && (
                     <button
                       onClick={() => setShowAllLocations(!showAllLocations)}
                       className="text-sm text-blue-600 hover:text-blue-700 font-medium mt-2"
                     >
-                      {showAllLocations ? "View Less" : "View More"}
+                      {showAllLocations ? "View Less" : `View More (${filteredLocationOptions.length - 5}+)`}
                     </button>
+                  )}
+                  {locationSearch && filteredLocationOptions.length === 0 && (
+                    <p className="text-xs text-gray-400">No matching locations</p>
                   )}
                 </div>
               )}
@@ -783,11 +969,11 @@ export default function JobListing() {
                 No jobs found
               </h3>
               <p className="text-sm text-gray-500 mb-4">
-                {searchQuery || selectedSpecialties.length > 0 || selectedJobTypes.length > 0 || experienceRange > 0 || salaryRange > 0
+                {searchQuery || selectedTitle || selectedSpecialization || selectedField || selectedLocations.length > 0 || selectedJobTypes.length > 0 || experienceRange > 0 || salaryRange > 0
                   ? "Try adjusting your filters or search query"
                   : "You haven't created any jobs yet"}
               </p>
-              {(searchQuery || selectedSpecialties.length > 0 || selectedJobTypes.length > 0 || experienceRange > 0 || salaryRange > 0) && (
+              {(searchQuery || selectedTitle || selectedSpecialization || selectedField || selectedLocations.length > 0 || selectedJobTypes.length > 0 || experienceRange > 0 || salaryRange > 0) && (
                 <button
                   onClick={clearAllFilters}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"

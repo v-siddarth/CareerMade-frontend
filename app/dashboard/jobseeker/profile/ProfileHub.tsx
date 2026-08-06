@@ -7,10 +7,13 @@ import Navbar from "@/app/components/Navbar";
 import { apiFetch, authStorage, logout } from "@/lib/api-client";
 import { CITY_OPTIONS_BY_STATE, LOCATION_STATE_OPTIONS } from "@/lib/location-options";
 import {
+  BENEFITS_OPTIONS,
   HEALTHCARE_TITLES,
   TITLE_DEGREE_OPTIONS,
   TITLE_FIELD_OPTIONS,
   TITLE_SPECIALIZATION_OPTIONS,
+  getFieldOptions,
+  getSpecializationOptions,
 } from "@/lib/healthcare-taxonomy";
 import {
   Bell,
@@ -197,11 +200,11 @@ type ApiResponse = {
 };
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
-  { id: "overview", label: "Overview", icon: <Sparkles className="h-4 w-4" /> },
-  { id: "personal", label: "Personal", icon: <UserRound className="h-4 w-4" /> },
+  { id: "overview", label: "Overview", icon: <UserRound className="h-4 w-4" /> },
+  { id: "personal", label: "Personal", icon: <Mail className="h-4 w-4" /> },
   { id: "professional", label: "Professional", icon: <Briefcase className="h-4 w-4" /> },
   { id: "education", label: "Education", icon: <FileText className="h-4 w-4" /> },
-  { id: "experience", label: "Work Experience", icon: <Briefcase className="h-4 w-4" /> },
+  { id: "experience", label: "Experience", icon: <Briefcase className="h-4 w-4" /> },
   { id: "skills", label: "Skills & Jobs", icon: <Sparkles className="h-4 w-4" /> },
   { id: "expectations", label: "Expectations", icon: <CreditCard className="h-4 w-4" /> },
   { id: "documents", label: "Documents", icon: <FileText className="h-4 w-4" /> },
@@ -219,24 +222,6 @@ const DEGREE_OPTIONS = TITLE_DEGREE_OPTIONS as Record<string, string[]>;
 
 const PREFERRED_JOB_TYPES = ["Full-time", "Part-time", "Contract", "Freelance", "Internship", "Locum"];
 const PREFERRED_SHIFTS = ["Fixed Shift", "Rotational Shift", "Night Shift"];
-
-const BENEFITS_OPTIONS = [
-  "Health Insurance",
-  "Life Insurance",
-  "Retirement/Pension Plan",
-  "CME Allowance",
-  "Professional Development",
-  "Housing Assistance",
-  "Relocation Assistance",
-  "Paid Time Off",
-  "Sick Leave",
-  "Maternity/Paternity Leave",
-  "Meal Allowance",
-  "Transportation",
-  "Conference Attendance",
-  "Research Opportunities",
-  "Indemnity Insurance",
-];
 
 const toDateInputValue = (value?: string) => {
   if (!value) return "";
@@ -870,13 +855,13 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
   };
 
   const selectedCategory = profile?.professionalInfo?.category || "";
-  const specializationOptions = SPEC_OPTIONS[selectedCategory] || [];
+  const specializationOptions = getSpecializationOptions(selectedCategory);
   const degreeOptions = DEGREE_OPTIONS[selectedCategory] || DEGREE_OPTIONS.Other;
   const selectedDoctorSpecializations =
     selectedCategory === "Doctor" ? profile?.professionalInfo?.specifications || [] : [];
   const doctorFieldOptions = Array.from(
     new Set(
-      selectedDoctorSpecializations.flatMap((specialization) => DOCTOR_FIELD_OPTIONS[specialization] || [])
+      selectedDoctorSpecializations.flatMap((specialization) => getFieldOptions("Doctor", specialization) || [])
     )
   );
 
@@ -1240,23 +1225,6 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                       />
                     </label>
                     <label className="text-sm font-medium text-gray-700">
-                      City
-                      <input
-                        type="text"
-                        value={profile.personalInfo?.address?.city || ""}
-                        onChange={(e) =>
-                          updateProfile((prev) => ({
-                            ...prev,
-                            personalInfo: {
-                              ...prev.personalInfo,
-                              address: { ...prev.personalInfo?.address, city: e.target.value },
-                            },
-                          }))
-                        }
-                        className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
-                      />
-                    </label>
-                    <label className="text-sm font-medium text-gray-700">
                       State
                       <input
                         type="text"
@@ -1267,6 +1235,23 @@ export default function ProfileHub({ initialTab = "overview" }: ProfileHubProps)
                             personalInfo: {
                               ...prev.personalInfo,
                               address: { ...prev.personalInfo?.address, state: e.target.value },
+                            },
+                          }))
+                        }
+                        className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2"
+                      />
+                    </label>
+                    <label className="text-sm font-medium text-gray-700">
+                      City
+                      <input
+                        type="text"
+                        value={profile.personalInfo?.address?.city || ""}
+                        onChange={(e) =>
+                          updateProfile((prev) => ({
+                            ...prev,
+                            personalInfo: {
+                              ...prev.personalInfo,
+                              address: { ...prev.personalInfo?.address, city: e.target.value },
                             },
                           }))
                         }

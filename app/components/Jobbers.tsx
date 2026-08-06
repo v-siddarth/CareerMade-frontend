@@ -18,11 +18,9 @@ import "react-toastify/dist/ReactToastify.css";
 import { motion } from "framer-motion";
 import { apiFetch } from "@/lib/api-client";
 import { getSpecialtyFilterOptions } from "@/lib/healthcare-taxonomy";
+import { FILTER_LOCATIONS } from "@/lib/location-options";
 
-const LOCATIONS = [
-  "Mumbai", "Delhi NCR", "Bangalore", "Pune", "Hyderabad",
-  "Chennai", "Kolkata", "Ahmedabad",
-];
+const LOCATIONS = FILTER_LOCATIONS;
 
 export default function JobSeekerJobs() {
   const router = useRouter();
