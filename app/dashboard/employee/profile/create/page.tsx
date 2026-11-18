@@ -680,7 +680,7 @@ export default function EmployerProfileCreatePage() {
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="+91 98765 43210"
+                  placeholder="+91 88065 06455"
                 />
               </div>
               <div className="sm:col-span-2">

@@ -72,9 +72,30 @@ const Footer = () => {
               Empowering healthcare professionals to find their dream careers
             </p>
             <div className="flex space-x-4">
-              <a href="https://www.linkedin.com" target="_blank" rel="noreferrer" className="hover:text-white">LinkedIn</a>
-              <a href="https://twitter.com" target="_blank" rel="noreferrer" className="hover:text-white">Twitter</a>
-              <a href="https://facebook.com" target="_blank" rel="noreferrer" className="hover:text-white">Facebook</a>
+              <a
+                href="https://www.linkedin.com"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-white"
+              >
+                LinkedIn
+              </a>
+              <a
+                href="https://twitter.com"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-white"
+              >
+                Twitter
+              </a>
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-white"
+              >
+                Facebook
+              </a>
             </div>
           </div>
 
@@ -82,10 +103,26 @@ const Footer = () => {
             <div>
               <h4 className="mb-4 font-semibold text-white">For Job Seekers</h4>
               <ul className="space-y-2 text-sm">
-                <li><Link href="/view-jobs" className="hover:text-white">Browse Jobs</Link></li>
-                <li><Link href="/career-resources" className="hover:text-white">Career Resources</Link></li>
-                <li><Link href="/dashboard/jobseeker/resume/build" className="hover:text-white">Resume Builder</Link></li>
-                <li><Link href="/pricing" className="hover:text-white">Pricing</Link></li>
+                <li>
+                  <Link href="/view-jobs" className="hover:text-white">
+                    Browse Jobs
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/career-resources" className="hover:text-white">
+                    Career Resources
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/dashboard/jobseeker/resume/build" className="hover:text-white">
+                    Resume Builder
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/pricing" className="hover:text-white">
+                    Pricing
+                  </Link>
+                </li>
               </ul>
             </div>
           )}
@@ -94,10 +131,26 @@ const Footer = () => {
             <div>
               <h4 className="mb-4 font-semibold text-white">For Employers</h4>
               <ul className="space-y-2 text-sm">
-                <li><Link href="/dashboard/employee/jobs/create" className="hover:text-white">Post a Job</Link></li>
-                <li><Link href="/dashboard/employee/jobs" className="hover:text-white">Manage Job Posts</Link></li>
-                <li><Link href="/dashboard/employee/applications" className="hover:text-white">Applications</Link></li>
-                <li><Link href="/pricing" className="hover:text-white">Pricing</Link></li>
+                <li>
+                  <Link href="/dashboard/employee/jobs/create" className="hover:text-white">
+                    Post a Job
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/dashboard/employee/jobs" className="hover:text-white">
+                    Manage Job Posts
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/dashboard/employee/applications" className="hover:text-white">
+                    Applications
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/pricing" className="hover:text-white">
+                    Pricing
+                  </Link>
+                </li>
               </ul>
             </div>
           )}
@@ -105,12 +158,36 @@ const Footer = () => {
           <div>
             <h4 className="mb-4 font-semibold text-white">Company</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/about-us" className="hover:text-white">About Us</Link></li>
-              <li><Link href="/contact" className="hover:text-white">Contact</Link></li>
-              <li><Link href="/privacy-policy" className="hover:text-white">Privacy Policy</Link></li>
-              <li><Link href="/terms-of-service" className="hover:text-white">Terms of Service</Link></li>
-              <li><Link href="/refund-policy" className="hover:text-white">Refund Policy</Link></li>
-              <li><Link href="/shipping-policy" className="hover:text-white">Shipping Policy</Link></li>
+              <li>
+                <Link href="/about-us" className="hover:text-white">
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:text-white">
+                  Contact
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy-policy" className="hover:text-white">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms-of-service" className="hover:text-white">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link href="/refund-policy" className="hover:text-white">
+                  Refund Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/shipping-policy" className="hover:text-white">
+                  Shipping Policy
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -134,11 +211,16 @@ const Footer = () => {
         <div className="border-t border-gray-800 pt-8 text-center text-sm">
           <p className="mb-2">
             Support Email:{" "}
-            <a href="mailto:support@careermed.in" className="text-gray-200 transition hover:text-white">
+            <a
+              href="mailto:support@careermed.in"
+              className="text-gray-200 transition hover:text-white"
+            >
               support@careermed.in
             </a>{" "}
             <span className="mx-2 hidden sm:inline">|</span>
-            <span className="block sm:inline">Contact: +918806506455</span>
+            <a href="tel:+918806506455" className="block sm:inline transition hover:text-white">
+              Contact: +91 88065 06455
+            </a>
           </p>
           <p>© 2026 CareerMed. All rights reserved.</p>
           <p className="mt-2">

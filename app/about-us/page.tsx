@@ -1,4 +1,5 @@
-import Navbar from "@/app/components/Navbar";
+import FooterPageShell from "@/app/components/FooterPageShell";
+import { BriefcaseBusiness, HeartHandshake, Target } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -11,45 +12,65 @@ export const metadata: Metadata = {
       "CareerMed is built to connect talented healthcare professionals with verified employers. Discover our mission, what we solve, and our promise.",
     url: "https://www.careermed.in/about-us",
   },
-  alternates: {
-    canonical: "/about-us",
-  },
+  alternates: { canonical: "/about-us" },
 };
+
+const values = [
+  {
+    title: "Our Mission",
+    text: "Build the most trusted healthcare hiring network where careers and organizations grow together.",
+    icon: Target,
+    color: "bg-blue-50 text-blue-600",
+  },
+  {
+    title: "What We Solve",
+    text: "We reduce hiring friction with role matching, application workflows, resume tooling, and role-based dashboards.",
+    icon: BriefcaseBusiness,
+    color: "bg-cyan-50 text-cyan-700",
+  },
+  {
+    title: "Our Promise",
+    text: "Product quality, transparent communication, and continuous improvements for both candidates and hiring teams.",
+    icon: HeartHandshake,
+    color: "bg-violet-50 text-violet-700",
+  },
+];
 
 export default function AboutUsPage() {
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen bg-gradient-to-b from-white via-blue-50/50 to-white">
-        <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold text-gray-900">About CareerMed</h1>
-          <p className="mt-5 text-lg leading-8 text-gray-700">
-            CareerMed is a healthcare-focused hiring platform built to connect talented professionals with verified employers.
-            We help job seekers discover the right opportunities faster and help employers hire quality candidates with confidence.
-          </p>
-
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900">Our Mission</h2>
-              <p className="mt-3 text-sm leading-6 text-gray-600">
-                Build the most trusted healthcare hiring network where careers and organizations grow together.
-              </p>
-            </article>
-            <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900">What We Solve</h2>
-              <p className="mt-3 text-sm leading-6 text-gray-600">
-                We reduce hiring friction with role matching, application workflows, resume tooling, and role-based dashboards.
-              </p>
-            </article>
-            <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900">Our Promise</h2>
-              <p className="mt-3 text-sm leading-6 text-gray-600">
-                Product quality, transparent communication, and continuous improvements for both candidates and hiring teams.
-              </p>
-            </article>
-          </div>
-        </section>
-      </main>
-    </>
+    <FooterPageShell
+      eyebrow="About CareerMed"
+      title="Healthcare careers, made more connected."
+      description="CareerMed is a healthcare-focused hiring platform built to connect talented professionals with verified employers."
+      icon={HeartHandshake}
+    >
+      <div className="mx-auto max-w-4xl text-center">
+        <p className="text-lg leading-8 text-slate-600">
+          We help job seekers discover the right opportunities faster and help employers hire
+          quality candidates with confidence.
+        </p>
+      </div>
+      <div className="mt-12 grid gap-6 md:grid-cols-3">
+        {values.map(({ title, text, icon: Icon, color }) => (
+          <article
+            key={title}
+            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+          >
+            <span className={`flex h-12 w-12 items-center justify-center rounded-xl ${color}`}>
+              <Icon className="h-6 w-6" aria-hidden="true" />
+            </span>
+            <h2 className="mt-5 text-lg font-semibold text-slate-900">{title}</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">{text}</p>
+          </article>
+        ))}
+      </div>
+      <div className="mt-10 rounded-3xl border border-blue-100 bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-8 text-center text-white shadow-lg shadow-blue-500/20 sm:px-10">
+        <h2 className="text-xl font-bold">Built for healthcare hiring</h2>
+        <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-blue-50">
+          From first opportunity to a successful hire, CareerMed brings candidates and healthcare
+          organizations together with clarity and confidence.
+        </p>
+      </div>
+    </FooterPageShell>
   );
 }
