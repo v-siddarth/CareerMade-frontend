@@ -1,5 +1,5 @@
 import Navbar from "@/app/components/Navbar";
-import { Clock3, Mail, MessageSquareText, Phone } from "lucide-react";
+import { Clock3, Mail, MessageSquareText, Phone, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -78,6 +78,47 @@ export default function ContactPage() {
               </p>
               <p className="mt-4 text-sm font-semibold text-violet-700">Within one business day</p>
             </div>
+          </div>
+          <div className="mt-6 grid gap-6 md:grid-cols-3">
+            <a
+              href="mailto:support@careermed.in?subject=CareerMed%20Grievance"
+              className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-rose-200 hover:shadow-lg"
+            >
+              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 text-rose-700">
+                <MessageSquareText className="h-6 w-6" aria-hidden="true" />
+              </span>
+              <h2 className="mt-5 font-semibold text-slate-900">Grievance</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Report a concern or request help resolving an issue.
+              </p>
+              <p className="mt-4 text-sm font-semibold text-rose-700">Email the grievance team</p>
+            </a>
+            <a
+              href="mailto:support@careermed.in?subject=CareerMed%20Privacy%20Request"
+              className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-violet-200 hover:shadow-lg"
+            >
+              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+                <ShieldCheck className="h-6 w-6" aria-hidden="true" />
+              </span>
+              <h2 className="mt-5 font-semibold text-slate-900">Privacy</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Submit a privacy question, request, or concern.
+              </p>
+              <p className="mt-4 text-sm font-semibold text-violet-700">Email the privacy team</p>
+            </a>
+            <a
+              href="mailto:support@careermed.in?subject=CareerMed%20Business%20Enquiry"
+              className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-amber-200 hover:shadow-lg"
+            >
+              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                <Mail className="h-6 w-6" aria-hidden="true" />
+              </span>
+              <h2 className="mt-5 font-semibold text-slate-900">Business enquiries</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Connect with us about organisational or business matters.
+              </p>
+              <p className="mt-4 text-sm font-semibold text-amber-700">Email CareerMed</p>
+            </a>
           </div>
           <p className="mt-10 text-center text-sm text-slate-500">
             For faster assistance, please include your registered email address and a short

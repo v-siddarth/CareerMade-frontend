@@ -5,91 +5,84 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Privacy Policy | CareerMed",
   description:
-    "Read CareerMed's privacy policy. Learn how we collect, process, and protect your personal data on our healthcare job platform.",
+    "Learn how CareerMed collects, uses, discloses, and protects personal data on its healthcare recruitment platform.",
   alternates: { canonical: "/privacy-policy" },
 };
 
+const policyText = "PRIVACY POLICY\nHow CareerMed collects, uses, discloses and protects personal data\nCareerMed is a healthcare recruitment and professional-opportunity platform operated by Lifemate Healthcare Private Limited (the “Company”, “CareerMed”, “we”, “us” or “our”). CareerMed connects healthcare professionals and allied personnel with hospitals, clinics, healthcare organisations and other prospective employers through its website, applications, portals and related services (collectively, the “Platform”).\nThis Privacy Policy explains the personal data we collect, the purposes and manner for which we process it, the persons with whom it may be shared, the safeguards and retention practices we apply, and the choices and rights available to users. It applies to the Platform and related services, subject to any more specific notice displayed at the point of collection.\nPlease read this Policy together with the CareerMed Terms and Conditions, Recruitment & Platform Guidelines, cookie notice and any service-specific notice. If there is a conflict concerning personal data, this Policy and any specific notice will govern to the extent of that subject matter, subject always to applicable law.\n1. SCOPE AND PERSONS COVERED\nThis Policy applies to individuals who visit or use the Platform, including job seekers, doctors, consultants, nurses, physiotherapists, pharmacists, technicians, paramedical professionals, administrative and support personnel, employers, hospitals, clinics, healthcare organisations, recruiters, authorised representatives and persons who communicate with CareerMed.\nFor this Policy, “personal data” or “personal information” means information about an identified or identifiable individual, as understood under applicable data-protection law. “User” includes a candidate, employer, recruiter, representative or visitor.\n2. WHO IS RESPONSIBLE FOR YOUR DATA\nThe Company operating CareerMed determines the purposes and means of processing personal data collected through the Platform, except where another organisation independently determines its own purposes and means of processing (for example, an employer that receives a candidate's application and independently evaluates or retains it).\nFor data processed by CareerMed, the Company will act in the capacity assigned to it under applicable law, including as a “Data Fiduciary” when and to the extent the Digital Personal Data Protection Act, 2023 (“DPDP Act”) and its operative rules apply. Employers may separately act as independent data fiduciaries/controllers in respect of candidate data they receive and process.\n3. CATEGORIES OF DATA WE MAY COLLECT\nThe information collected depends on the features used, the user's role, the vacancy and the level of verification requested. We do not require every user to provide every category listed below.\n• Identity and profile data: name, age or date of birth where relevant, profile photograph, gender if voluntarily supplied or lawfully relevant, and identity-verification details where required.\n• Contact and location data: mobile number, email address, address or city, preferred work location and communication preferences.\n• Professional and employment data: qualifications, degrees, diplomas, institution details, professional registration and registration numbers, specialisation, skills, experience, employment history, references, certifications, memberships, CV/resume, availability, preferred employment type and expected remuneration.\n• Verification data: documents and information used to check identity, qualifications, professional registration, employment history, experience, certifications or other vacancy-related claims.\n• Employer and organisation data: organisation name and type, address, website, contact details, authorised representative details, registration particulars, PAN/GST particulars where applicable, recruitment requirements, billing and transaction information.\n• Application and communication data: jobs viewed or applied for, application status, messages sent through Platform features, support requests, feedback, complaints and records of communications with CareerMed.\n• Technical and usage data: IP address, device and browser details, operating system, log-in and session data, device identifiers, timestamps, pages and features used, cookies, diagnostics and security logs.\n• Payment and transaction data: payment status, transaction reference, amount, date, invoice and limited payment-provider information. Payment credentials are generally handled by the payment service provider and are not intended to be stored by CareerMed.\n4. INFORMATION WE DO NOT ASK YOU TO UPLOAD\nCareerMed is a recruitment platform and is not intended to receive patient medical records, patient-identifiable clinical information, hospital case sheets, diagnostic images, treatment records or other patient data. Users must not upload such information unless a specific feature expressly requires it and the user has lawful authority to do so.\nDo not submit passwords, OTPs, ATM PINs, payment PINs, banking passwords or unrelated confidential information. CareerMed will not ordinarily ask for such credentials. If a vacancy legitimately requires a particular document, the employer and candidate should use a secure and lawful method and disclose only what is necessary.\n5. SOURCES OF DATA\nWe may collect data directly from you when you register, create or update a profile, post a vacancy, apply for a job, upload documents, communicate with support or use Platform features. We may also receive information from an employer, candidate, authorised representative, verification provider, publicly accessible professional or statutory registry, payment provider or other lawful source. Where we obtain information from a third party, we may use it to validate, supplement or investigate information supplied to us, subject to applicable law.\n6. PURPOSES FOR WHICH WE PROCESS DATA\nWe process personal data only for specified, lawful and reasonably necessary purposes, which may include:\n• creating, authenticating and administering user and employer accounts;\n• creating, displaying and maintaining professional profiles and employer pages;\n• publishing vacancies and facilitating job search, applications, candidate discovery and recruitment communications;\n• matching candidates and vacancies using profile details, preferences, filters and Platform functionality;\n• making relevant candidate information available to an employer where a candidate applies, enables profile visibility or otherwise authorises disclosure;\n• checking or displaying the status of qualifications, professional registrations, experience or other information where verification is offered;\n• providing customer support, responding to queries, resolving complaints and administering feedback;\n• providing paid or premium services, issuing invoices, processing payments and managing refunds or billing disputes;\n• detecting, preventing and investigating fraud, impersonation, fake vacancies, forged documents, abuse, security incidents and violations of Platform policies;\n• maintaining, testing, securing and improving Platform functionality, user experience and service quality;\n• sending service, account, security, legal, recruitment and policy communications;\n• sending promotional communications where permitted and, where required, with the user's consent;\n• complying with applicable laws, court orders, lawful government requests and regulatory obligations; and\n• establishing, exercising or defending legal claims and protecting the rights, safety and property of CareerMed, users and others.\n7. CONSENT, NOTICE AND LAWFUL PROCESSING\nWhere applicable law requires consent, CareerMed will seek consent through a clear affirmative action, such as a suitably worded checkbox, electronic acceptance, profile setting, application action or other permitted mechanism. A pre-ticked box, silence or mere browsing will not be treated as consent where the law requires affirmative consent.\nWhere required, the notice accompanying consent will identify the categories of personal data and the purposes of processing in clear language and will explain how a user may withdraw consent or exercise applicable rights. Consent to promotional communications will be separate from communications necessary to operate an account or respond to a job application.\nA user's acknowledgement of this Policy does not, by itself, replace any separate consent, notice or other legal requirement that may apply to a particular processing activity. CareerMed may also process information where another lawful basis or statutory permission applies under the law in force at the relevant time.\nIf you provide personal data about another person, you represent that you are authorised to do so and that all required notices, permissions and lawful bases have been obtained.\n8. CANDIDATE PROFILE VISIBILITY AND APPLICATIONS\nDepending on Platform settings and functionality, a candidate profile may be visible to employers or recruiters who have been granted access to the relevant candidate-search or recruitment feature. A candidate should review profile visibility settings and avoid including information that is not necessary for recruitment.\nWhen a candidate applies for a vacancy, the application information and documents selected or required for that application may be made available to the relevant employer and its authorised recruitment personnel. Where a candidate makes a profile visible, the information displayed may be accessible to eligible employers in accordance with the Platform's settings.\nCareerMed may use reasonable access controls and relevance filters, but cannot guarantee that an employer will not copy, download, retain or further process information that has been lawfully disclosed to it. Once an employer receives candidate data, the employer may process it independently for recruitment, employment, credentialing or legal purposes and must provide any notices and meet any obligations applicable to its own processing.\nA candidate may withdraw an application or change profile visibility where the Platform permits. Such action will not necessarily retrieve information already viewed, downloaded, copied or retained by an employer, nor erase records that must lawfully be retained.\n9. VERIFICATION AND VERIFICATION INDICATORS\nWhere verification features are available, CareerMed may examine documents submitted by a user, consult publicly accessible records or professional registries, seek confirmation from an institution or former employer, or engage an authorised verification provider. Verification may be limited in scope, time or source and may not be available for every profile or vacancy.\nA verification indicator will refer only to the particular item or check actually performed. It must not be interpreted as a guarantee of the user's identity, competence, character, fitness to practise, current registration status, employment history or suitability. Users and employers remain responsible for conducting any further checks required by law or appropriate to the engagement.\nWhere a verification request involves disclosure to an institution, registry or verification provider, CareerMed will process and disclose the relevant information subject to applicable law and any required notice or consent.\n10. SHARING AND DISCLOSURE\nCareerMed may disclose personal data only to the extent reasonably necessary for the purposes described in this Policy, or as otherwise permitted or required by law. Recipients may include:\n• the employer or recruiter to whom a candidate applies or whose recruitment access the candidate has enabled;\n• candidates or employers, where necessary to facilitate an application, response or recruitment communication;\n• hosting, cloud, database, software, analytics, cybersecurity and technical-support providers;\n• SMS, email, telephone, OTP, messaging and customer-support providers;\n• payment gateways, banks and invoicing or accounting service providers;\n• identity, qualification, professional-registration and background-verification providers;\n• the Company's professional advisers, auditors, insurers and service providers subject to appropriate confidentiality obligations;\n• courts, regulators, law-enforcement agencies or government authorities where disclosure is legally required or reasonably necessary to protect rights, safety or security; and\n• a successor, purchaser or restructuring entity in connection with a merger, reorganisation, financing, sale or transfer of all or part of the business, subject to applicable law and appropriate safeguards.\nCareerMed does not intend to sell candidate personal data as a standalone commercial product. This does not prevent CareerMed from charging for platform access, recruitment tools, subscriptions, listings, premium features or other services, or from sharing data with service providers and employers as described in this Policy.\n11. EMPLOYERS AS INDEPENDENT RECIPIENTS\nEmployers are responsible for their own handling of candidate information after receiving it from CareerMed. They must use it only for legitimate recruitment or related purposes, restrict access to authorised personnel, protect it against unauthorised disclosure and retain or delete it in accordance with applicable law and their own published privacy practices.\nCareerMed may require employers to accept contractual data-protection and confidentiality obligations. However, CareerMed does not control an employer's independent systems, employees, decisions or subsequent processing. Candidates should direct requests relating to an employer's independent records to that employer, without prejudice to any rights they may have against CareerMed under law.\n12. THIRD-PARTY SERVICES AND LINKS\nThe Platform may rely on third-party services and may contain links to websites, applications or services not operated by CareerMed. Those providers may process data under their own privacy notices and terms. CareerMed is not responsible for the privacy, security, content or practices of independent third parties, except to the extent responsibility is imposed on CareerMed by applicable law.\nUsers should review the privacy terms of the relevant payment provider, communication service, verification provider or external website before using it or submitting information to it.\n13. COOKIES AND SIMILAR TECHNOLOGIES\nCareerMed may use strictly necessary cookies and similar technologies to maintain sessions, authenticate users, preserve security and enable core Platform functions. With appropriate notice and consent or controls where required, we may also use analytics, preference and performance technologies to understand usage and improve the Platform.\nUsers may be able to control cookies through browser settings or Platform controls. Disabling certain cookies may affect login, security or other Platform functionality. Any cookie banner or preference centre displayed on the Platform will explain the available choices and their effect.\n14. DATA SECURITY AND CONFIDENTIALITY\nCareerMed will implement and maintain reasonable technical, organisational and administrative safeguards appropriate to the nature of the information and the risks of processing, as required by applicable law. Depending on the system and risk, safeguards may include:\n• role-based access controls, authentication and least-privilege access;\n• password protection and secure credential-handling practices;\n• encryption in transit and, where appropriate, at rest;\n• logging, monitoring, backups and recovery procedures;\n• security assessments, vulnerability management and software updates;\n• confidentiality obligations for personnel and service providers;\n• secure document handling and retention/deletion procedures; and\n• incident-response and business-continuity procedures.\nNo website, network, device or electronic storage system can be guaranteed to be completely secure. Users are responsible for maintaining the confidentiality of their passwords, using secure devices and promptly notifying CareerMed if they suspect unauthorised access to their account.\n15. PERSONAL DATA BREACHES\nIf CareerMed becomes aware of a personal data breach affecting information under its control, it will take reasonable and legally required steps to contain, investigate, mitigate and remediate the incident. CareerMed will make notifications to affected users, the Data Protection Board, CERT-In or other authorities where and within the time required by applicable law.\nUsers must promptly report suspected compromise of their accounts or unauthorised access to candidate or employer information through the contact details set out in this Policy.\n16. DATA RETENTION AND DELETION\nCareerMed will retain personal data for no longer than is reasonably necessary for the purpose for which it was collected, unless a longer period is required or permitted by law. Retention periods may vary by data category and may take account of:\n• the period for which an account remains active and the user continues to use the Platform;\n• the status and lifecycle of applications, vacancies, employer accounts and transactions;\n• verification, fraud-prevention, security and audit requirements;\n• statutory, regulatory, tax, accounting and record-keeping obligations;\n• the need to preserve evidence, resolve disputes or establish, exercise or defend legal claims; and\n• applicable intermediary, cybersecurity or lawful-record preservation requirements.\nWhen data is no longer required, CareerMed will take reasonable steps to delete, anonymise or securely dispose of it, subject to lawful retention requirements and backup-cycle limitations. Data in routine backups may remain for a limited period before being overwritten or securely deleted.\n17. ACCOUNT CLOSURE AND WITHDRAWAL OF CONSENT\nUsers may request account closure or deletion through the account settings or by contacting CareerMed at the designated privacy address. CareerMed may take reasonable steps to verify the identity and authority of the requester before acting.\nWhere processing is based on consent, a user may withdraw consent through the available mechanism or by contacting CareerMed. Withdrawal will not affect the lawfulness of processing carried out before withdrawal. It may also mean that CareerMed cannot continue providing a feature or service that depends on the relevant information.\nAccount closure does not automatically require deletion of all records. CareerMed may retain information to the extent necessary or legally required for pending transactions, tax and accounting records, security logs, fraud investigations, dispute resolution, legal claims, regulatory compliance or preservation obligations. Where retention is required, CareerMed will restrict further use to the permitted purpose.\n18. YOUR RIGHTS AND HOW TO EXERCISE THEM\nSubject to applicable law and the commencement of the relevant provisions, users may be entitled to request information about processing, correction or completion of inaccurate or misleading data, erasure, withdrawal of consent, grievance redressal and other rights available under the DPDP Act or other applicable law.\nRequests should be sent to the designated privacy/grievance contact below and should identify the account, the right being exercised and sufficient information to verify the request. CareerMed may seek additional information where reasonably necessary to verify identity, prevent fraud or clarify the request. We will respond within the period prescribed by applicable law.\nWhere a request concerns information independently held by an employer or another third party, CareerMed may direct the requester to that organisation or assist by forwarding the request where appropriate and lawful. Nothing in this Policy limits a user's statutory right to approach an authority or seek a remedy available under law.\n19. CHILDREN AND AGE RESTRICTIONS\nCareerMed is designed primarily for adults seeking employment and professional opportunities. The Platform is not intended to be used by children under the age of eighteen to create employment-seeker accounts. Users must not misstate their age or create an account on behalf of a child.\nIf CareerMed becomes aware that personal data of a child has been collected in circumstances where valid parental or guardian consent or another legal requirement has not been met, CareerMed will take steps required by applicable law, which may include restricting processing and deleting the information.\n20. DIRECT MARKETING AND COMMUNICATION PREFERENCES\nCareerMed may send communications necessary to operate the Platform, including OTPs, account and security alerts, application updates, verification notifications, service notices, legal notices and responses to support requests. These communications are not ordinary promotional messages and may continue while the account or relevant service remains active.\nPromotional communications will be sent only in accordance with applicable law and any required consent or preference. Users may opt out through the unsubscribe link, account settings or the instructions in the communication. Opting out of promotions will not prevent essential service or legal communications.\n21. CROSS-BORDER PROCESSING\nCareerMed and its service providers may store or process information in India or other jurisdictions. Where data is transferred, stored or made accessible outside India, CareerMed will comply with applicable restrictions, government notifications, contractual safeguards and other legal requirements in force at the relevant time.\n22. GRIEVANCE REDRESSAL AND PRIVACY CONTACT\nFor privacy questions, requests, complaints or concerns, contact the designated CareerMed Grievance / Privacy Officer using the details below. Please include “Privacy Request” in the subject line and provide sufficient details for us to identify the issue. Do not email passwords, OTPs or unnecessary identity documents.\nEmail: support@careermed.in\nTelephone: +91 88065 06455\nThe Company will acknowledge and resolve grievances within the period prescribed by applicable law and will publish any additional details required by law. Users may also approach the competent statutory authority where permitted by law.\n23. CHANGES TO THIS POLICY\nCareerMed may revise this Policy to reflect changes in the Platform, business operations, technology or applicable law. The revised version will be published on the Platform with an updated “Last Updated” date. Where a change materially affects the purposes or manner of processing, or where law requires, CareerMed will provide additional notice and obtain fresh consent where necessary.\nContinued use of the Platform after publication of a revised Policy will not be treated as a substitute for fresh consent where fresh consent is legally required.\n24. GOVERNING LAW AND JURISDICTION\nThis Policy is governed by the laws of India. Subject to mandatory statutory remedies and the jurisdiction of any authority or forum that cannot lawfully be excluded, courts at Pune, Maharashtra shall have exclusive jurisdiction over disputes arising from or relating to this Policy.\n25. CONTACT DETAILS\nCareerMed\nOperated by: Lifemate Healthcare Private Limited\nGeneral Support Email: support@careermed.in\nTelephone: +91 88065 06455\n";
+
+function renderText(item: string) {
+  const separator = item.indexOf(":");
+
+  if (separator > 0 && separator < 48) {
+    const label = item.slice(0, separator + 1);
+    const value = item.slice(separator + 1).trim();
+
+    if (label === "Email:" || label === "General Support Email:") {
+      return <><strong>{label}</strong> <a href={`mailto:${value}`}>{value}</a></>;
+    }
+
+    if (label === "Telephone:") {
+      return <><strong>{label}</strong> <a href="tel:+918806506455">{value}</a></>;
+    }
+
+    return <><strong>{label}</strong> {value}</>;
+  }
+
+  return item;
+}
+function PolicyContent({ content }: { content: string }) {
+  const lines = content.split("\n").filter((line) => line.trim());
+  const groups: { type: "paragraph" | "list"; items: string[] }[] = [];
+
+  lines.forEach((line) => {
+    const type = line.startsWith("•") ? "list" : "paragraph";
+    const value = type === "list" ? line.slice(1).trim() : line;
+
+    if (groups.at(-1)?.type === type) {
+      groups.at(-1)?.items.push(value);
+    } else {
+      groups.push({ type, items: [value] });
+    }
+  });
+
+  return groups.map((group, index) =>
+    group.type === "list" ? (
+      <ul key={`list-${index}`} className="space-y-2">
+        {group.items.map((item) => (
+          <li key={item}>{renderText(item)}</li>
+        ))}
+      </ul>
+    ) : (
+      <>{group.items.map((item) => <p key={item}>{renderText(item)}</p>)}</>
+    ),
+  );
+}
 export default function PrivacyPolicyPage() {
+  const [heading, subtitle, ...body] = policyText.split("\n");
+  const policyBody = body.join("\n");
+  const [introduction, ...sections] = policyBody.split(/(?=^\d+\.\s)/m);
+
   return (
     <FooterPageShell
       eyebrow="Privacy & data"
-      title="Privacy Policy"
-      description="How CareerMed collects, uses, and protects the information entrusted to us."
-      updated="April 21, 2026"
+      title={heading}
+      description={subtitle}
       icon={ShieldCheck}
     >
       <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-blue-950/5 sm:p-10 lg:p-12">
-        <div className="prose prose-slate max-w-none text-slate-700 prose-headings:text-slate-900 prose-a:text-blue-600 prose-strong:text-slate-900">
-          <p>
-            Lifemate Healthcare Pvt Ltd (&quot;us&quot;, &quot;we&quot;, or &quot;our&quot;)
-            operates the CareerMed platform (the &quot;Service&quot;). This page informs you of our
-            policies regarding the collection, use, and disclosure of personal data when you use our
-            Service and the choices you have associated with that data.
-          </p>
-          <h3>1. Information We Collect</h3>
-          <p>
-            We collect several different types of information for various purposes to provide and
-            improve our Service to you:
-          </p>
-          <ul>
-            <li>
-              <strong>Personal Data:</strong> Email address, First name and last name, Phone number,
-              Address, State, Province, ZIP/Postal code, City.
-            </li>
-            <li>
-              <strong>Professional Data:</strong> Resumes, employment history, education, medical
-              council registration details, and other job-related information.
-            </li>
-            <li>
-              <strong>Usage Data:</strong> Information on how the Service is accessed and used
-              (e.g., your computer&apos;s Internet Protocol address, browser type, pages visited).
-            </li>
-          </ul>
-          <h3>2. Payment Information</h3>
-          <p>
-            We use Razorpay as our payment gateway. We do not store your full credit/debit card
-            details or UPI PIN on our servers. Your payment information is securely processed by
-            Razorpay in compliance with the Payment Card Industry Data Security Standard (PCI-DSS).
-            We only store payment confirmation receipts and subscription status to grant you access
-            to premium features.
-          </p>
-          <h3>3. Use of Data</h3>
-          <p>CareerMed uses the collected data for various purposes:</p>
-          <ul>
-            <li>
-              To provide and maintain the Service (e.g., matching job seekers with employers).
-            </li>
-            <li>To notify you about changes to our Service.</li>
-            <li>To provide customer care and support.</li>
-            <li>To process payments and manage subscriptions.</li>
-            <li>To monitor the usage of the Service and detect technical issues.</li>
-          </ul>
-          <h3>4. Sharing of Data</h3>
-          <p>
-            If you are a job seeker, your profile and resume data will be shared with employers when
-            you apply for a job or if you make your profile public. We do not sell your personal
-            data to third-party marketers. We may disclose your data in good faith if required by
-            law or to protect the rights and safety of Lifemate Healthcare Pvt Ltd.
-          </p>
-          <h3>5. Security of Data</h3>
-          <p>
-            The security of your data is important to us. We implement industry-standard security
-            measures to protect your data. However, remember that no method of transmission over the
-            Internet, or method of electronic storage is 100% secure.
-          </p>
-          <h3>6. Contact Us</h3>
-          <p>If you have any questions about this Privacy Policy, please contact us:</p>
-          <ul>
-            <li>
-              <strong>Email:</strong> <a href="mailto:support@careermed.in">support@careermed.in</a>
-            </li>
-            <li>
-              <strong>Phone:</strong> <a href="tel:+918806506455">+91 88065 06455</a>
-            </li>
-            <li>
-              <strong>Entity:</strong> Lifemate Healthcare Pvt Ltd
-            </li>
-          </ul>
+        <div className="prose prose-slate max-w-none text-slate-700 prose-headings:scroll-mt-28 prose-headings:font-bold prose-headings:text-slate-950 prose-h2:mt-14 prose-h2:border-b prose-h2:border-slate-200 prose-h2:pb-4 prose-li:marker:text-blue-600 prose-a:font-semibold prose-a:text-blue-600 prose-strong:font-semibold prose-strong:text-slate-950">
+          <PolicyContent content={introduction} />
+          {sections.map((section) => {
+            const [sectionTitle, ...sectionContent] = section.split("\n");
+
+            return (
+              <section key={sectionTitle}>
+                <h2>{sectionTitle}</h2>
+                <PolicyContent content={sectionContent.join("\n")} />
+              </section>
+            );
+          })}
         </div>
       </article>
     </FooterPageShell>

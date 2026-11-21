@@ -156,16 +156,11 @@ const Footer = () => {
           )}
 
           <div>
-            <h4 className="mb-4 font-semibold text-white">Company</h4>
+            <h4 className="mb-4 font-semibold text-white">Legal</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/about-us" className="hover:text-white">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="hover:text-white">
-                  Contact
+                <Link href="/terms-of-service" className="hover:text-white">
+                  Terms of Service
                 </Link>
               </li>
               <li>
@@ -173,38 +168,73 @@ const Footer = () => {
                   Privacy Policy
                 </Link>
               </li>
-              <li>
-                <Link href="/terms-of-service" className="hover:text-white">
-                  Terms of Service
-                </Link>
-              </li>
+            </ul>
+            <h4 className="mb-4 mt-7 font-semibold text-white">Policies</h4>
+            <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/refund-policy" className="hover:text-white">
-                  Refund Policy
+                  Refund &amp; Cancellation Policy
                 </Link>
               </li>
               <li>
                 <Link href="/shipping-policy" className="hover:text-white">
-                  Shipping Policy
+                  Digital Services &amp; Delivery Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/verification-policy" className="hover:text-white">
+                  Verification Policy
                 </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="mb-4 font-semibold text-white">Trust & Credits</h4>
-            <p className="text-sm leading-6">
-              CareerMed is proudly owned by{" "}
-              <a
-                href="https://lifematecare.com/"
-                target="_blank"
-                rel="noreferrer"
-                className="font-semibold text-white underline decoration-gray-600 underline-offset-4 transition hover:text-cyan-300"
-              >
-                Lifemate Healthcare Pvt Ltd
-              </a>
-              , focused on building trusted healthcare hiring experiences.
-            </p>
+            <h4 className="mb-4 font-semibold text-white">Platform Guidelines</h4>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link href="/recruitment-platform-guidelines" className="hover:text-white">
+                  Recruitment &amp; Platform Guidelines
+                </Link>
+              </li>
+              <li>
+                <Link href="/about-us" className="hover:text-white">
+                  About CareerMed
+                </Link>
+              </li>
+            </ul>
+            <h4 className="mb-4 mt-7 font-semibold text-white">Contact</h4>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <a href="mailto:support@careermed.in" className="hover:text-white">
+                  Support
+                </a>
+              </li>
+              <li>
+                <a
+                  href="mailto:support@careermed.in?subject=CareerMed%20Grievance"
+                  className="hover:text-white"
+                >
+                  Grievance
+                </a>
+              </li>
+              <li>
+                <a
+                  href="mailto:support@careermed.in?subject=CareerMed%20Privacy%20Request"
+                  className="hover:text-white"
+                >
+                  Privacy
+                </a>
+              </li>
+              <li>
+                <a
+                  href="mailto:support@careermed.in?subject=CareerMed%20Business%20Enquiry"
+                  className="hover:text-white"
+                >
+                  Business Enquiries
+                </a>
+              </li>
+            </ul>
           </div>
         </div>
 
@@ -222,7 +252,7 @@ const Footer = () => {
               Contact: +91 88065 06455
             </a>
           </p>
-          <p>© 2026 CareerMed. All rights reserved.</p>
+          <p>© Lifemate Healthcare Private Limited | Operating CareerMed</p>
           <p className="mt-2">
             Designed, developed, and maintained by{" "}
             <a

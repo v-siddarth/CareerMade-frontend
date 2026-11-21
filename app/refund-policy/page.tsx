@@ -15,15 +15,14 @@ export default function RefundPolicyPage() {
       eyebrow="Payments & subscriptions"
       title="Cancellation & Refund Policy"
       description="Clear information about cancellations, refund eligibility, and how we review requests."
-      updated="April 21, 2026"
       icon={CircleDollarSign}
     >
       <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-blue-950/5 sm:p-10 lg:p-12">
         <div className="prose prose-slate max-w-none text-slate-700 prose-headings:text-slate-900 prose-a:text-blue-600 prose-strong:text-slate-900">
           <p>
-            Thank you for choosing CareerMed, operated by Lifemate Healthcare Pvt Ltd. We strive to
-            provide the best healthcare recruitment platform. Please read our cancellation and
-            refund policy carefully.
+            Thank you for choosing CareerMed, operated by Lifemate Healthcare Private Limited. We
+            strive to provide the best healthcare recruitment platform. Please read our cancellation
+            and refund policy carefully.
           </p>
           <h3>1. Subscription Cancellations</h3>
           <p>
@@ -81,6 +80,23 @@ export default function RefundPolicyPage() {
           <p>
             We reserve the right to modify this Cancellation and Refund Policy at any time. Any
             changes will be posted on this page with an updated revision date.
+          </p>
+          <h3>5. Failed Transactions and Refund Method</h3>
+          <p>
+            If a payment is debited but the order is not created or the paid service is not
+            activated, the transaction is ordinarily reconciled through the relevant payment
+            gateway, bank or payment provider. Approved refunds are ordinarily initiated to the
+            original payment method. Timing after initiation depends on the payment gateway, bank,
+            card issuer, UPI provider or other intermediary.
+          </p>
+          <h3>6. Refund Requests and Fraud Review</h3>
+          <p>
+            Please provide the registered name, account email or mobile number, order number or
+            transaction reference, date, amount, payment method, service purchased and reason for
+            the request. CareerMed may request information reasonably necessary to authenticate the
+            user, locate the transaction, prevent fraud or assess eligibility. We may review
+            transactions that reasonably appear to involve fraud, unauthorised use, chargeback abuse
+            or account compromise, subject to applicable law and statutory rights.
           </p>
         </div>
       </article>

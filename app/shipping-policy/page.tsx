@@ -3,7 +3,7 @@ import { PackageCheck } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Shipping & Delivery Policy | CareerMed",
+  title: "Digital Services & Delivery Policy | CareerMed",
   description: "Learn how CareerMed delivers digital subscriptions and services.",
   alternates: { canonical: "/shipping-policy" },
 };
@@ -12,16 +12,15 @@ export default function ShippingPolicyPage() {
   return (
     <FooterPageShell
       eyebrow="Digital service delivery"
-      title="Shipping & Delivery Policy"
+      title="Digital Services & Delivery Policy"
       description="How CareerMed activates subscriptions and delivers platform services after payment."
-      updated="April 21, 2026"
       icon={PackageCheck}
     >
       <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-blue-950/5 sm:p-10 lg:p-12">
         <div className="prose prose-slate max-w-none text-slate-700 prose-headings:text-slate-900 prose-a:text-blue-600 prose-strong:text-slate-900">
           <p>
-            CareerMed, operated by Lifemate Healthcare Pvt Ltd, is a digital SaaS (Software as a
-            Service) platform and job portal.
+            CareerMed, operated by Lifemate Healthcare Private Limited, is a digital SaaS (Software
+            as a Service) platform and job portal.
           </p>
           <h3>Digital Delivery</h3>
           <p>
